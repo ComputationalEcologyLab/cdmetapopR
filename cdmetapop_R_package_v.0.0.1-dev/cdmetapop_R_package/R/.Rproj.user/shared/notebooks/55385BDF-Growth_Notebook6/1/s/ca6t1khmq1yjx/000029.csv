@@ -1,0 +1,6 @@
+"0",""
+"0","ggplot(mydata_second, aes(x = release_fl, y = growthL, color= release_group_name)) +"
+"0","  geom_point( size = 1) +"
+"0","  geom_smooth(method = ""lm"" , se = FALSE)+"
+"0","  theme_minimal()"
+"0",""

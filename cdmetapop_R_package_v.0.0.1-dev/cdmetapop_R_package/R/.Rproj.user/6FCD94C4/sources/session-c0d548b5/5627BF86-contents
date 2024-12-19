@@ -1,0 +1,58 @@
+#' This function counts the number of individuals that move each year by reading in each ind file
+#'
+#' @param path path to the simulation folder
+#' @param runs integer referring to the number of montecarlo simulations output files to examine. It refers to the mcruns option in the RunVars CDMetaPOP input file. Right now it defaults to 1, which would be only one montecarlo run.
+#' @param gen Simulation run time (generation or year). Refers to runtime in the RunVars of CDMetaPOP input file. Currently defaults to 49
+#' @param species If the simulation includes more species... The code for this needs to be adjusted. Right now, species = 0, means one species only and it is the default
+#' @return a dataframe 
+#' @examples 
+#' define  your path to the output_test folder: mypath = "your_path/your_output_test/" For example "~/UM/CDMetaPop/EBT/EBT_Inputs/data/output_test1728487700/"
+
+mypath = "~/UM/CDMetaPop/EBT/EBT_Inputs/data/output_test1732024487/"
+
+######################################################
+#temporary vector to introduce variation to cdist column:
+CDist <- runif(n = 10000, min = 0, max = 1)
+CDistb <- rep.int (-9999, 6610)
+CDist <- sample(c(CDist, CDistb)) 
+######################################################
+
+dispersal <- function(path = mypath, runs = 1, gen = 49, species = 0) {
+ 
+   # Initialize a matrix to store the data
+  dispersors_matrix <- matrix(data=NA, nrow=gen, ncol=runs)
+  
+  # Iterate through each ind year
+  for(i in 0:gen){ 
+    
+    mydata<-read.csv(paste0(path, "run0batch0mc",runs-1,"species",species,"/ind",i,".csv"))
+   
+    ######################################################
+    ####temporarily change CDist column with random vector
+    #mydata$CDist <- CDist
+    #####################################################
+    
+    #non_movers <- sum(mydata$CDist == -9999) # Count of non-movers
+    movers <- sum(mydata$CDist != -9999) # Count of movers
+    
+      # calculate the proportion of movers in the current generation
+      proportion_movers<- movers/nrow(mydata)
+      
+      # store the results into the matrix
+      dispersors_matrix[i,runs] <-proportion_movers 
+    }
+    
+  colnames(dispersors_matrix) <- paste0("MC", 1:runs)
+  row.names(dispersors_matrix) <- c(paste0("Y",1:gen))
+  
+dispersors <- as.data.frame(dispersors_matrix)
+return (dispersors)
+}
+
+dispersors<- tmp
+dispersors$avg <- rowMeans(dispersors, na.rm=T)    
+    
+    
+    
+    
+  

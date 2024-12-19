@@ -1,0 +1,38 @@
+
+bum can vary between 0 and more 
+bam can vary between 0: and more
+bim can also vary between 0 and more
+
+
+myfunction <- function(path = path, bum = 0, bam = 0, bim = 9, pum = TRUE ) {
+mymatrix <- matrix(data=NA, nrow=bim, ncol=bam+1)
+
+ifelse(pum = TRUE,
+         mydf<-read.csv(paste0("kk",bim,".csv")),  
+         mydf<-read.csv(paste0("kkfritta",bim,".csv")))
+# Iterate through each ind 
+for(j 9 in 0:bum){ 
+for(k in 0:bam){ 
+  for(i in 0:bim){ 
+    
+    
+    # do the calculations calculate
+    my_calculation<- x+y
+    
+    # store the results into the matrix
+    mymatrix[i,k+1] <-my_calculation
+  }
+}
+}
+combine_names <- expand.grid(bum = 0:bum, bam = 0:bam)
+
+# Create the column names
+colnames(mymatrix) <- paste0("bb", combinations$bum, "xx", combinations$bam)
+
+row.names(mymatrix) <- c(paste0("yy",1:bim))
+
+df <- as.data.frame(mymatrix)
+return (df)
+}
+
+

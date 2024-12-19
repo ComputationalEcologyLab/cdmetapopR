@@ -1,0 +1,428 @@
+---
+title: "YY EBT Growth"
+author: "Dominique Alò"
+date: "Nov 26 2024"
+output:
+  html_document:
+    df_print: paged
+  pdf_document:
+    latex_engine: pdflatex
+  word_document: default
+header-includes: \usepackage{float}
+bibliography: growth_references.bib
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      message = FALSE, 
+                      warning = FALSE,
+                       fig.width = 7,
+                      fig.height = 5,
+                      fig.pos = 'H',
+                      fig.align = 'center')
+
+# Load the libraries
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+library(sf)
+library(tmap)
+library(sjPlot)
+library(sp)
+library(MuMIn)
+library(broom)
+library(gt)
+
+#load some of my functions
+source("~/UM/Growth_YYEBT/scripts/my_growth_functions.R")
+
+
+color_blind_palette <- c(
+  "#E69F00",  # orange
+  "#56B4E9",  # sky blue
+  "#009E73",  # bluish green
+  "#F0E442",  # yellow
+  "#0072B2",  # blue
+  "#D55E00",  # vermillion
+  "#CC79A7",  # reddish purple
+  "#999999",  # grey
+  "#660066",  # deep purple
+  "#33CCFF",  # light cyan
+  "#FF99CC",  # pink
+  "#FFCC33",  # bright yellow-orange
+  "#996600",  # brown
+  "#00CC99",  # teal
+  "#3399FF"   # bright blue
+)
+
+```
+
+ 
+
+Table 1: Summary statistics 
+```{r warning = FALSE}
+
+mydata  <- read.csv("~/UM/Growth_YYEBT/data/mycaps.csv")
+
+# calculate basic statistics by group and year of release for all fish about to be released from the hatchery (day = 0)
+initial_stats <- mydata %>%
+  filter (day == 0 & SpeciesCode == "ONCL")%>%
+  group_by(first_year)%>%
+  summarise(
+    ID_count = n(),
+    avg_weight = mean(Weight_g, na.rm = TRUE),
+    sd_weight = sd(Weight_g, na.rm = TRUE),
+    avg_length = mean(ForkLength_mm, na.rm = TRUE),
+    sd_length = sd(ForkLength_mm, na.rm = TRUE),
+    sd_weight = sd(ForkLength_mm, na.rm = TRUE),
+    avg_condition = mean(Condition, na.rm = TRUE),
+    sd_condition = sd(Condition, na.rm = TRUE)
+  ) %>%
+  ungroup()
+  
+
+# Remove instances where IndividualsID appears only once = this has a total of 5732 individuals
+mydata <- mydata %>%
+  filter((!is.na(Condition) | !is.na(GrowthTemperatureBack) ) & SpeciesCode == "ONCL")%>%
+  group_by(IndividualID) %>%
+  filter(n() > 1) %>%  # Keep only IndividualIDs that have more than 1 occurrence
+  ungroup()
+
+# Convert variables to factors
+mydata$IndividualID <- as.factor(mydata$IndividualID)
+mydata$EHYear_Extracted <- as.factor(mydata$EHYear_Extracted)
+mydata$release_group <- as.factor(mydata$release_group)
+
+mydata$release_month <- as.factor(mydata$release_month)
+#mydata$mover <- as.factor(mydata$mover)
+
+initial_stats
+```
+
+
+```{r warning = FALSE}
+mydata_first <- mydata %>%
+  filter(day == 0 | (day > 100 & day < 450))%>%
+  # now make sure I only have two measures per individual, in case I have more than two, make sure the first one is day = 0, and 
+  # the next one that immediately follows
+  group_by(IndividualID)%>%
+  arrange(day)%>%
+  slice(c(1,which(day > 0) [1]))%>% # Keep day = 0 and the next
+  filter(n()>1)%>% #remove individuals left with just one record after the operation
+  ungroup()
+
+# there was a very high value that was skewing the data, I removed it from the mycaps data file (see flags.R)
+#pit.tag.ch: 3DD.003E06D500
+
+```
+
+Table 2: Summary statistics for the ONCL population at first capture
+
+```{r warning = FALSE}
+
+# Now calculate the average Weight, Length, Condition  by first year 
+avg_stats0 <- mydata_first %>%
+   filter(day == 0)%>%
+  group_by(first_year) %>%
+  summarise(
+    ID_count = n(),
+    avg_weight = mean(Weight_g, na.rm = TRUE),
+    sd_weight = sd(Weight_g, na.rm = TRUE),
+    avg_length = mean(ForkLength_mm, na.rm = TRUE),
+    sd_length = sd(ForkLength_mm, na.rm = TRUE),
+    sd_weight = sd(ForkLength_mm, na.rm = TRUE),
+    avg_condition = mean(Condition, na.rm = TRUE),
+    sd_condition = sd(Condition, na.rm = TRUE)
+  ) %>%
+  ungroup()
+avg_stats0
+```
+
+Table 3: Summary statistics for the ONCL population after recapture (one year after first capture)
+
+```{r warning = FALSE}
+avg_stats1 <- mydata_first %>%
+   filter(day != 0)%>%
+  group_by(first_year) %>%
+  summarise(
+    ID_count = n(),
+    avg_weight = mean(Weight_g, na.rm = TRUE),
+    sd_weight = sd(Weight_g, na.rm = TRUE),
+    avg_length = mean(ForkLength_mm, na.rm = TRUE),
+    sd_length = sd(ForkLength_mm, na.rm = TRUE),
+    sd_weight = sd(ForkLength_mm, na.rm = TRUE),
+    avg_condition = mean(Condition, na.rm = TRUE),
+    sd_condition = sd(Condition, na.rm = TRUE),
+    avg_distance_moved = mean(distance_moved, na.rm = TRUE),
+    sd_distance_moved = sd(distance_moved, na.rm = TRUE)
+  ) %>%
+  ungroup()
+avg_stats1
+```
+
+
+Full model run: Growth ~ condition + size at release + year of release + site of release + distance moved + summer temperature
+
+## Results
+
+```{r warning = FALSE}
+
+growth_year1 <- mydata_first %>%
+  arrange(IndividualID, EHYear_Extracted) %>%
+  group_by(IndividualID) %>%
+  reframe(
+    # ABSOLUTE GROWTH
+    AG = ForkLength_mm[2] - ForkLength_mm[1],
+    # ABSOLUTE GROWTH RATE
+    AGR = (ForkLength_mm[2] - ForkLength_mm [1])/ (day[2] - day [1]),
+    #AGR_summer_days = (ForkLength_mm[2] - ForkLength_mm [1])/ (summer_days),
+    #AGR_winter_days = (ForkLength_mm[2] - ForkLength_mm [1])/ (day[2] - day [1]- winter_days),
+    # RELATIVE GROWTH RATE
+    RGR = ((ForkLength_mm[2] - ForkLength_mm [1])/ForkLength_mm [1])*100,
+    # INSTANTANEOUS GROWTH RATE
+    IGR = (log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ (day[2] - day [1]),
+    #IGR_summer_days = (log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ (summer_days),
+    #IGR_winter_days = (log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ (day[2] - day [1] - winter_days),
+    #IGR_mod = 100 * (log(ForkLength_mm[2] /ForkLength_mm [1])) / (day[2] - day [1]),
+    # SPECIFIC GROWTH RATE
+    SGR = ((log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ day[2] - (day [1]))*100,
+    #SGR_summer_days = ((log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ summer_days)*100,
+    #SGR_winter_days = ((log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ day[2] - (day [1] - winter_days))*100,
+    # THERMAL GROWTH COEFFICIENT
+    #TGC = calculate_tgc (ForkLength_mm[2], ForkLength_mm[1], summer_days, winter_days, GrowthTemperatureBack, GrowthTemperatureOut),
+    # SUMMER THERMAL GROWTH COEFFICIENT
+    #STGC = calculate_stgc (ForkLength_mm[2], ForkLength_mm[1], summer_days, winter_days, GrowthTemperatureBack, GrowthTemperatureOut), 
+        # condition
+    condition = Condition [1],
+     # distance moved
+    distance_moved = distance_moved [2],
+    # weigth
+    weight = Weight_g [1],
+    # length
+    length = ForkLength_mm [1],
+    # year
+    first_year = first_year[1])
+
+
+growth_stats <-growth_year1 %>%
+  group_by(first_year) %>%
+  summarise(
+    avg_AG = mean(AG, na.rm = TRUE),
+    avg_AGR = mean(AGR, na.rm = TRUE),
+    avg_RGR = mean(RGR, na.rm = TRUE),
+    avg_IGR = mean(IGR, na.rm = TRUE),
+    avg_SGR = mean(SGR, na.rm = TRUE),
+  ) %>%
+  ungroup()
+#growth_stats
+
+# store results
+gf <- c()
+mpd <- c()
+
+# Loop through each column
+for (i in 2:ncol(growth_year1)-1) {
+  # linear model
+  model <- lm (growth_year1[[i]] ~  condition  +  first_year +  length + weight + distance_moved , data = growth_year1)
+  
+  # Calculate R-squared for the model
+  r_squared_value <- summary(model)$r.squared
+  gf <- c(gf, r_squared_value)
+  
+  # Calculate Mean Percentage Deviation (MPD) of each growth calculation
+  mean_observed <- mean(growth_year1[[i]]) # calculate the mean
+  absolute_deviations <- abs(growth_year1[[i]] - mean_observed) # calculate the deviation from the mean
+  mpd_value <- mean(abs((absolute_deviations - mean_observed) * 100)) # calculate the percentage variation
+  mpd <- c(mpd, mpd_value)
+}
+
+# Create a summary table with results
+results <- data.frame(
+  Model = names(growth_year1[, c(2:6)]),
+  R_squared = gf[2:6],
+  Mean_Percentage_Deviation = mpd[2:6]
+)
+smallest_change_fl<- growth_year1%>% filter(AG == min(growth_year1$AG))#id 17482
+min_IGR <- growth_year1%>% filter(IGR == min(growth_year1$IGR))#id 	17239
+
+largest_change_fl<- growth_year1%>% filter(AG == max(growth_year1$AG))#id 14999
+max_IGR <- growth_year1%>% filter(IGR == max(growth_year1$IGR))#id 14999
+#  negative & positive selected values
+negative_ids <- growth_year1 %>%
+  filter(AG < 0) %>%   # Filter rows with negative growth
+  summarise(count = n_distinct(IndividualID),
+            minAG = min(AG),
+            avgAG = mean(AG),
+            avgdist = mean(distance_moved),
+            avgfl = mean(length))  
+
+
+positive_ids <- growth_year1 %>%
+  filter(AG > 0) %>%   # Filter rows with positive growth
+  summarise(count = n_distinct(IndividualID),
+            minAG = min(AG),
+            avgAG = mean(AG),
+            avgdist = mean(distance_moved),
+            avgfl = mean(length))  
+
+
+
+```
+
+
+Table 4. Best model’s predictors for growth
+
+```{r warning = FALSE}
+results
+```
+
+
+Table 5. Model summary outputs giving the predictor variables included after 'dredge' iterations, their estimates, standard error, t statistic, p-values, lower and higher confidence intervals. The estimate for the intercept refers to the categories was the year: 2018.
+
+```{r warning = FALSE}
+
+model_y1 <- lm (IGR ~  condition  +  first_year +  length + weight + distance_moved, data = growth_year1)
+
+#iterate between the different models: 
+options(na.action = "na.fail") 
+linmodel_y1 <- dredge(model_y1)
+options(na.action = "na.omit")# reset na.action options
+top_linearmodel_y1 <- subset(linmodel_y1, delta < 2)
+
+# Extract model results
+tidy_model <- tidy(model_y1, conf.int = TRUE)
+
+# Format numeric values in scientific notation
+tidy_model <- tidy_model %>%
+  mutate(
+    estimate = format(estimate, scientific = TRUE, digits = 2),
+    p.value = format(p.value, scientific = TRUE, digits = 2),
+    conf.low = format(conf.low, scientific = TRUE, digits = 2),
+    conf.high = format(conf.high, scientific = TRUE, digits = 2)
+  )
+  
+
+# Generate the table using gt
+gt_table <- tidy_model %>%
+  gt() %>%
+  tab_header(
+    title = "IGR Linear Model Results",
+  ) %>%
+  cols_label(
+    term = "Variable",
+    estimate = "Estimate",
+    conf.low = "CI Lower",
+    conf.high = "CI Upper",
+    p.value = "P-value"
+  ) %>%
+  fmt_scientific(
+    columns = c(estimate, std.error, statistic, p.value),
+    decimals = 2
+  ) %>%
+  tab_options(
+    table.font.size = "medium"
+  )
+
+gt_table
+```
+
+```{r warning = FALSE}
+# Subset the data into two groups based on the sign IGR
+negative_IGR <- growth_year1[growth_year1$IGR < 0, ]
+positive_IGR <- growth_year1[growth_year1$IGR > 0, ]
+
+# Perform a t-test to compare IGR forklength
+t_test_fl <- t.test(negative_IGR$length, positive_IGR$length)
+
+# Perform a t-test to compare IGR distance moved
+t_test_dm <- t.test(negative_IGR$distance_moved, positive_IGR$distance_moved)
+
+```
+## Possible themes for discussion
+
+Figure 2. Forklenght by group and year of release
+
+```{r warning = FALSE}
+
+#mydata_plot <- mydata_first %>%
+  # group_by(IndividualID) %>%
+  # filter(day == min(day)) %>%
+  # ungroup()
+  
+# Boxplots for  Length by Year, split by release group 
+ggplot(mydata_first, aes(x = factor(first_year), y =ForkLength_mm)) +
+  geom_boxplot() +
+  geom_point(size = .05)+  
+  labs(title = "Length at release", 
+       x = "Year", 
+       y = "ForkLenght in mm",
+       color = "Release Group") +
+  scale_fill_manual(values = color_blind_palette) +  
+  theme(
+    legend.title = element_text(size = 12, face = "bold")
+  )
+
+```
+
+
+Figure 3. Condition by group and year of release
+
+```{r warning = FALSE}
+
+
+  
+# Boxplots for  Condition by Year
+ggplot(mydata_first, aes(x = factor(first_year), y =Condition)) +
+  geom_boxplot() +
+  geom_point(size = .05)+  
+  labs(title = "Condition at release", 
+       x = "Year", 
+       y = "Condition K",
+       color = "Release Group") +
+  scale_fill_manual(values = color_blind_palette) +  
+  theme(
+    legend.title = element_text(size = 12, face = "bold")
+  )
+
+```
+Figure 4. Scatterplot of forklength at release and distance moved 
+
+```{r warning = FALSE}
+
+mydata_plot2 <- mydata_first %>%
+  arrange(IndividualID, day) %>%
+  group_by(IndividualID) %>%
+  reframe(
+    # INSTANTANEOUS GROWTH RATE
+    IGR = (log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ (day[2] - day [1]),
+    # size at first capture
+    length = ForkLength_mm [1] ,
+    # condition
+    condition = Condition [1],
+    # first year
+    first_year =first_year [1],
+    # distance moved
+    distance_moved = distance_moved [2])
+
+# scatterplot for  Distance moved  and size at release  split by year 
+ggplot(mydata_plot2, aes(x = length, y = distance_moved, color = as.factor(first_year))) +
+    geom_point(size = 1,alpha = 0.8) +
+    scale_color_manual(values = color_blind_palette)+
+    labs(x = "ForkLenght mm at release", y = "Distance Travelled in meters") +
+    theme_minimal()
+
+# # scatterplot for  Distance moved  and size at release  split by release_group 
+# ggplot(mydata_plot2, aes(x = release_fl, y = distance_moved, color = release_group)) +
+#     geom_point(size = 1,alpha = 0.8) +
+#     scale_color_manual(values = color_blind_palette)+
+#     labs(x = "ForkLenght mm at release", y = "Distance Travelled in meters") +
+#     theme_minimal()
+
+```
+
+
+## References

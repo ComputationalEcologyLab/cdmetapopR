@@ -1,0 +1,80 @@
+
+if(!require(tidyr)) install.packages("tidyr", repos="http://cran.us.r-project.org")
+if(!require(vctrs)) install.packages("vctrs", repos="http://cran.us.r-project.org")
+if(!require(gtools)) install.packages("gtools", repos="http://cran.us.r-project.org")
+if(!require(readr)) install.packages("readr", repos="http://cran.us.r-project.org")
+if(!require(purrr)) install.packages("purrr", repos="http://cran.us.r-project.org")
+#library(devtools)
+library(tidyr)
+library(vctrs)
+library(dplyr)
+library(gtools)
+library(readr)
+library(purrr)
+
+NInitial_df <- data.frame(matrix(ncol=7,nrow=0))
+x <- c("Year", "K", "N", "SelDeaths", "N_Females", "N_YY", "Run")
+colnames(NInitial_df) <- x
+
+patchlabel <- c('all',1:379)
+#n = n()
+#data_path <- file.path("./LHS_Dir/LHS_#/output_#/run0batchrun0mcrun0species0/summary_popAllTime.csv")
+#data_path
+##bring in summarypopfiles
+myFiles <- list.files(path = "./LHS_Dir2", pattern = "LHS", full.names=TRUE)
+myFiles <- mixedsort(myFiles)
+print(myFiles)
+num <- 0
+for (currentFile in myFiles) {
+  num = num + 1
+  print(currentFile)
+  #pat <- paste0(currentFile,"/output_", num ,"/run0batchrun0mcrun0species0/summary_popAllTime.csv")
+  pat <- paste0("./LHS_Dir2/LHS_", num , "/output_", num ,"/run0batchrun0mcrun0species0/summary_popAllTime.csv")
+  print(pat)
+  df <- readr::read_csv(pat)
+  head(df)
+  
+  dfK <- data.frame(Year = df$Year, Variable = df$K)
+  dfK <- separate(data = dfK, col = Variable, into = c(patchlabel), sep = '\\|')
+  dfK$mean <- as.numeric(dfK$all) / 379
+  dfKmean <- data.frame(Year = dfK$Year, K = dfK$mean)
+  
+  dfn <- data.frame(Year = df$Year, Variable = df$N_Initial)
+  dfn <- separate(data = dfn, col = Variable, into = c(patchlabel), sep = '\\|')
+  dfn$mean <- as.numeric(dfn$all) / 379
+  dfnmean <- data.frame(Year = dfK$Year, N = dfn$mean)
+  
+  dfn2 <- data.frame(Year = df$Year, Variable = df$SelectionDeaths_Immigration)
+  dfn2 <- separate(data = dfn2, col = Variable, into = c(patchlabel), sep = '\\|')
+  dfn2$mean <- as.numeric(dfn2$all) / 379
+  dfn2mean <- data.frame(Year = dfK$Year, SelDeaths = dfn2$mean)
+  
+  dfK3 <- data.frame(Year = df$Year, Variable = df$N_Females)
+  dfK3 <- separate(data = dfK3, col = Variable, into = c(patchlabel), sep = '\\|')
+  dfK3$mean <- as.numeric(dfK3$all) / 379
+  dfK3mean <- data.frame(Year = dfK3$Year, N_Females = dfK3$mean)
+  
+  dfK4 <- data.frame(Year = df$Year, Variable = df$N_YYMales)
+  dfK4 <- separate(data = dfK4, col = Variable, into = c(patchlabel), sep = '\\|')
+  dfK4$mean <- as.numeric(dfK4$all) / 379
+  dfK4mean <- data.frame(Year = dfK4$Year, N_YY = dfK4$mean)
+  
+
+  df_list <- list(dfKmean,dfnmean, dfn2mean, dfK3mean, dfK4mean) 
+  total<- df_list %>% reduce(full_join, by='Year')
+ 
+  Run<-num
+  total$Run<-Run
+
+ # NInitial_df[nrow(NInitial_df)+1, ] <- c(total)
+  #NInitial_df<- total
+  
+  NInitial_df = rbind(NInitial_df, total)
+  #NInitial_df[NInitial_df +1,] <- total
+  
+}
+NInitial_df
+
+write_csv(NInitial_df,path = "NInitial_df3.csv")
+
+

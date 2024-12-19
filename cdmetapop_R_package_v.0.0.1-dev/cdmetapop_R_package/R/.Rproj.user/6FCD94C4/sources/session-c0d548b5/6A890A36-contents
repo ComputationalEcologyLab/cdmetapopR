@@ -1,0 +1,8 @@
+
+# one record of this individual is marked 'erroneously' as ONCL - the other 2 records are SAFO_yy
+flag <- captures(pit_tag_ch = "3DD.003D731777")
+View(flag)
+
+# check this individual because the measurement records are odd, probably missing a '0' in the weight column of its second capture
+flag2 <- captures(pit_tag_ch = "3DD.003E06D500")
+View(flag2)

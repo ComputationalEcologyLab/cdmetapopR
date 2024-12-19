@@ -1,0 +1,129 @@
+#Kaeli's modified by dominique alo
+#december_6 2024
+
+#install.packages("devtools", repos="http://cran.us.r-project.org)
+#if(!require(devtools)) install.packages("devtools", repos="http://cran.us.r-project.org")
+if(!require(tidyr)) install.packages("tidyr", repos="http://cran.us.r-project.org")
+if(!require(vctrs)) install.packages("vctrs", repos="http://cran.us.r-project.org")
+if(!require(gtools)) install.packages("gtools", repos="http://cran.us.r-project.org")
+if(!require(readr)) install.packages("readr", repos="http://cran.us.r-project.org")
+if(!require(purrr)) install.packages("purrr", repos="http://cran.us.r-project.org")
+
+library(devtools)
+library(tidyr)
+library(vctrs)
+library(dplyr)
+library(gtools)
+library(readr)
+library(purrr)
+
+devtools::load_all("/home/dominique.alo/Documents/cdmetapop_R_package")
+
+NInitial_df <- data.frame(matrix(ncol=7,nrow=0))
+x <- c("Year", "K", "N", "SelDeaths", "N_Females", "N_YY", "Run")
+colnames(NInitial_df) <- x
+
+#setwd("/mnt/DataDrive1/data/kaeliD/wolverine/KaeliD/LHS_Dir_Sept.Full.hindex.f.combo/Data/LHS_Dir3")
+setwd("~/UM/CDMetaPop/Kaeli_et_al/fake_runs")
+#patchlabel <- c('all',1:379)
+#n = n()
+#data_path <- file.path("./LHS_Dir/LHS_#/output_#/run0batchrun0mcrun0species0/summary_popAllTime.csv")
+#data_path
+##bring in summarypopfiles
+myFiles <- list.files(path = ".", pattern = "LHS", full.names=TRUE)
+myFiles <- mixedsort(myFiles)
+print(myFiles)
+#Initialize num to 0
+num <- 0
+for (i in seq_along(myFiles)) {
+  num = num + 1
+  print(num)
+  #pat <- paste0(currentFile,"/output_", num ,"/run0batchrun0mcrun0species0/summary_popAllTime.csv")
+  mySim <- list.files(path = myFiles[i], pattern = "output", full.names=FALSE)
+  #for mac:
+  pat <- paste0(myFiles[i], "/", mySim ,"/run0batchrun0mcrun0species0/summary_popAllTime.csv")
+  print(pat)
+  #df <- readr::read_csv(pat)
+  df <-read.cdmetapop(pat)
+  head(df)
+  #df$K <- as.numeric(df$K)
+  #dfK <- data.frame(Year = df$Year, Variable = df$K)
+  #split_count <- max(sapply(strsplit(df$K, "\\|"), length))
+  
+  #dfK <- separate(data = dfK, col = Variable, into = c(patchlabel), sep = '\\|')
+  dfK<-separate_column(pat, "K", sep = "|")
+  dfK <- cbind(df$Year, dfK)
+  patchlabel <-c( "Year", "all", paste0(1:(ncol(dfK)-2)))
+  colnames (dfK) <- patchlabel
+  #dfK$mean <- as.numeric(dfK$all) / 379  #####This is odd in my opinion... why calculate average like this? 
+  dfK$mean <- rowMeans(dfK[,c(3:dim(dfK)[2])], na.rm = TRUE)
+  dfKmean <- data.frame(Year = dfK$Year, K = dfK$mean)
+  
+  #dfn <- data.frame(Year = df$Year, Variable = df$N_Initial)
+  #dfn <- separate(data = dfn, col = Variable, into = c(patchlabel), sep = '\\|')
+  #dfn$mean <- as.numeric(dfn$all) / 379
+  #dfnmean <- data.frame(Year = dfK$Year, N = dfn$mean)
+  dfn <- separate_column(pat, "N_Initial", sep= "|")
+  dfn <- cbind(df$Year, dfn)
+  patchlabel <-c( "Year", "all", paste0(1:(ncol(dfn)-2)))
+  colnames (dfn) <- patchlabel
+  dfn$mean <- rowMeans(dfn[,c(3:dim(dfn)[2])], na.rm = TRUE)
+  dfnmean <- data.frame(Year = dfn$Year, N = dfn$mean)
+  
+  
+  
+  # dfn2 <- data.frame(Year = df$Year, Variable = df$SelectionDeaths_Immigration)
+  # dfn2 <- separate(data = dfn2, col = Variable, into = c(patchlabel), sep = '\\|')
+  # dfn2$mean <- as.numeric(dfn2$all) / 379
+  # dfn2mean <- data.frame(Year = dfK$Year, SelDeaths = dfn2$mean)
+  dfn2 <- separate_column(pat, "SelectionDeaths_Immigration", sep= "|")
+  dfn2 <- cbind(df$Year, dfn2)
+  patchlabel <-c( "Year", "all", paste0(1:(ncol(dfn2)-2)))
+  colnames (dfn2) <- patchlabel
+  dfn2$mean <- rowMeans(dfn2[,c(3:dim(dfn2)[2])], na.rm = TRUE)
+  dfn2mean <- data.frame(Year = dfn2$Year, SelDeaths = dfn2$mean)
+  
+  
+  # dfK3 <- data.frame(Year = df$Year, Variable = df$N_Females)
+  # dfK3 <- separate(data = dfK3, col = Variable, into = c(patchlabel), sep = '\\|')
+  # dfK3$mean <- as.numeric(dfK3$all) / 379
+  # dfK3mean <- data.frame(Year = dfK3$Year, N_Females = dfK3$mean)
+  dfK3 <- separate_column(pat, "N_Females", sep= "|")
+  dfK3 <- cbind(df$Year, dfK3)
+  patchlabel <-c( "Year", "all", paste0(1:(ncol(dfK3)-2)))
+  colnames (dfK3) <- patchlabel
+  dfK3$mean <- rowMeans(dfK3[,c(3:dim(dfK3)[2])], na.rm = TRUE)
+  dfK3mean <- data.frame(Year = dfK3$Year, N_Females = dfK3$mean)
+  
+  
+  # dfK4 <- data.frame(Year = df$Year, Variable = df$N_YYMales)
+  # dfK4 <- separate(data = dfK4, col = Variable, into = c(patchlabel), sep = '\\|')
+  # dfK4$mean <- as.numeric(dfK4$all) / 379
+  # dfK4mean <- data.frame(Year = dfK4$Year, N_YY = dfK4$mean)
+  dfK4 <- separate_column(pat, "N_YYMales", sep= "|")
+  dfK4 <- cbind(df$Year, dfK4)
+  patchlabel <-c( "Year", "all", paste0(1:(ncol(dfK4)-2)))
+  colnames (dfK4) <- patchlabel
+  dfK4$mean <- rowMeans(dfK4[,c(3:dim(dfK4)[2])], na.rm = TRUE)
+  dfK4mean <- data.frame(Year = dfK4$Year, N_YY = dfK4$mean)
+  
+  
+
+  df_list <- list(dfKmean,dfnmean, dfn2mean, dfK3mean, dfK4mean) 
+  total<- df_list %>% reduce(full_join, by='Year')
+ 
+  #Run<-num
+  total$Run<-i
+
+ # NInitial_df[nrow(NInitial_df)+1, ] <- c(total)
+  #NInitial_df<- total
+  
+  NInitial_df = rbind(NInitial_df, total)
+  #NInitial_df[NInitial_df +1,] <- total
+  
+}
+
+
+write_csv(NInitial_df,path = "NInitial_combo.csv")
+
+

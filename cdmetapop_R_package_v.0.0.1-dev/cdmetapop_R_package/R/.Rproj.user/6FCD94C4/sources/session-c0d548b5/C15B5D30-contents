@@ -1,0 +1,155 @@
+### Checks I ran on some of the preliminary runs (e.g. no selection) for the flycatcher
+# Many won't be relevant for the bats, but you can see how to access the various parameters...
+
+
+### A few checks on the demography model...
+# age structure
+# dispersal by age group
+# number of females laying eggs
+
+
+setwd("D:/DGS/Mvelifer_Test_out/")
+
+##################### AGE STRUCTURE ##################### 
+
+## Let's see if we're close to the age structure we're shooting for from Paxton et al 2007:
+# empirical proportion of birds in age class: [modify for the bats to include older age classes??]
+# SY = 0.52
+# TY = 0.25
+# 4Y = 0.09
+# 5Y = 0.07
+# 6Y = 0.04
+
+
+age.structure <- matrix(data=NA, nrow=5, ncol=11)
+runs <- c(0:9)
+
+
+for (i in (1:10)) {
+  foo <- read.csv(paste0("./run0batch0mc",runs[i],"species0/ind99.csv"))
+  tot <- sum(foo$age>1)
+  
+  age.structure[1,i] <- sum(foo$age==2)/tot
+  age.structure[2,i] <- sum(foo$age==3)/tot
+  age.structure[3,i] <- sum(foo$age==4)/tot
+  age.structure[4,i] <- sum(foo$age==5)/tot
+  age.structure[5,i] <- sum(foo$age==6)/tot
+}
+
+age.structure[,11] <- rowMeans(age.structure, na.rm=T)
+
+colnames(age.structure) <- c(paste0("MC", runs), "Avg")
+row.names(age.structure) <- c("SY","TY","4Y","5Y","6Y")
+
+age.structure
+
+
+##################### DISPERSAL ##################### 
+
+# -9999 = site fidelity
+# 0.95 = stayed b/t 100m and 3 km (w/in drainage)
+# <0.95 & >0.001 = stayed within 10-44 km (w/in drainage)
+# 0.001 = 44-100 km 
+# 0.0009 = 150-200 km
+# 0.0008 = 200-300 km
+# 0.0005 = 300-444 km
+
+
+age1.dispersal <- matrix(data=NA, nrow=7, ncol=11)
+age2.dispersal <- matrix(data=NA, nrow=7, ncol=11)
+
+runs <- c(0:9)
+
+for (i in (1:10)) {
+  foo <- read.csv(paste0("./run0batch0mc",runs[i],"species0/ind99.csv"))
+  
+  # Age 1s
+  d1 <- foo$CDist[foo$age==1]
+  d1.tot <- length(d1)
+  
+  age1.dispersal[1,i] <- sum(d1==-9999)/d1.tot
+  age1.dispersal[2,i] <- sum(d1==0.95)/d1.tot
+  age1.dispersal[3,i] <- sum(d1<0.95 & d1>0.001)/d1.tot
+  age1.dispersal[4,i] <- sum(d1==0.001)/d1.tot
+  age1.dispersal[5,i] <- sum(d1==0.0009)/d1.tot
+  age1.dispersal[6,i] <- sum(d1==0.0008)/d1.tot
+  age1.dispersal[7,i] <- sum(d1==0.0005)/d1.tot
+  
+  # Age 2-6
+  d2 <- foo$CDist[foo$age!=1]
+  d2.tot <- length(d2)
+  
+  age2.dispersal[1,i] <- sum(d2==-9999)/d2.tot
+  age2.dispersal[2,i] <- sum(d2==0.95)/d2.tot
+  age2.dispersal[3,i] <- sum(d2<0.95 & d2>0.001)/d2.tot
+  age2.dispersal[4,i] <- sum(d2==0.001)/d2.tot
+  age2.dispersal[5,i] <- sum(d2==0.0009)/d2.tot
+  age2.dispersal[6,i] <- sum(d2==0.0008)/d2.tot
+  age2.dispersal[7,i] <- sum(d2==0.0005)/d2.tot
+  
+}
+
+age1.dispersal
+sum(age1.dispersal[2:3,1])
+sum(age1.dispersal[4:7,1])
+
+age2.dispersal
+sum(age2.dispersal[2:3,1])
+sum(age2.dispersal[4:7,1])
+
+
+age1.dispersal[,11] <- rowMeans(age1.dispersal, na.rm=T)
+age2.dispersal[,11] <- rowMeans(age2.dispersal, na.rm=T)
+
+age1.dispersal
+sum(age1.dispersal[,11])
+sum(age1.dispersal[2:3,11])
+sum(age1.dispersal[4:7,11])
+
+age2.dispersal
+sum(age2.dispersal[,11])
+sum(age2.dispersal[2:3,11])
+sum(age2.dispersal[4:7,11])
+
+colnames(age1.dispersal) <- colnames(age2.dispersal) <- c(paste0("MC", runs), "Avg")
+row.names(age1.dispersal) <- row.names(age2.dispersal) <- c("site_fidelity","WD_100m-3km","WD_3-44km","AD_45-100km","AD_100-200km","AD_200-300km","AD_300-444km")
+age1.dispersal
+age2.dispersal
+
+# Note: these are currently zero for the bats because the dispersal distnaces of interest would need to be modified...
+
+
+##################### FEMALE EGG LAYING ##################### 
+
+eggs <- matrix(data=NA, nrow=2, ncol=11)
+runs <- c(0:9)
+
+for (i in (1:10)) {
+  foo <- read.csv(paste0("./run0batch0mc",runs[i],"species0/ind99.csv"))
+  
+  bar <- foo[foo$sex=="XX",]
+  bar1 <- bar[bar$mature==1,]
+  
+  eggs[1,i] <- sum(bar1$mature)
+  eggs[2,i] <- sum(bar1$layeggs)
+  
+}
+
+eggs[,11] <- rowMeans(eggs, na.rm=T)
+
+colnames(eggs) <- c(paste0("MC", runs), "Avg")
+row.names(eggs) <- c("Number_females","Egg_laying_females")
+
+eggs 
+
+
+
+# WRITE THEM OUT:
+
+write.csv(age.structure, "Run1_age_structure.csv")
+write.csv(age1.dispersal, "Run1_dispersal_natal.csv")
+write.csv(age2.dispersal, "Run1_dispersal_age2-6.csv")
+write.csv(eggs, "Run1_eggs_demography_runs.csv")
+
+
+
