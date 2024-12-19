@@ -1,0 +1,63 @@
+{
+    "sources": [
+        {
+            "id": "cite-key",
+            "type": "article-journal"
+        },
+        {
+            "author": [
+                {
+                    "family": "Tyus",
+                    "given": "Harold M"
+                }
+            ],
+            "id": "tyus2011ecology",
+            "issued": {
+                "date-parts": [
+                    [
+                        2011
+                    ]
+                ]
+            },
+            "publisher": "CRC press",
+            "title": "Ecology and conservation of fishes",
+            "type": "book"
+        },
+        {
+            "author": [
+                {
+                    "family": "Huusko",
+                    "given": "Ari"
+                },
+                {
+                    "family": "Mäki-Petäys",
+                    "given": "Aki"
+                },
+                {
+                    "family": "Stickler",
+                    "given": "Morten"
+                },
+                {
+                    "family": "Mykrä",
+                    "given": "Heikki"
+                }
+            ],
+            "container-title": "Functional Ecology",
+            "id": "huusko2011fish",
+            "issue": "3",
+            "issued": {
+                "date-parts": [
+                    [
+                        2011
+                    ]
+                ]
+            },
+            "page": "628-633",
+            "publisher": "Wiley Online Library",
+            "title": "Fish can shrink under harsh living conditions",
+            "type": "article-journal",
+            "volume": "25"
+        }
+    ],
+    "project_biblios": []
+}

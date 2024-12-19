@@ -1,0 +1,13 @@
+{
+    "sortOrder": [
+        {
+            "columnIndex": 4,
+            "ascending": true
+        },
+        {
+            "columnIndex": 2,
+            "ascending": true
+        }
+    ],
+    "path": "~/UM/CDMetaPop/EBT/EBT_Inputs/data/output_test1732024487/run0batch0mc0species0"
+}

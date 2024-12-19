@@ -1,0 +1,22 @@
+"0","```r
+
+yy4 <- read.csv(\"~/UM/Growth_YYEBT/data/YY_EBT_size_by_year4.csv\")
+
+# Add the 'Encounter' column based on the EHYear
+  # Create the Encounter column
+yy4$Encounter <- ave(yy4$EHYear, yy4$IndividualID, FUN = function(x) {
+  seq_along(x)
+})
+
+# Map the numerical encounter to the corresponding labels
+yy4$Encounter <- recode(yy4$Encounter, `1` = \"first\", `2` = \"second\", `3` = \"third\", `4` = \"fourth\")
+yy4$Encounter <- factor(yy4$Encounter, levels = c(\"first\", \"second\", \"third\", \"fourth\"))
+
+  
+# Plot ForkLength_mm on y-axis and Encounter on x-axis
+ggplot(yy4, aes(x = Encounter, y = ForkLength_mm)) +
+  geom_boxplot() +  # You can use a boxplot to show distribution by category
+  geom_jitter(width = 0.2, height = 0, color = \"#0072B2\", size = 0.5) +  # Jitter to show individual points
+  labs(x = \"Encounter\", y = \"Fork Length (mm)\", title = \"Fork Length by Encounter\") +
+  theme_minimal()
+```"

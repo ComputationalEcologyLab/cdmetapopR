@@ -1,0 +1,7 @@
+"0","```r
+
+# Filter the yy dataframe to look only at the individuals with too much growth 
+filtered_yy2 <- yy[yy$IndividualID %in% excessgrowth_individuals, ]
+
+head (filtered_yy2,20)
+```"

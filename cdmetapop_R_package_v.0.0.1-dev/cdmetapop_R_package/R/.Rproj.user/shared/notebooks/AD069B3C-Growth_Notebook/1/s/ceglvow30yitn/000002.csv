@@ -1,0 +1,12 @@
+"0","```r
+# Applying the equation and adding it as a new column 'k' to filtered_yy3
+filtered_yy3$k <- (filtered_yy3$Weight_g * 10^5) / (filtered_yy3$ForkLength_mm^3)
+
+# Plot k on y-axis and Encounter on x-axis
+ggplot(filtered_yy3, aes(x = Encounter, y = k)) +
+  geom_boxplot() +  # You can use a boxplot to show distribution by category
+  geom_jitter(width = 0.2, height = 0, color = \"#0072B2\", size = 0.1) +  # Jitter to show individual points
+  labs(x = \"Encounter\", y = \"condition k\", title = \"Condition by Encounter\") +
+  theme_minimal()
+
+```"

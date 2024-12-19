@@ -1,0 +1,8 @@
+"0",""
+"0","# scatterplot for  Distance moved  and size at release  split by release_group "
+"0","ggplot(mydata_plot2, aes(x = release_fl, y = distance_moved, color = release_group)) +"
+"0","    geom_point(size = 1,alpha = 0.8) +"
+"0","    scale_color_manual(values = color_blind_palette)+"
+"0","    labs(x = ""ForkLenght mm at release"", y = ""Distance Travelled in meters"") +"
+"0","    theme_minimal()"
+"0",""

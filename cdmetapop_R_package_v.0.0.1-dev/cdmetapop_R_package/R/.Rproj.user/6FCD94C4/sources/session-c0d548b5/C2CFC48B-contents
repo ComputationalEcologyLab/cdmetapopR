@@ -1,0 +1,31 @@
+# Maps of temperature variables
+# ************************************
+
+library(ggplot2)
+library(ggrepel)
+library(tibble)  # Load tibble to use deframe()
+library(dplyr)
+
+temp <- read.csv("~/UM/Growth_YYEBT/data/temperature.csv")
+mydata <- read.csv("~/UM/Growth_YYEBT/data/mydata.csv")
+
+ggplot(temp, aes(x = X, y = Y, color = GrowthTemperatureOut)) +
+  geom_point() +
+  scale_color_viridis_c() + 
+  labs(color = "Winter Temperature") +
+  theme_minimal() +
+  coord_fixed() # Maintains the aspect ratio
+
+ggplot(temp, aes(x = X, y = Y, color = GrowthTemperatureBack)) +
+  geom_point() +
+  scale_color_viridis_c() + 
+  labs(color = "Summer Temperature") +
+  theme_minimal() +
+  coord_fixed() # Maintains the aspect ratio
+
+ggplot(temp, aes(x = X, y = Y, color = (GrowthTemperatureBack + GrowthTemperatureOut)/2)) +
+  geom_point() +
+  scale_color_viridis_c() + 
+  labs(color = "Average Temperature") +
+  theme_minimal() +
+  coord_fixed() # Maintains the aspect ratio

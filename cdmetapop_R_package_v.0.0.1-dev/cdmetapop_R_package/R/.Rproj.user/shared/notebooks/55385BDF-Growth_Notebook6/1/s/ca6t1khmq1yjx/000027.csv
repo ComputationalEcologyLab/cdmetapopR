@@ -1,0 +1,6 @@
+"0","# Plot growth on y-axis and mover on x-axis"
+"0","ggplot(mydata_second, aes(x = mover, y = growthL, color = release_group_name)) +"
+"0","  geom_boxplot() +  # You can use a boxplot to show distribution by category"
+"0","  #geom_jitter(width = 0.2, height = 0, color = ""#0072B2"", size = 0.1) +  # Jitter to show individual points"
+"0","  #labs(x = ""Mover"", y = ""Fork Length (mm)"", title = ""Movers vs Non movers"") +"
+"0","  theme_minimal()"

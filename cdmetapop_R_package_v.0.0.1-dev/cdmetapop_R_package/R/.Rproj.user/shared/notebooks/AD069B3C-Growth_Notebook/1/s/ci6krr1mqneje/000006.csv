@@ -1,0 +1,12 @@
+"0","```r
+
+cat(\"\n## k Statistics by Encounter\n\")
+```"
+"1","
+## k Statistics by Encounter
+"
+"0","```r
+kable(k_stats, caption = \"Basic Statistics for k by Encounter\") %>%
+  kable_styling(\"striped\", full_width = F, position = \"left\") %>%
+  column_spec(1:ncol(k_stats), width = \"3cm\")  # Adjust the width for columns
+```"

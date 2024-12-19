@@ -1,0 +1,123 @@
+if(!require(tidyr)) install.packages("tidyr", repos="http://cran.us.r-project.org")
+if(!require(vctrs)) install.packages("vctrs", repos="http://cran.us.r-project.org")
+if(!require(gtools)) install.packages("gtools", repos="http://cran.us.r-project.org")
+if(!require(readr)) install.packages("readr", repos="http://cran.us.r-project.org")
+if(!require(purrr)) install.packages("purrr", repos="http://cran.us.r-project.org")
+if(!require(tidyverse)) install.packages("tidyverse", repos="http://cran.us.r-project.org")
+
+library(tidyr)
+library(vctrs)
+library(dplyr)
+library(gtools)
+library(readr)
+library(purrr)
+library(stringr)
+
+Het_df <- data.frame(matrix(ncol=5,nrow=0))
+x <- c("Run","Year", "Ohomo", "Ohet","Ehet")
+colnames(Het_df) <- x
+
+
+num <- 0
+
+# set the path to the directory of folders
+dir_path <- "~/UM/CDMetaPop/EBT/EBT_Inputs/data/output_test1732024487"
+
+# loop through the folders
+list_folders <- list.dirs(dir_path, recursive = FALSE)
+#print(list_folders)
+for(i in list_folders){
+  num = num + 1
+  list_files <- list.files(i, pattern="ind",full.names = TRUE, recursive = TRUE)
+  #print(list_files)
+  indFiles <- grep("Sample", list_files, value=TRUE,invert=TRUE)
+  indFiles <-mixedsort(indFiles)
+  for(j in indFiles){
+    # df <- rbind(df, data.frame(Files = j))
+    # print(j)
+    
+    fulldata <- readr::read_csv(j, id = "file_name")
+  LOAN3 <- fulldata %>% mutate(Year = as.character(gsub("./", "", file_name)))
+  
+  LOAN3 <- LOAN3 %>% mutate(Year = as.character(gsub("LHS_DirLHS_output_run0batchrun0mcrun0speciesind", "", Year)))
+  LOAN3 <- LOAN3 %>% mutate(Year = as.character(gsub(".csv", "", Year)))
+  head(LOAN3$Year)
+  
+  
+  LOAN3$Run <- num
+#myfiles = do.call(rbind, lapply(indFiles, function(x) read.csv(x, stringsAsFactors = FALSE)))
+
+#####
+table(LOAN3$sex)
+Mydata<-LOAN3[!(LOAN3$sex=="YY"),]
+Mydata[!duplicated(Mydata$ID), ]
+#Fh calculation
+
+indData<-LOAN3 %>%
+  dplyr::select(1:21)
+indData$Year<-LOAN3$Year 
+indData$Run<-LOAN3$Run 
+df= LOAN3 %>%
+  dplyr::select(22:10021)
+
+#tail(df)
+#df=ind_file %>%
+#  select(21:40)
+#head(df)
+#combine loci so 1 column per locus
+for(i in 0:4999){
+  
+  firstcol<-paste("L",i,"A0", sep="")
+  secondcol<-paste("L",i,"A1", sep="")
+  # names(data1)[names(data1) == q] <- ""
+  # temp <- df[ , i]
+  
+  df[[firstcol]] = paste0(df[[firstcol]],df[[secondcol]])
+  # Or, if you want the result to be numeric, rather than character
+  # df3$xyz <- as.numeric(with(df3, paste(x,y,z, sep="")))
+  
+  df[[secondcol]] <- NULL
+}
+
+#Mydata<-Mydata[!(Mydata$sex=="YY"),]
+#recode to 11, 12,22
+df[,] <- ifelse(df[,] == "20", 11, ifelse(df[,] == "02", 22,ifelse(df[,] == "11", 12, 99)))
+#df
+df2<- df[,1:5000]
+df2$hom1ind <- rowSums(df2 == "11")
+df2$het1ind <- rowSums(df2 == "12")
+df2$hom2ind <- rowSums(df2 == "22")
+indcols2 <- df2[,5001:5003]
+indcols2$Ohomo <- rowSums(cbind(indcols2$hom1ind,indcols2$hom2ind),na.rm=TRUE)
+Fulldata2<- cbind(indData, indcols2)
+#Ohomo=indcols2$Ohomo
+Fulldata2$ohet=Fulldata2$het1ind/5000
+Fulldata2$pi <- ((2*indcols2$hom1ind)+indcols2$het1ind)/(2*5000)
+Fulldata2$qi=1-Fulldata2$pi
+Fulldata2$piqi=2*Fulldata2$pi*Fulldata2$qi
+#snpcols$oneminus=1-snpcols$piqi
+
+meandf <- Fulldata2 %>%
+  group_by(Run, Year) %>%
+  summarise_at(vars(Ohomo), list(Ohomo = mean))
+meandf1<- Fulldata2 %>%
+  group_by(Run, Year) %>%
+  summarise_at(vars(ohet), list(Ohet = mean))
+meandf2<- Fulldata2 %>%
+  group_by(Run, Year) %>%
+  summarise_at(vars(pi), list(Ehet = mean))
+jointdataset <- merge(meandf,meandf1, by = c('Run','Year'))
+jointdataset2 <- merge(jointdataset,meandf2, by = c('Run','Year'))
+
+
+Het_df = rbind(Het_df, jointdataset2)
+
+Het_df
+
+
+}
+}
+Het_df
+
+
+write_csv(Het_df,path = "FSeland H_Het_df.csv")

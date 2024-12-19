@@ -1,0 +1,15 @@
+"0","```r
+
+# Create a vector for individuals with negative ForkLength_diff
+negative_individuals <- size_change_df$IndividualID[size_change_df$ForkLength_diff < 0]
+
+# Create a vector for individuals with ForkLength_diff > 50???????? Ask Ryan
+excessgrowth_individuals <- size_change_df$IndividualID[size_change_df$ForkLength_diff > 50]
+
+remove_negative_toopositive <- c(negative_individuals, excessgrowth_individuals)
+
+# Filter the yy dataframe to look only at the individuals with negative growth 
+filtered_yy <- yy[yy$IndividualID %in% negative_individuals, ]
+
+head (filtered_yy, 10)
+```"

@@ -1,0 +1,663 @@
+library(ade4)
+library(vegan)
+library(gclus)
+library(ape)
+library(dplyr)
+
+
+mycaps <- read.csv("~/UM/Growth_YYEBT/data/mycaps.csv")
+# Convert variables to factors
+mycaps$IndividualID <- as.character(mycaps$IndividualID)
+mycaps$EHYear_Extracted <- as.factor(mycaps$EHYear_Extracted)
+
+# Keep only IndividualIDs that have more than 1 occurrence
+mycaps <- mycaps %>%
+  filter(!is.na(ForkLength_mm))%>%
+    group_by(IndividualID) %>%
+  filter(n() > 1) %>%  
+  filter(EHYear_Extracted != 2023)%>%
+  ungroup()
+mycaps_first <- mycaps %>%
+  filter(day == 0 | (day > 100 & day < 450))%>%
+  # now make sure I only have two measures per individual, in case I have more than two, make sure the first one is day = 0, and 
+  # the next one that immediately follows
+  group_by(IndividualID)%>%
+  arrange(day)%>%
+  slice(c(1,which(day > 0) [1]))%>% # Keep day = 0 and the next
+  ungroup()
+# build growth df
+growth <- mycaps_first %>%
+  arrange(IndividualID, EHYear_Extracted) %>%
+  group_by(IndividualID) %>%
+  reframe(
+    # ABSOLUTE GROWTH
+    AG = ForkLength_mm[2] - ForkLength_mm[1],
+    # INSTANTANEOUS GROWTH RATE
+    IGR = (log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ (day[2] - day [1]),
+    # Species
+    SpeciesCode = SpeciesCode[1],
+    # condition
+    condition = Condition [1],
+    # distance moved
+    distance_moved = distance_moved [2],
+    # Sampling_unit
+    SamplingUnitName = SamplingUnitName [1]
+   )
+growth <- growth[!is.na(growth$AG), ]
+
+#myenv <- read.csv("~/UM/Growth_YYEBT/data/myenv.csv")#, colClasses = c("avg_pool_area" = "numeric"))
+myenv <- read_csv("myenv.csv", col_types = cols(avg_pool_area = col_number()))
+geo_env <- myenv[,c(5:20)]
+hab_env <- myenv[,c(5,21:25)]
+pool_env <- myenv[,c(5,26:30)]
+sub_env <- myenv[,c(5,31:36)]
+wood_env <- myenv[,c(5,37:41)]
+bank_env <- myenv[,c(5,42:45)]
+log_env <- myenv[,c(5,46:50)]
+#write.csv(myenv[,c(6:20)], file = "geo_env.csv")
+
+# check for env normality
+normality_results <- sapply(myenv, function(col) {
+  if (is.numeric(col)) {  # Apply only to numeric variables
+    # Kolmogorov-Smirnov test for normality
+    ks_test <- ks.test(col[!is.na(col)], "pnorm", mean(col, na.rm = TRUE), sd(col, na.rm = TRUE))
+    ks_test$p.value
+  } else {
+    NA  # Ignore non-numeric columns
+  }
+})
+
+normality_summary <- data.frame(
+  Variable = names(normality_results),
+  P_Value = normality_results,
+  Normally_Distributed = ifelse(normality_results > 0.05, "Yes", "No")
+)
+
+
+my_units<-unique(mycaps$SamplingUnitName)
+
+myenv<-myenv%>%
+  filter(SamplingUnitName %in% my_units)
+
+# # Select numeric columns
+# env<- myenv[,c(6:56)]
+# num_env <- env[, sapply(env, is.numeric)]
+# 
+# num_env_scaled <- scale(num_env)  # Standardization
+
+
+################################################################
+#RDA on the environmental variables#### GEOMORPHIC ENVIRONMENT
+###############################################################
+# since variables are expressed in different measurement scales, we compute a PCA on the correlation matrix
+# Correlations are the covariances of standardized variables
+
+# Merge the data by "Site"
+merged_df <- merge(growth, geo_env, by = "SamplingUnitName")
+merged_df <- na.omit(merged_df)
+# Save the 'Site' column
+site_info <- merged_df$SamplingUnitName
+species_info <- merged_df$SpeciesCode
+
+# Response data: individual measurements
+response_data <- as.data.frame(scale(merged_df[, c(3,4,6,7)]))
+# Explanatory data: environmental variables
+explanatory_data <- as.data.frame(scale(merged_df[, c(8:22)][, sapply(merged_df[, c(8:22)], is.numeric)]))
+ 
+# Perform RDA
+rda_result <- rda(response_data ~ ., data = explanatory_data)
+# Extract RDA site scores
+site_scores <- as.data.frame(scores(rda_result, display = "sites", scaling = 2))
+
+# Add the 'Site' information
+site_scores$species <- species_info
+
+# Assuming you have already run your RDA model and have the necessary data
+library(vegan)
+library(ggplot2)
+library(grid)
+
+# Assuming your RDA model is stored in rda_result
+# Example: rda_result <- rda(response_data ~ ., data = explanatory_data)
+
+# Step 1: Extract scores from your RDA result
+# Explanatory variable scores (arrows)
+explanatory_scores <- scores(rda_result, display = "bp", scaling = 2)
+
+# Response variable scores (species or other response variables)
+response_scores <- scores(rda_result, display = "species", scaling = 2)
+
+# Site scores (individual sites, to color points)
+site_scores <- scores(rda_result, display = "sites", scaling = 2)
+
+# Step 2: Convert scores into data frames for ggplot
+explanatory_df <- as.data.frame(explanatory_scores)
+response_df <- as.data.frame(response_scores)
+site_df <- as.data.frame(site_scores)
+
+# Add explanatory variable names for labeling arrows
+explanatory_df$Variable <- rownames(explanatory_df)
+
+# Add  names for site labels
+site_df$Site <- species_info
+
+# Step 3: Create a color mapping for the sites (optional)
+# For example, if site labels are categorical, you can color them accordingly
+site_df$Site <- as.factor(site_df$Site)  # Convert sites to factor if needed
+
+#Create a color mapping for the sites
+# Generate enough colors for all unique sites
+num_sites <- length(unique(site_df$Site))
+site_colors <- colorRampPalette(RColorBrewer::brewer.pal(3, "Set2"))(num_sites)
+
+# Step 4: Plot the RDA biplot
+ggplot() +
+  # Plot explanatory variables as arrows
+  geom_segment(data = explanatory_df, 
+               aes(x = 0, y = 0, xend = RDA1, yend = RDA2),
+               arrow = arrow(length = unit(0.2, "cm")), 
+               color = "black") +
+  # Add explanatory variable labels (arrows)
+  geom_text(data = explanatory_df, 
+            aes(x = RDA1, y = RDA2, label = Variable), 
+            color = "black", hjust = 1.5, size = 2.5) +
+  # Plot site scores as points (colored)
+   geom_point(data = site_df, 
+              aes(x = RDA1, y = RDA2, color = Site), 
+              size = 1, alpha = 0.3) +
+  # # # Add labels for sites if needed (e.g., site names)
+  # geom_text(data = site_df, 
+  #           aes(x = RDA1, y = RDA2, label = Site), 
+  #           color = "black", vjust = -1, size = 3) +
+  # Add response variable points (blue)
+  geom_point(data = response_df, 
+             aes(x = RDA1, y = RDA2), 
+             color = "blue", size = 4, shape = 17) +  # Change shape if needed
+  # Add labels for response variables
+  geom_text(data = response_df, 
+            aes(x = RDA1, y = RDA2, label = rownames(response_df)), 
+            color = "blue", vjust = 1.5, size = 3) +
+  # Customize theme
+  theme_minimal() +
+  scale_color_manual(values = site_colors) + 
+  labs(x = "RDA1", y = "RDA2", 
+       title = "RDA on Geomorphic Explanatory Variables and Species",
+       subtitle = "Black arrows: Geomorphic Variables, Blue triangles: Response Variables",
+       caption = "Sites colored by Species")
+
+
+################################################################
+#RDA on the environmental variables#### HABITAT
+###############################################################
+# since variables are expressed in different measurement scales, we compute a PCA on the correlation matrix
+# Correlations are the covariances of standardized variables
+
+# Merge the data by "Site"
+merged_df <- merge(growth, hab_env, by = "SamplingUnitName")
+merged_df <- na.omit(merged_df)
+# Save the 'Site' column
+site_info <- merged_df$SamplingUnitName
+species_info <- merged_df$SpeciesCode
+
+# Response data: individual measurements
+response_data <- as.data.frame(scale(merged_df[, c(3,4,6,7)]))
+# Explanatory data: environmental variables
+explanatory_data <- as.data.frame(scale(merged_df[, c(8:12)]))
+# Perform RDA
+rda_result <- rda(response_data ~ ., data = explanatory_data)
+# Extract RDA site scores
+site_scores <- as.data.frame(scores(rda_result, display = "sites", scaling = 2))
+
+# Add the 'Site' information
+site_scores$species <- species_info
+
+# Assuming you have already run your RDA model and have the necessary data
+library(vegan)
+library(ggplot2)
+library(grid)
+
+# Assuming your RDA model is stored in rda_result
+# Example: rda_result <- rda(response_data ~ ., data = explanatory_data)
+
+# Step 1: Extract scores from your RDA result
+# Explanatory variable scores (arrows)
+explanatory_scores <- scores(rda_result, display = "bp", scaling = 2)
+
+# Response variable scores (species or other response variables)
+response_scores <- scores(rda_result, display = "species", scaling = 2)
+
+# Site scores (individual sites, to color points)
+site_scores <- scores(rda_result, display = "sites", scaling = 2)
+
+# Step 2: Convert scores into data frames for ggplot
+explanatory_df <- as.data.frame(explanatory_scores)
+response_df <- as.data.frame(response_scores)
+site_df <- as.data.frame(site_scores)
+
+# Add explanatory variable names for labeling arrows
+explanatory_df$Variable <- rownames(explanatory_df)
+
+# Add  names for site labels
+site_df$Site <- species_info
+
+# Step 3: Create a color mapping for the sites (optional)
+# For example, if site labels are categorical, you can color them accordingly
+site_df$Site <- as.factor(site_df$Site)  # Convert sites to factor if needed
+
+#Create a color mapping for the sites
+# Generate enough colors for all unique sites
+num_sites <- length(unique(site_df$Site))
+site_colors <- colorRampPalette(RColorBrewer::brewer.pal(3, "Set2"))(num_sites)
+
+# Step 4: Plot the RDA biplot
+ggplot() +
+  # Plot explanatory variables as arrows
+  geom_segment(data = explanatory_df, 
+               aes(x = 0, y = 0, xend = RDA1, yend = RDA2),
+               arrow = arrow(length = unit(0.2, "cm")), 
+               color = "black") +
+  # Add explanatory variable labels (arrows)
+  geom_text(data = explanatory_df, 
+            aes(x = RDA1, y = RDA2, label = Variable), 
+            color = "black", hjust = 1.5, size = 2.5) +
+  # Plot site scores as points (colored)
+  geom_point(data = site_df, 
+             aes(x = RDA1, y = RDA2, color = Site), 
+             size = 1, alpha = 0.3) +
+  # # # Add labels for sites if needed (e.g., site names)
+  # geom_text(data = site_df, 
+  #           aes(x = RDA1, y = RDA2, label = Site), 
+  #           color = "black", vjust = -1, size = 3) +
+  # Add response variable points (blue)
+  geom_point(data = response_df, 
+             aes(x = RDA1, y = RDA2), 
+             color = "blue", size = 4, shape = 17) +  # Change shape if needed
+  # Add labels for response variables
+  geom_text(data = response_df, 
+            aes(x = RDA1, y = RDA2, label = rownames(response_df)), 
+            color = "blue", vjust = 1.5, size = 3) +
+  # Customize theme
+  theme_minimal() +
+  scale_color_manual(values = site_colors) + 
+  labs(x = "RDA1", y = "RDA2", 
+       title = "RDA Biplot with Habitat Variables and Species",
+       subtitle = "Black arrows: Habitat Variables, Blue triangles: Response Variables",
+       caption = "Sites colored by Species")
+
+################################################################
+#RDA on the environmental variables#### POOL
+###############################################################
+# since variables are expressed in different measurement scales, we compute a PCA on the correlation matrix
+# Correlations are the covariances of standardized variables
+
+# Merge the data by "Site"
+merged_df <- merge(growth, pool_env, by = "SamplingUnitName")
+merged_df <- na.omit(merged_df)
+# Save the 'Site' column
+site_info <- merged_df$SamplingUnitName
+species_info <- merged_df$SpeciesCode
+
+# Response data: individual measurements
+response_data <- as.data.frame(scale(merged_df[, c(3,4,6,7)]))
+# Explanatory data: environmental variables
+explanatory_data <- as.data.frame(scale(merged_df[, c(8:12)]))
+# Perform RDA
+rda_result <- rda(response_data ~ ., data = explanatory_data)
+# Extract RDA site scores
+site_scores <- as.data.frame(scores(rda_result, display = "sites", scaling = 2))
+
+# Add the 'Site' information
+site_scores$species <- species_info
+
+# Assuming you have already run your RDA model and have the necessary data
+library(vegan)
+library(ggplot2)
+library(grid)
+
+# Assuming your RDA model is stored in rda_result
+# Example: rda_result <- rda(response_data ~ ., data = explanatory_data)
+
+# Step 1: Extract scores from your RDA result
+# Explanatory variable scores (arrows)
+explanatory_scores <- scores(rda_result, display = "bp", scaling = 2)
+
+# Response variable scores (species or other response variables)
+response_scores <- scores(rda_result, display = "species", scaling = 2)
+
+# Site scores (individual sites, to color points)
+site_scores <- scores(rda_result, display = "sites", scaling = 2)
+
+# Step 2: Convert scores into data frames for ggplot
+explanatory_df <- as.data.frame(explanatory_scores)
+response_df <- as.data.frame(response_scores)
+site_df <- as.data.frame(site_scores)
+
+# Add explanatory variable names for labeling arrows
+explanatory_df$Variable <- rownames(explanatory_df)
+
+# Add  names for site labels
+site_df$Site <- species_info
+
+# Step 3: Create a color mapping for the sites (optional)
+# For example, if site labels are categorical, you can color them accordingly
+site_df$Site <- as.factor(site_df$Site)  # Convert sites to factor if needed
+
+#Create a color mapping for the sites
+# Generate enough colors for all unique sites
+num_sites <- length(unique(site_df$Site))
+site_colors <- colorRampPalette(RColorBrewer::brewer.pal(3, "Set2"))(num_sites)
+
+# Step 4: Plot the RDA biplot
+ggplot() +
+  # Plot explanatory variables as arrows
+  geom_segment(data = explanatory_df, 
+               aes(x = 0, y = 0, xend = RDA1, yend = RDA2),
+               arrow = arrow(length = unit(0.2, "cm")), 
+               color = "black") +
+  # Add explanatory variable labels (arrows)
+  geom_text(data = explanatory_df, 
+            aes(x = RDA1, y = RDA2, label = Variable), 
+            color = "black", hjust = 1.5, size = 2.5) +
+  # Plot site scores as points (colored)
+  geom_point(data = site_df, 
+             aes(x = RDA1, y = RDA2, color = Site), 
+             size = 1, alpha = 0.3) +
+  # # # Add labels for sites if needed (e.g., site names)
+  # geom_text(data = site_df, 
+  #           aes(x = RDA1, y = RDA2, label = Site), 
+  #           color = "black", vjust = -1, size = 3) +
+  # Add response variable points (blue)
+  geom_point(data = response_df, 
+             aes(x = RDA1, y = RDA2), 
+             color = "blue", size = 4, shape = 17) +  # Change shape if needed
+  # Add labels for response variables
+  geom_text(data = response_df, 
+            aes(x = RDA1, y = RDA2, label = rownames(response_df)), 
+            color = "blue", vjust = 1.5, size = 3) +
+  # Customize theme
+  theme_minimal() +
+  scale_color_manual(values = site_colors) + 
+  labs(x = "RDA1", y = "RDA2", 
+       title = "RDA Biplot with POOL Variables and Species",
+       subtitle = "Black arrows: Pool Variables, Blue triangles: Response Variables",
+       caption = "Sites colored by Species")
+
+################################################################
+#RDA on the environmental variables#### SUBSTRATE
+###############################################################
+# since variables are expressed in different measurement scales, we compute a PCA on the correlation matrix
+# Correlations are the covariances of standardized variables
+
+# Merge the data by "Site"
+merged_df <- merge(growth, sub_env, by = "SamplingUnitName")
+merged_df <- na.omit(merged_df)
+# Save the 'Site' column
+site_info <- merged_df$SamplingUnitName
+species_info <- merged_df$SpeciesCode
+
+# Response data: individual measurements
+response_data <- as.data.frame(scale(merged_df[, c(3,4,6,7)]))
+# Explanatory data: environmental variables
+explanatory_data <- as.data.frame(scale(merged_df[, c(8:13)]))
+# Perform RDA
+rda_result <- rda(response_data ~ ., data = explanatory_data)
+# Extract RDA site scores
+site_scores <- as.data.frame(scores(rda_result, display = "sites", scaling = 2))
+
+# Add the 'Site' information
+site_scores$species <- species_info
+
+# Assuming you have already run your RDA model and have the necessary data
+library(vegan)
+library(ggplot2)
+library(grid)
+
+# Assuming your RDA model is stored in rda_result
+# Example: rda_result <- rda(response_data ~ ., data = explanatory_data)
+
+# Step 1: Extract scores from your RDA result
+# Explanatory variable scores (arrows)
+explanatory_scores <- scores(rda_result, display = "bp", scaling = 2)
+
+# Response variable scores (species or other response variables)
+response_scores <- scores(rda_result, display = "species", scaling = 2)
+
+# Site scores (individual sites, to color points)
+site_scores <- scores(rda_result, display = "sites", scaling = 2)
+
+# Step 2: Convert scores into data frames for ggplot
+explanatory_df <- as.data.frame(explanatory_scores)
+response_df <- as.data.frame(response_scores)
+site_df <- as.data.frame(site_scores)
+
+# Add explanatory variable names for labeling arrows
+explanatory_df$Variable <- rownames(explanatory_df)
+
+# Add  names for site labels
+site_df$Site <- species_info
+
+# Step 3: Create a color mapping for the sites (optional)
+# For example, if site labels are categorical, you can color them accordingly
+site_df$Site <- as.factor(site_df$Site)  # Convert sites to factor if needed
+
+#Create a color mapping for the sites
+# Generate enough colors for all unique sites
+num_sites <- length(unique(site_df$Site))
+site_colors <- colorRampPalette(RColorBrewer::brewer.pal(3, "Set2"))(num_sites)
+
+# Step 4: Plot the RDA biplot
+ggplot() +
+  # Plot explanatory variables as arrows
+  geom_segment(data = explanatory_df, 
+               aes(x = 0, y = 0, xend = RDA1, yend = RDA2),
+               arrow = arrow(length = unit(0.2, "cm")), 
+               color = "black") +
+  # Add explanatory variable labels (arrows)
+  geom_text(data = explanatory_df, 
+            aes(x = RDA1, y = RDA2, label = Variable), 
+            color = "black", hjust = 1.5, size = 2.5) +
+  # Plot site scores as points (colored)
+  geom_point(data = site_df, 
+             aes(x = RDA1, y = RDA2, color = Site), 
+             size = 1, alpha = 0.3) +
+  # # # Add labels for sites if needed (e.g., site names)
+  # geom_text(data = site_df, 
+  #           aes(x = RDA1, y = RDA2, label = Site), 
+  #           color = "black", vjust = -1, size = 3) +
+  # Add response variable points (blue)
+  geom_point(data = response_df, 
+             aes(x = RDA1, y = RDA2), 
+             color = "blue", size = 4, shape = 17) +  # Change shape if needed
+  # Add labels for response variables
+  geom_text(data = response_df, 
+            aes(x = RDA1, y = RDA2, label = rownames(response_df)), 
+            color = "blue", vjust = 1.5, size = 3) +
+  # Customize theme
+  theme_minimal() +
+  scale_color_manual(values = site_colors) + 
+  labs(x = "RDA1", y = "RDA2", 
+       title = "RDA Biplot with Substrate Variables and Species",
+       subtitle = "Black arrows: Substrate Variables, Blue triangles: Response Variables",
+       caption = "Sites colored by Species")
+
+################################################################
+#RDA on the environmental variables#### WOOD
+###############################################################
+# since variables are expressed in different measurement scales, we compute a PCA on the correlation matrix
+# Correlations are the covariances of standardized variables
+
+# Merge the data by "Site"
+merged_df <- merge(growth, wood_env, by = "SamplingUnitName")
+merged_df <- na.omit(merged_df)
+# Save the 'Site' column
+site_info <- merged_df$SamplingUnitName
+species_info <- merged_df$SpeciesCode
+
+# Response data: individual measurements
+response_data <- as.data.frame(scale(merged_df[, c(3,4,6,7)]))
+# Explanatory data: environmental variables
+explanatory_data <- as.data.frame(scale(merged_df[, c(8:12)]))
+# Perform RDA
+rda_result <- rda(response_data ~ ., data = explanatory_data)
+# Extract RDA site scores
+site_scores <- as.data.frame(scores(rda_result, display = "sites", scaling = 2))
+
+# Add the 'Site' information
+site_scores$species <- species_info
+
+# Step 1: Extract scores from your RDA result
+# Explanatory variable scores (arrows)
+explanatory_scores <- scores(rda_result, display = "bp", scaling = 2)
+
+# Response variable scores (species or other response variables)
+response_scores <- scores(rda_result, display = "species", scaling = 2)
+
+# Site scores (individual sites, to color points)
+site_scores <- scores(rda_result, display = "sites", scaling = 2)
+
+# Step 2: Convert scores into data frames for ggplot
+explanatory_df <- as.data.frame(explanatory_scores)
+response_df <- as.data.frame(response_scores)
+site_df <- as.data.frame(site_scores)
+
+# Add explanatory variable names for labeling arrows
+explanatory_df$Variable <- rownames(explanatory_df)
+
+# Add  names for site labels
+site_df$Site <- species_info
+
+# Step 3: Create a color mapping for the sites (optional)
+# For example, if site labels are categorical, you can color them accordingly
+site_df$Site <- as.factor(site_df$Site)  # Convert sites to factor if needed
+
+#Create a color mapping for the sites
+# Generate enough colors for all unique sites
+num_sites <- length(unique(site_df$Site))
+site_colors <- colorRampPalette(RColorBrewer::brewer.pal(3, "Set2"))(num_sites)
+
+# Step 4: Plot the RDA biplot
+ggplot() +
+  # Plot explanatory variables as arrows
+  geom_segment(data = explanatory_df, 
+               aes(x = 0, y = 0, xend = RDA1, yend = RDA2),
+               arrow = arrow(length = unit(0.2, "cm")), 
+               color = "black") +
+  # Add explanatory variable labels (arrows)
+  geom_text(data = explanatory_df, 
+            aes(x = RDA1, y = RDA2, label = Variable), 
+            color = "black", hjust = 1.5, size = 2.5) +
+  # Plot site scores as points (colored)
+ geom_point(data = site_df, 
+            aes(x = RDA1, y = RDA2, color = Site), 
+            size = 1, alpha = 0.3) +
+  # # # Add labels for sites if needed (e.g., site names)
+  # geom_text(data = site_df, 
+  #           aes(x = RDA1, y = RDA2, label = Site), 
+  #           color = "black", vjust = -1, size = 3) +
+  # Add response variable points (blue)
+  geom_point(data = response_df, 
+             aes(x = RDA1, y = RDA2), 
+             color = "blue", size = 4, shape = 17) +  # Change shape if needed
+  # Add labels for response variables
+  geom_text(data = response_df, 
+            aes(x = RDA1, y = RDA2, label = rownames(response_df)), 
+            color = "blue", vjust = 1.5, size = 3) +
+  # Customize theme
+  theme_minimal() +
+  scale_color_manual(values = site_colors) + 
+  labs(x = "RDA1", y = "RDA2", 
+       title = "RDA Biplot with Wood Variables and Species",
+       subtitle = "Black arrows: Wood Variables, Blue triangles: Response Variables",
+       caption = "Sites colored by Species")
+
+
+
+################################################################
+#RDA on the environmental variables#### LOG
+###############################################################
+# since variables are expressed in different measurement scales, we compute a PCA on the correlation matrix
+# Correlations are the covariances of standardized variables
+
+# Merge the data by "Site"
+merged_df <- merge(growth, log_env, by = "SamplingUnitName")
+merged_df <- na.omit(merged_df)
+# Save the 'Site' column
+site_info <- merged_df$SamplingUnitName
+species_info <- merged_df$SpeciesCode
+
+# Response data: individual measurements
+response_data <- as.data.frame(scale(merged_df[, c(3,4,6,7)]))
+# Explanatory data: environmental variables
+explanatory_data <- as.data.frame(scale(merged_df[, c(8:9,11,12)]))
+# Perform RDA
+rda_result <- rda(response_data ~ ., data = explanatory_data)
+# Extract RDA site scores
+site_scores <- as.data.frame(scores(rda_result, display = "sites", scaling = 2))
+
+# Add the 'Site' information
+site_scores$species <- species_info
+
+# Step 1: Extract scores from your RDA result
+# Explanatory variable scores (arrows)
+explanatory_scores <- scores(rda_result, display = "bp", scaling = 2)
+
+# Response variable scores (species or other response variables)
+response_scores <- scores(rda_result, display = "species", scaling = 2)
+
+# Site scores (individual sites, to color points)
+site_scores <- scores(rda_result, display = "sites", scaling = 2)
+
+# Step 2: Convert scores into data frames for ggplot
+explanatory_df <- as.data.frame(explanatory_scores)
+response_df <- as.data.frame(response_scores)
+site_df <- as.data.frame(site_scores)
+
+# Add explanatory variable names for labeling arrows
+explanatory_df$Variable <- rownames(explanatory_df)
+
+# Add  names for site labels
+site_df$Site <- species_info
+
+# Step 3: Create a color mapping for the sites (optional)
+# For example, if site labels are categorical, you can color them accordingly
+site_df$Site <- as.factor(site_df$Site)  # Convert sites to factor if needed
+
+#Create a color mapping for the sites
+# Generate enough colors for all unique sites
+num_sites <- length(unique(site_df$Site))
+site_colors <- colorRampPalette(RColorBrewer::brewer.pal(3, "Set2"))(num_sites)
+
+# Step 4: Plot the RDA biplot
+ggplot() +
+  # Plot explanatory variables as arrows
+  geom_segment(data = explanatory_df, 
+               aes(x = 0, y = 0, xend = RDA1, yend = RDA2),
+               arrow = arrow(length = unit(0.2, "cm")), 
+               color = "black") +
+  # Add explanatory variable labels (arrows)
+  geom_text(data = explanatory_df, 
+            aes(x = RDA1, y = RDA2, label = Variable), 
+            color = "black", hjust = 1.5, size = 2.5) +
+  # Plot site scores as points (colored)
+  geom_point(data = site_df,
+             aes(x = RDA1, y = RDA2, color = Site),
+             size = 1, alpha = 0.3) +
+  # # # Add labels for sites if needed (e.g., site names)
+  # geom_text(data = site_df, 
+  #           aes(x = RDA1, y = RDA2, label = Site), 
+  #           color = "black", vjust = -1, size = 3) +
+  # Add response variable points (blue)
+  geom_point(data = response_df, 
+             aes(x = RDA1, y = RDA2), 
+             color = "blue", size = 4, shape = 17) +  # Change shape if needed
+  # Add labels for response variables
+  geom_text(data = response_df, 
+            aes(x = RDA1, y = RDA2, label = rownames(response_df)), 
+            color = "blue", vjust = 1.5, size = 3) +
+  # Customize theme
+  theme_minimal() +
+  scale_color_manual(values = site_colors) + 
+  labs(x = "RDA1", y = "RDA2", 
+       title = "RDA Biplot with Log Variables and Species",
+       subtitle = "Black arrows: Log Variables, Blue triangles: Response Variables",
+       caption = "Sites colored by Species")

@@ -1,0 +1,6 @@
+"0",""
+"0","YY_EBT_5caps <- read.csv(""~/UM/Growth_YYEBT/data/YY_EBT_5caps.csv"")"
+"0",""
+"0","# extract only columns of interest:"
+"0","caps5 <- YY_EBT_5caps[, c(""IndividualID"", ""ForkLength_mm"", ""Weight_g"", ""day"")]"
+"0","print (caps5)"
