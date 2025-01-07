@@ -1,0 +1,14 @@
+"0","```r
+# Add the 'Encounter' column based on the lowest and highest EHYear
+  yy <- yy %>%
+    group_by(IndividualID) %>%
+    mutate(Encounter = ifelse(EHYear == min(EHYear), \"first\", \"second\")) %>%
+    ungroup()
+  
+# Plot ForkLength_mm on y-axis and Encounter on x-axis
+ggplot(yy, aes(x = Encounter, y = ForkLength_mm)) +
+  geom_boxplot() +  # You can use a boxplot to show distribution by category
+  geom_jitter(width = 0.2, height = 0, color = \"#0072B2\", size = 0.1) +  # Jitter to show individual points
+  labs(x = \"Encounter\", y = \"Fork Length (mm)\", title = \"Fork Length by Encounter\") +
+  theme_minimal()
+```"

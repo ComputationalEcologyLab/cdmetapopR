@@ -1,0 +1,185 @@
+#install.packages("devtools", repos="http://cran.us.r-project.org)
+#if(!require(devtools)) install.packages("devtools", repos="http://cran.us.r-project.org")
+if(!require(tidyr)) install.packages("tidyr", repos="http://cran.us.r-project.org")
+if(!require(vctrs)) install.packages("vctrs", repos="http://cran.us.r-project.org")
+if(!require(gtools)) install.packages("gtools", repos="http://cran.us.r-project.org")
+if(!require(readr)) install.packages("readr", repos="http://cran.us.r-project.org")
+if(!require(purrr)) install.packages("purrr", repos="http://cran.us.r-project.org")
+
+
+
+#library(devtools)
+library(tidyr)
+library(vctrs)
+library(dplyr)
+library(gtools)
+library(readr)
+library(purrr)
+
+color_blind_palette <- c(
+  "#D73027", # Red
+  "#FC8D59", # Salmon Orange
+  "#E7298A", # Magenta
+  "#91BFDB", # Light Blue
+  "#4575B4", # Deep Blue
+  "#1A9850", # Green
+  "#66BD63", # Lime Green
+  "#FDAE61", # Bright Orange
+  "#A6761D", # Brown
+  "#666666"  # Dark Gray
+)
+color_blind_palette <- c(
+  "#117733", # Deep Green
+  "#FDAE61", # Bright Orange
+  "#88CCEE", # Sky Blue
+  "#332288", # Navy Blue
+  "#DDCC77", # Sandy Yellow
+  "#CC6677", # Dusty Rose
+  "#AA4499", # Purple
+  "#999933", # Olive
+  "#D73027", # Red
+  "#661100"  # Dark Brown
+)
+
+
+#read in both the simulated dataframe and the null dataframe
+InitN <- read.csv("NInitial_selection.csv", header=TRUE,stringsAsFactors = FALSE) 
+InitN_Null <- read.csv("NInitial_null.csv", header=TRUE) 
+
+
+#rename run values to be run names
+InitN$Run2 <- InitN$Run
+
+InitN$Run[InitN$Run %in% 1:10]<-"-1/4 SD (8.86)"
+InitN$Run[InitN$Run%in% 11:20]<-"+1/4 SD (10.29)"
+InitN$Run[InitN$Run%in% 21:30]<-"mean (9.57)"
+InitN$Run[InitN$Run%in% 31:40]<-"-1/8 SD (9.22)"
+InitN$Run[InitN$Run%in% 41:50]<-"+1/8 SD (9.93)"
+InitN$Run[InitN$Run%in% 51:60]<-"-1 SD (6.71)"
+InitN$Run[InitN$Run%in% 61:70]<-"+1 SD (12.44)"
+InitN$Run[InitN$Run%in% 71:80]<-"Baseline"
+
+InitN_Null$Run2 <- InitN_Null$Run
+InitN_Null$Run[InitN_Null$Run%in% 1:10]<-"Null"
+
+# #pull out no selection runs
+# cc<-subset(InitN, Run =="Baseline")
+# cc2<-cc %>% 
+#   group_by(Run, Run2) %>% 
+#   slice(tail(row_number(), 1))
+# mean(cc2$Year)
+# sd(cc2$Year)
+# No_sel<- tail(InitN, n =710)
+
+#bind both data frames together
+total <- rbind(InitN, InitN_Null)
+#total2 <- rbind(total, No_sel)
+
+# # run a regression compatible with tidy
+# m1 <- glm(N ~ ., data = InitN)
+# m2 <- glm(N_Females ~ ., data = InitN)
+# m3 <- glm(SelDeaths ~ ., data = InitN)
+# summary(m1)
+# summary(m2)
+# summary(m3)
+
+df.summary <- total %>%
+  group_by(Year, Run) %>%
+  summarise(
+    sd = sd(SelDeaths, na.rm = TRUE),
+    len = mean(SelDeaths)
+  )
+df.summary
+ library(ggplot2)
+  
+#make graph of mean number of  deaths per patch
+p<- ggplot(df.summary, aes(y = len, x = Year, color = Run, fill=Run)) +
+  geom_line() +
+  geom_point() +
+  scale_color_manual(values = color_blind_palette) + # Apply colorblind palette
+  geom_ribbon(aes(ymin = len-sd, ymax =  len+sd, fill = Run), alpha = 0.3, linetype=0) + 
+  labs(x="Year", y = "Ohomo")  + 
+  theme_bw(base_size = 15)+
+  annotate(geom = "rect", xmin = 25, xmax = 38, ymin = -Inf, ymax = Inf,
+           fill = "grey",  alpha = 0.2) +
+  #annotate(geom = "rect", xmin = 25, xmax = 28, ymin = -Inf, ymax = Inf,
+           #fill = "grey", alpha = 0.3) +
+  annotate("text", x=33, y=32, label= "MYY") + 
+  annotate("text", x = 31.5, y=27, label = "Suppression")+
+  ggtitle ("Selection Runs: Mean number of Deaths") +
+  ylab("Mean Number Deaths Per Patch") + theme_bw(base_size = 15)
+
+p + geom_segment(aes(x = 25, y = 25, xend = 38, yend = 25), inherit.aes = FALSE) + geom_segment(aes(x = 28, y = 30, xend = 38, yend = 30), inherit.aes = FALSE)
+
+df.summary2 <- total %>%
+  group_by(Year, Run) %>%
+  summarise(
+    sd = sd(N, na.rm = TRUE),
+    len = mean(N)
+  )
+df.summary2
+
+
+#plot of mean n per patch
+ggplot(df.summary2, aes(y = len, x = Year, color = Run, fill=Run)) +
+  geom_line(aes(linetype=Run, color=Run)) +
+  geom_point() +
+  scale_color_manual(values = color_blind_palette) + # Apply colorblind palette
+  geom_ribbon(aes(ymin = len-sd, ymax =  len+sd, fill = Run), alpha = 0.2, linetype=0) + labs(x="Year", y = "Ohomo")  + theme_bw(base_size = 15)+
+  annotate(geom = "rect", xmin = 25, xmax = 38, ymin = -Inf, ymax = Inf,
+           fill = "grey",  alpha = 0.4) +
+  #annotate(geom = "rect", xmin = 25, xmax = 28, ymin = -Inf, ymax = Inf,
+        #   fill = "grey", alpha = 0.3) +
+  annotate("text", x=33, y=52, label= "MYY") +
+  annotate("text", x = 31.5, y=62, label = "Suppression")+
+  ggtitle ("Selection Runs: Mean N Across Patches") +
+  ylab("Mean N Per Patch (Nfemale+Nmale only)") + theme_bw(base_size = 15)+
+  geom_segment(aes(x = 25, y = 60, xend = 38, yend = 60), inherit.aes = FALSE) + geom_segment(aes(x = 28, y = 50, xend = 38, yend = 50), inherit.aes = FALSE)
+
+df.summary3 <- total %>%
+  group_by(Year, Run) %>%
+  summarise(
+    sd = sd(N_Females, na.rm = TRUE),
+    len = mean(N_Females)
+  )
+df.summary3
+#plot of mean number of females per patch
+ggplot(df.summary3, aes(y = len, x = Year, color = Run, fill=Run)) +
+  geom_line() +
+  geom_point() +
+  scale_color_manual(values = color_blind_palette) + # Apply colorblind palette
+  geom_ribbon(aes(ymin = len-sd, ymax =  len+sd, fill = Run), alpha = 0.2, linetype=0) + labs(x="Year", y = "Ohomo")  + theme_bw(base_size = 15)+
+  annotate(geom = "rect", xmin = 28, xmax = 38, ymin = -Inf, ymax = Inf,
+           fill = "grey",  alpha = 0.4) +
+  annotate(geom = "rect", xmin = 25, xmax = 28, ymin = -Inf, ymax = Inf,
+           fill = "grey", alpha = 0.3) +
+  annotate("text", x=33, y=37, label= "MYY") + 
+  annotate("text", x = 31.5, y=47, label = "Suppression")+
+  ggtitle ("Selection Runs: N_Females") +
+  ylab("Mean Number of Females Per Patch") + theme_bw(base_size = 15)+
+  geom_segment(aes(x = 25, y = 45, xend = 38, yend = 45), inherit.aes = FALSE) + geom_segment(aes(x = 28, y = 35, xend = 38, yend = 35), inherit.aes = FALSE)
+
+
+#calculate proportion of selection deaths over time
+
+InitN$totalN <- InitN$N*415
+InitN$totalSD <- InitN$SelDeaths*415
+InitN$propSD <- (InitN$totalSD/InitN$totalN)
+xxxx<-InitN[InitN$Run != "+1 SD (12.44)", ] 
+
+df.summary2 <- xxxx %>%
+  group_by(Year, Run) %>%
+  summarise(
+    sd = sd(propSD, na.rm = TRUE),
+    len = mean(propSD)
+  )
+df.summary2
+ggplot(df.summary2, aes(y = len, x = Year, color = Run, ymin = len-sd, ymax = len+sd)) +
+  geom_line() +
+  geom_pointrange(size=0.1)+
+  scale_color_manual(values = color_blind_palette) + # Apply colorblind palette
+  annotate(geom = "rect", xmin = 25, xmax = 38, ymin = -Inf, ymax = Inf,
+           fill = "grey",  alpha = 0.3) +
+  ggtitle ("Selection Runs") +
+  ylab("Proportion of deaths") + theme_bw(base_size = 15)
+

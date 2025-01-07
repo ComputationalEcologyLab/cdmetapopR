@@ -1,0 +1,10 @@
+"0","```r
+
+
+# Plot Weight_g on y-axis and Encounter on x-axis
+ggplot(yy4, aes(x = Encounter, y = Weight_g)) +
+  geom_boxplot() +  # You can use a boxplot to show distribution by category
+  geom_jitter(width = 0.2, height = 0, color = \"#0072B2\", size = 0.5) +  # Jitter to show individual points
+  labs(x = \"Encounter\", y = \"Weight (g)\", title = \"Weight by Encounter\") +
+  theme_minimal()
+```"

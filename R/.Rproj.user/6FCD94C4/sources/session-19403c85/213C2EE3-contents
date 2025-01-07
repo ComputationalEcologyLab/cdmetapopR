@@ -1,0 +1,94 @@
+# Load the libraries
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+library(sf)
+library(tmap)
+library(sjPlot)
+library(sp)
+library(MuMIn)
+library(broom)
+library(gt)
+
+#load some of my functions
+source("~/UM/Growth_YYEBT/scripts/my_growth_functions.R")
+
+
+color_blind_palette <- c(
+  "#E69F00",  # orange
+  "#56B4E9",  # sky blue
+  "#009E73",  # bluish green
+  "#F0E442",  # yellow
+  "#0072B2",  # blue
+  "#D55E00",  # vermillion
+  "#CC79A7"   # reddish purple
+)
+
+mydata <- read.csv("/Users/domi/UM/Growth_YYEBT/data/mydata.csv")
+# Remove instances where IndividualsID appears only once = this has a total of 4063 individuals
+mydata <- mydata %>%
+  filter(!is.na(Condition)& !is.na(temp) & !is.na(GrowthTemperatureOut) & !is.na(GrowthTemperatureBack))%>%
+  group_by(IndividualID) %>%
+  filter(n() > 1) %>%  # Keep only IndividualIDs that have more than 1 occurrence
+  ungroup()
+
+# Convert variables to factors
+mydata$IndividualID <- as.factor(mydata$IndividualID)
+mydata$EHYear_Extracted <- as.factor(mydata$EHYear_Extracted)
+mydata$release_group <- as.factor(mydata$release_group)
+mydata$release_year <- as.factor(mydata$release_year)
+mydata$release_month <- as.factor(mydata$release_month)
+
+mydata_first <- mydata %>%
+  filter(day == 0 | (day > 100 & day < 450))%>%
+  # now make sure I only have two measures per individual, in case I have more than two, make sure the first one is day = 0, and 
+  # the next one that immediately follows
+  group_by(IndividualID)%>%
+  arrange(day)%>%
+  slice(c(1,which(day > 0) [1]))%>% # Keep day = 0 and the next
+  ungroup()
+
+
+growth_year1 <- mydata_first %>%
+  arrange(IndividualID, EHYear_Extracted) %>%
+  group_by(IndividualID) %>%
+  reframe(
+    # ABSOLUTE GROWTH
+    AG = ForkLength_mm[2] - ForkLength_mm[1],
+    # ABSOLUTE GROWTH RATE
+    AGR = (ForkLength_mm[2] - ForkLength_mm [1])/ (day[2] - day [1]),
+    AGR_summer_days = (ForkLength_mm[2] - ForkLength_mm [1])/ (summer_days),
+    AGR_winter_days = (ForkLength_mm[2] - ForkLength_mm [1])/ (day[2] - day [1]- winter_days),
+    # RELATIVE GROWTH RATE
+    RGR = ((ForkLength_mm[2] - ForkLength_mm [1])/ForkLength_mm [1])*100,
+    # INSTANTANEOUS GROWTH RATE
+    IGR = (log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ (day[2] - day [1]),
+    IGR_summer_days = (log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ (summer_days),
+    IGR_winter_days = (log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ (day[2] - day [1] - winter_days),
+    IGR_mod = 100 * (log(ForkLength_mm[2] /ForkLength_mm [1])) / (day[2] - day [1]),
+    # SPECIFIC GROWTH RATE
+    SGR = ((log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ day[2] - (day [1]))*100,
+    SGR_summer_days = ((log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ summer_days)*100,
+    SGR_winter_days = ((log(ForkLength_mm[2]) - log(ForkLength_mm [1]))/ day[2] - (day [1] - winter_days))*100,
+    # THERMAL GROWTH COEFFICIENT
+    TGC = calculate_tgc (ForkLength_mm[2], ForkLength_mm[1], summer_days, winter_days, GrowthTemperatureBack, GrowthTemperatureOut),
+    # SUMMER THERMAL GROWTH COEFFICIENT
+    STGC = calculate_stgc (ForkLength_mm[2], ForkLength_mm[1], summer_days, winter_days, GrowthTemperatureBack, GrowthTemperatureOut), 
+    # temp OF RELEASE 
+    summer_temp = GrowthTemperatureBack [1],
+    # day
+    day = day,
+    # size at release
+    release_fl = release_fl [1] ,
+    # condition
+    condition = Condition [1],
+    # release year
+    release_year =release_year [1],
+    # distance moved
+    distance_moved = distance_moved [2],
+    # release_group
+    release_group = release_group_name ) %>%
+  group_by(IndividualID) %>%
+  slice(2)%>% # Keep only second measurement 
+  ungroup()

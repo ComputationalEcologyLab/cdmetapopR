@@ -1,0 +1,23 @@
+Package: cdmetapop.R
+Title: Utility functions for CDMetaPOP outputs
+Version: 0.0.1
+Authors@R: 
+    person(given = "Dominique", 
+    family = "Alò", 
+    role = c("aut","cre"),
+    email = "dominiquealo@gmail.com",
+    comment = c(ORCID = "0000-0003-0579-4156"))
+Description: This package provides a set of helper functions to analyze
+    and visualize the output files of CDMetaPOP
+Imports: ggplot2,
+  reshape2,
+  tidyr,
+  dplyr
+License: friends to pick a
+    license
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

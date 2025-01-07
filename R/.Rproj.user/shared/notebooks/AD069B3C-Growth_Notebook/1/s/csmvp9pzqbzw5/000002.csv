@@ -1,0 +1,33 @@
+"0","```r
+# create a new column in yy to hold the StreamName
+```"
+"1","Warning messages:
+1: In if (match < 0) { :
+  the condition has length > 1 and only the first element will be used
+2: In if (match < 0) { :
+  the condition has length > 1 and only the first element will be used
+3: In if (match < 0) { :
+  the condition has length > 1 and only the first element will be used
+4: In if (match < 0) { :
+  the condition has length > 1 and only the first element will be used
+5: In if (match < 0) { :
+  the condition has length > 1 and only the first element will be used
+6: In if (match < 0) { :
+  the condition has length > 1 and only the first element will be used
+"
+"0","```r
+filtered_yy3$StreamName <- NA  # Initialize the column with NA
+
+# Iterate through each row of xx and update the StreamName in yy
+for (i in 1:nrow(captures_output)) {
+  individual_id <- captures_output$IndividualID[i]
+  sampling_date <- captures_output$SamplingDate[i]
+  stream_name <- captures_output$StreamName[i]
+  
+  # Find the corresponding rows in yy
+  filtered_yy3[filtered_yy3$IndividualID == individual_id & filtered_yy3$CaptureDate == sampling_date, \"StreamName\"] <- stream_name
+}
+
+
+
+```"

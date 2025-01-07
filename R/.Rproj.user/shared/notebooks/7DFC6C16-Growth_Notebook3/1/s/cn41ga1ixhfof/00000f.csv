@@ -1,0 +1,8 @@
+"0","# Fit a linear mixed-effects model for length"
+"0","my_lenght_model <- lmer(growthL ~ GrowthTemperatureOut + GrowthTemperatureBack + EHYear_Extracted + release_group + (1 | IndividualID), data = df_nNa)"
+"0",""
+"0","# Fit a linear mixed-effects model for Weight"
+"0","my_weight_model <- lmer(growthW ~ GrowthTemperatureOut + GrowthTemperatureBack + EHYear_Extracted + release_group + (1 | IndividualID), data = df_nNa)"
+"0","                        "
+"0","# Show both models side by side"
+"0","tab_model(my_lenght_model, my_weight_model, show.p = TRUE, show.ci = TRUE)"

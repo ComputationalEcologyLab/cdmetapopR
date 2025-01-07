@@ -1,0 +1,12 @@
+"0","```r
+captures_output <- read.csv(\"~/UM/Growth_YYEBT/data/captures_output.csv\")
+
+# Check if IndividualID has consistent StreamName and list inconsistent IDs with their StreamNames
+inconsistent_ids <- captures_output %>%
+  group_by(IndividualID) %>%
+  filter(n_distinct(StreamName) > 1) %>%
+  summarise(StreamNames = paste(unique(StreamName), collapse = \", \"))
+
+# Output inconsistent IndividualIDs with their corresponding StreamNames
+print(inconsistent_ids)
+```"

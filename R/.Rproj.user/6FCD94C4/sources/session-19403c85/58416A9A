@@ -1,0 +1,26 @@
+{
+    "id": "58416A9A",
+    "path": "~/UM/Growth_YYEBT/scripts/example_df.R",
+    "project_path": null,
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1732367521530.0,
+    "source_on_save": false,
+    "relative_order": 19,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "22,31",
+        "scrollLine": "3"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1732820632,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1732820632840,
+    "read_only": false,
+    "read_only_alternatives": []
+}

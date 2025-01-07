@@ -1,0 +1,113 @@
+library(ggplot2)
+color_blind_palette <- c(
+  "#E69F00",  # orange
+  "#56B4E9",  # sky blue
+  "#009E73",  # bluish green
+  "#F0E442",  # yellow
+  "#0072B2",  # blue
+  "#D55E00",  # vermillion
+  "#CC79A7"   # reddish purple
+)
+
+######################################
+### ID PENALTY ######################
+#####################################
+
+# Define slopes and standard deviation
+m <- 9.57
+sd <- 12.44-m
+bint <- -7.025   
+
+# Slopes to plot
+slopes <- c(
+  m,
+  m + sd, m - sd,
+  m + 0.25 * sd, m - 0.25 * sd,
+  m + 0.125 * sd, m - 0.125 * sd
+)
+
+# Generate data frame with x values
+Ho <- seq(0, 1, by = 0.01)
+lines_df <- data.frame()
+
+
+# Create y-values for each slope
+for (m in slopes) {
+  # Calculate mortality probability using logit transformation
+  logit_mortality <- bint + m * Ho
+  mortality_prob <- exp(logit_mortality) / (1 + exp(logit_mortality))
+  lines_df <- rbind(lines_df, data.frame(x = Ho, y = mortality_prob, m = as.factor(m)))
+}
+
+# Plot
+ggplot(lines_df, aes(x = x, y = y, color = m)) +
+  geom_line(size = 1) +
+  theme_minimal() +
+  labs(
+    title = "Hypothesis",
+    x = "Ho",
+    y = "mortality",
+    color = "Slope"
+  ) +
+  scale_color_manual(values = color_blind_palette[1:7])  
+
+######################################
+### OD PENALTY ######################
+#####################################
+# calculating OD
+# Set the x and y values for different y1 values
+x <- c(0, 1)
+mortality_values <- c(0.44, 0.33, 0.22)
+
+# Create an empty plot
+plot(NULL, xlim = c(0, 1), ylim = c(0, 0.5), xlab = "x", ylab = "y", main = "Lines with varying mortality values")
+
+# Plot the lines for each y1
+colors <- c("red", "blue", "green") 
+for (i in 1:length(mortality_values)) {
+  y <- c(mortality_values[i], 0)
+  lines(x, 
+        y, 
+        col = colors[i], 
+        lwd = 2)
+}
+
+######################################
+## COMBINATION OF ID & OD PENALTIES #
+#####################################
+
+min_od_slope = -.22
+max_od_slope = -.44
+
+sd = 12.44
+m = 9.57
+pos_sd1_4_id_slope = m + 0.25 * sd
+neg_sd1_4_id_slope =  - 0.25 * sd
+pos_sd1_8_id_slope = m + 0.125 * sd
+neg_sd1_4_id_slope = m - 0.125 * sd
+
+#slopes used: 
+pos_sd1_4_id_slope*min_od_slope
+pos_sd1_4_id_slope*max_od_slope
+neg_sd1_4_id_slope*min_od_slope
+neg_sd1_4_id_slope*max_od_slope 
+pos_sd1_8_id_slope*min_od_slope
+pos_sd1_8_id_slope*max_od_slope
+neg_sd1_4_id_slope*min_od_slope
+neg_sd1_4_id_slope*max_od_slope
+
+#probability of mortality = Pod * Pid
+
+# Define the probability function
+Pmort <- function(slope1, slope2, HI, Ho, h, bint) {
+  (slope1 * HI * h) * (exp(bint + slope2 * Ho) / (1 + exp(bint + slope2 * Ho)))
+}
+
+# Set parameters
+# slope1_vals <- c(min_od_slope, max_od_slope)        # Two slope1 values
+# slope2_vals <- c(pos_sd1_4_id_slope, neg_sd1_4_id_slope, pos_sd1_8_id_slope, neg_sd1_4_id_slope)  # Four slope2 values
+# HI <- seq(0, 1, by = 0.01)                         # value for hi
+# Ho <- seq(0, 1, by = 0.01)                       #  value for ho
+# h <- c(0.44, 0.22)  #  h mortality values
+bint <- -7.025
+

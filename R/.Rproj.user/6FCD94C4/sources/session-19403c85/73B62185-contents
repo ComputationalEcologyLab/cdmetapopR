@@ -1,0 +1,53 @@
+# Compare differences in csv files
+
+
+# Replace with the paths to your CSV files
+file1 <- read.csv("PopvarsEBT415_Sim_intit_practice_sim_1.csv", stringsAsFactors = FALSE)
+file2 <- read.csv("PopvarsEBT415_Sim_intit_practice_sim.csv", stringsAsFactors = FALSE)
+
+# Ensure both files have the same structure
+if (!all(colnames(file1) == colnames(file2))) {
+  stop("Column names do not match between the two files!")
+}
+
+#################################
+## if columns are different: ###
+#################################
+# Get column names
+columns_file1 <- colnames(file1)
+columns_file2 <- colnames(file2)
+
+# Identify columns that are in file1 but not in file2
+extra_in_file1 <- setdiff(columns_file1, columns_file2)
+
+# Identify columns that are in file2 but not in file1
+extra_in_file2 <- setdiff(columns_file2, columns_file1)
+
+# Combine results into a summary
+column_differences <- list(
+  Extra_in_File1 = extra_in_file1,
+  Extra_in_File2 = extra_in_file2
+)
+
+# Print the differences
+print(column_differences)
+
+# Remove a column 
+file2 <- file2[ , !(colnames(file2) %in% "X.1")]
+
+##########################################
+#########################################
+#########################################
+
+# Compare values
+differences <- file1 != file2
+
+# Create a summary table with row, column, and values
+summary_table <- data.frame(
+  Row = which(differences, arr.ind = TRUE)[, 1],
+  Column = colnames(file1)[which(differences, arr.ind = TRUE)[, 2]],
+  File1_Value = file1[differences],
+  File2_Value = file2[differences]
+)
+#write.csv(summary_table, "Differences_Summary.csv", row.names = FALSE)
+
