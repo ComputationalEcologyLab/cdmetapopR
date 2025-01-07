@@ -1,27 +1,27 @@
 {
-    "id": "8FEFE08B",
-    "path": "~/UM/CDMetaPop/Kaeli_et_al/scripts/mort_model_calculations.R",
+    "id": "F8DD269F",
+    "path": null,
     "project_path": null,
     "type": "r_source",
     "hash": "0",
     "contents": "",
-    "dirty": false,
-    "created": 1732738889231.0,
+    "dirty": true,
+    "created": 1736273681217.0,
     "source_on_save": false,
-    "relative_order": 4,
+    "relative_order": 16,
     "properties": {
         "tempName": "Untitled3",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "74,0",
-        "scrollLine": "0"
+        "cursorPosition": "37,0",
+        "scrollLine": "16"
     },
     "folds": "",
-    "lastKnownWriteTime": 1735553879,
-    "encoding": "UTF-8",
+    "lastKnownWriteTime": 0,
+    "encoding": "",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1735553879667,
+    "last_content_update": 1736274368978,
     "read_only": false,
     "read_only_alternatives": []
 }

@@ -1,0 +1,37 @@
+dispersal_hist <- function(path = path, run = 0, batch = 0, mc = 0, gen = 100, species = 0, ind = TRUE, plot = FALSE) {
+  
+  # Initialize a matrix to store the data with columns "Year" and "movers"
+  dispersors <- data.frame(Year = 0:gen, movers = NA)
+  
+  # Iterate through each generation
+  for(g in 0:gen){ 
+    
+    # Check whether examining ind or sample files
+    if(ind){
+      mydata <- read.csv(paste0(path, "run", run, "batch", batch, "mc", mc, "species", species, "/ind", g, ".csv"))
+    } else {
+      mydata <- read.csv(paste0(path, "run", run, "batch", batch, "mc", mc, "species", species, "/indSample", g, ".csv"))
+    }
+    
+    # Count of movers (where CDist is not -9999)
+    movers <- sum(mydata$CDist != -9999)
+    
+    # Store the movers count in the dispersors data frame
+    dispersors$movers[g + 1] <- movers
+  }
+  
+  # If plot is TRUE, generate the plot
+  if(plot) {
+    # Barplot of the number of movers per year
+    barplot(dispersors$movers, 
+            names.arg = paste0("Y", 0:gen),  # Label the bars with years (Y0, Y1, ...)
+            col = "blue", 
+            xlab = "Year", 
+            ylab = "Number of Movers", 
+            main = "Movers Per Year",
+            border = "white")  # Remove borders around bars
+  }
+  
+  # Return the dispersors data frame
+  return(dispersors)
+}

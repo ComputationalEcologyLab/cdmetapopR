@@ -2,7 +2,7 @@
 % Please edit documentation in R/dispersal.R
 \name{dispersal}
 \alias{dispersal}
-\title{This function counts the number of individuals that move each year by reading in each ind file}
+\title{Counts number of individuals that move each year by reading in each ind file}
 \usage{
 dispersal(
   path = path,
@@ -11,30 +11,48 @@ dispersal(
   mc = 0,
   gen = 49,
   species = 0,
-  ind = TRUE
+  ind = TRUE,
+  plot = FALSE
 )
 }
 \arguments{
-\item{path}{path to the simulation folder}
+\item{path}{Character. The path to the directory containing the output files.}
 
-\item{run}{A run is each row of the RunVars file - Fix description}
+\item{run}{Integer. The run index. A run is each row of the RunVars file - Defaults to 0.}
 
-\item{batch}{see RunVars PreProcess Run parameters in cdmetapop user manual}
+\item{batch}{Integer. The batch index. See RunVars PreProcess Run parameters in the CDMetaPOP user manual.}
 
-\item{mc}{integer referring to the number of montecarlo simulations output files to examine. It refers to the mcruns option in the RunVars CDMetaPOP input file. Right now it defaults to 0, which would be only one  run.}
+\item{mc}{Integer. The Monte Carlo index. It refers to the number of Monte Carlo simulations output files to examine. It refers to the mcruns option in the RunVars CDMetaPOP input file. It defaults to 0, which is one run.}
 
-\item{gen}{Simulation run time (generation or year). Refers to runtime in the RunVars of CDMetaPOP input file. Currently defaults to 49}
+\item{gen}{Integer. The number of generations. Simulation run time (generation or year). Refers to runtime in the RunVars of CDMetaPOP input file. It defaults to 49.}
 
-\item{species}{If the simulation includes more species...  It defaults to species = 0, which means one species only}
+\item{species}{Integer. The species index. If the simulation includes multiple species. It defaults to 0, meaning one species only.}
 
-\item{ind}{If ind is true, the function will return calculations based on the ind files, otherwise on the sample files}
+\item{ind}{Logical. Whether to use ind files ('TRUE') or sample files ('FALSE').}
+
+\item{plot}{Logical. If TRUE, a histogram of the proportion of movers across the ind file defined by the chosen parameters will be displayed. Defaults to FALSE. NOTE: The histogram of movers only reflects the counts for the given combination of parameters (not across all iterations).}
 }
 \value{
-a dataframe The data returned is a dataframe that lists the proportion of dispersors for each year and for each mc simulation
+A data frame with proportions of movers or a plot of the count of movers per year. The data returned is a dataframe that lists the proportion of dispersors for each year and for each Monte Carlo simulation.
 }
 \description{
-This function counts the number of individuals that move each year by reading in each ind file
+Counts number of individuals that move each year by reading in each ind file
+}
+\details{
+This function was partially developed with assistance from ChatGPT, an AI model by OpenAI.
 }
 \examples{
-define  your path to the output_test folder: mypath = "your_path/your_output_test/" For example "~/UM/CDMetaPop/EBT/EBT_Inputs/data/output_test1728487700/"
+Example: using the example directory provided in the package
+my_output <- system.file("extdata/output_test1732137064", package = "cdmetapop_R")
+
+# Iterate through files in the directory provided with cdmetapopR
+files <- list.files (my_output, full.names = TRUE)
+for (file in files) {
+  print(paste("Processing:", file))
+  # Run the function with individual files
+  dispersal(path = dirname(file), run = 0, batch = 0, mc = 0, gen = 1, species = 0, ind = TRUE, plot = FALSE)
+}
+
+# Example: Generating a barplot for the example directory
+dispersal(path = my_output, run = 0, batch = 0, mc = 0, gen = 1, species = 0, ind = TRUE, plot = TRUE)
 }

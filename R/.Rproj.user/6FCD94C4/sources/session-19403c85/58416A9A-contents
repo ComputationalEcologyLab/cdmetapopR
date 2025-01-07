@@ -22,3 +22,29 @@ df <- data.frame(
   var2 = c(4,5,44,5,0, NA),
   var3 = c(NA, NA, NA, 3, 3,4))
 
+
+
+# Create the first example dataframe
+ind1 <- data.frame(
+  patch = sample(1:3, 6, replace = TRUE),
+  sex = sample(c("M", "F"), 6, replace = TRUE),
+  age = sample(1:5, 6, replace = TRUE),
+  CDist = sample(c(runif(5, 0, 1), -9999), 6, replace = TRUE)
+)
+
+# Create the second example dataframe
+ind2 <- data.frame(
+  patch = sample(1:3, 6, replace = TRUE),
+  sex = sample(c("M", "F"), 6, replace = TRUE),
+  age = sample(1:5, 6, replace = TRUE),
+  CDist = sample(c(runif(5, 0, 1), -9999), 6, replace = TRUE)
+)
+
+# Create the third example dataframe
+ind3 <- data.frame(
+  patch = sample(1:3, 6, replace = TRUE),
+  sex = sample(c("M", "F"), 6, replace = TRUE),
+  age = sample(1:5, 6, replace = TRUE),
+  CDist = sample(c(runif(5, 0, 1), -9999), 6, replace = TRUE)
+)
+
