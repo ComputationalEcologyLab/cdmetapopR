@@ -9,7 +9,7 @@ dispersal(
   run = 0,
   batch = 0,
   mc = 0,
-  gen = 9,
+  gen = 49,
   species = 0,
   ind = TRUE
 )
@@ -19,11 +19,13 @@ dispersal(
 
 \item{run}{A run is each row of the RunVars file - Fix description}
 
+\item{batch}{see RunVars PreProcess Run parameters in cdmetapop user manual}
+
 \item{mc}{integer referring to the number of montecarlo simulations output files to examine. It refers to the mcruns option in the RunVars CDMetaPOP input file. Right now it defaults to 0, which would be only one  run.}
 
 \item{gen}{Simulation run time (generation or year). Refers to runtime in the RunVars of CDMetaPOP input file. Currently defaults to 49}
 
-\item{species}{If the simulation includes more species... The code for this needs to be adjusted. Right now, species = 0, means one species only and it is the default}
+\item{species}{If the simulation includes more species...  It defaults to species = 0, which means one species only}
 
 \item{ind}{If ind is true, the function will return calculations based on the ind files, otherwise on the sample files}
 }
