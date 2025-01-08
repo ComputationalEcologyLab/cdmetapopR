@@ -42,17 +42,14 @@ Counts number of individuals that move each year by reading in each ind file
 This function was partially developed with assistance from ChatGPT, an AI model by OpenAI.
 }
 \examples{
-Example: using the example directory provided in the package
-my_output <- system.file("extdata/output_test1732137064", package = "cdmetapop_R")
+# Example: using the example directory provided in the package
+my_output <- system.file("extdata/output_test1732137064/", package = "cdmetapop_R")
+# Alternatively use a custom path:
+my_output <- "/your_path/cdmetapop_R_package/inst/extdata/output_test1732137064/"
 
-# Iterate through files in the directory provided with cdmetapopR
-files <- list.files (my_output, full.names = TRUE)
-for (file in files) {
-  print(paste("Processing:", file))
-  # Run the function with individual files
-  dispersal(path = dirname(file), run = 0, batch = 0, mc = 0, gen = 1, species = 0, ind = TRUE, plot = FALSE)
-}
+# Example: Run the function to output a dataframe for all the generations and replicas specified:
+  dispersal (path = my_output, run = 1, batch = 0, mc = 2, gen = 9, species = 0, ind = FALSE, plot = FALSE)
 
 # Example: Generating a barplot for the example directory
-dispersal(path = my_output, run = 0, batch = 0, mc = 0, gen = 1, species = 0, ind = TRUE, plot = TRUE)
+dispersal(path = my_output, run = 0, batch = 0, mc = 0, gen = 9, species = 1, ind = FALSE, plot = TRUE)
 }
