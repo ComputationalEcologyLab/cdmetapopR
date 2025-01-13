@@ -1,0 +1,12 @@
+
+
+##### to genind ######
+tmp<- df[,c(loci_columns)]
+strata <- df[,c(4,1)]
+row.names(tmp) <- df[,4]
+tmp2 <- df2genind(tmp,   sep = ":", strata = strata)
+tmp2
+tab(tmp2)
+
+##### to genalex ######
+genind2genalex(tmp2, filename = "genalex.trash.csv")

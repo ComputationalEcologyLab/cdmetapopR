@@ -1,28 +1,27 @@
 {
-    "id": "C9849698",
+    "id": "7965FB20",
     "path": null,
     "project_path": null,
-    "type": "object_explorer",
+    "type": "r_source",
     "hash": "0",
     "contents": "",
-    "dirty": false,
-    "created": 1736352968922.0,
+    "dirty": true,
+    "created": 1736421591727.0,
     "source_on_save": false,
-    "relative_order": 16,
+    "relative_order": 19,
     "properties": {
-        "id": "4c963d4fad494326afcc2ca889c4a0e2",
-        "name": "tmp",
-        "title": "tmp",
-        "language": "R",
+        "tempName": "Untitled4",
         "source_window_id": "",
-        "Source": "Source"
+        "Source": "Source",
+        "cursorPosition": "1,0",
+        "scrollLine": "0"
     },
     "folds": "",
     "lastKnownWriteTime": 0,
     "encoding": "",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1736352968922,
+    "last_content_update": 1736766532141,
     "read_only": false,
     "read_only_alternatives": []
 }
