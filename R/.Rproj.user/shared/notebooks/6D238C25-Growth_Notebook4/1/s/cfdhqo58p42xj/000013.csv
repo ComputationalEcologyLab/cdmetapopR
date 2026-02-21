@@ -1,5 +1,0 @@
-"0","tab_model(mixed_model, show.p = TRUE, show.ci = TRUE)
-"
-"2","Error in tab_model(mixed_model, show.p = TRUE, show.ci = TRUE) : 
-  could not find function ""tab_model""
-"

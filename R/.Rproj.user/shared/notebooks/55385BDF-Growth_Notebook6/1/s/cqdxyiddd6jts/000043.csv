@@ -1,7 +1,0 @@
-"0",""
-"0","# Plot growth on y-axis and summer temp on x-axis"
-"0","ggplot(mydata_first, aes(x = group_summer_temp, y = growthL, color = release_group)) +"
-"0","  geom_point(size = 2) +  # You can use a boxplot to show distribution by category"
-"0","  #geom_jitter(width = 0.2, height = 0, color = ""#0072B2"", size = 0.1) +  # Jitter to show individual points"
-"0","  #labs(x = ""Mover"", y = ""Fork Length (mm)"", title = ""Movers vs Non movers"") +"
-"0","  theme_minimal()"
