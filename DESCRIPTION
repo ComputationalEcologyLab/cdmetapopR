@@ -1,4 +1,4 @@
-Package: cdmetapop.R
+Package: cdmetapopR
 Title: Utility functions for CDMetaPOP outputs
 Version: 0.0.1
 Authors@R: 
