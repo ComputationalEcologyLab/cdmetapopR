@@ -159,37 +159,14 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
           ))
         ),
         
-        # Mate_cdmat
+        # mating cost-distance matrix
         div(
           class = "upload-block",
           h5("Mating Movement"),
-          radioButtons(
-            "cdmat_option",
-            "Distance Matrix Option:",
-            choices = c("Type" = "type", "Generate" = "generate")
-          ),
-          conditionalPanel(
-            condition = "input.cdmat_option == 'type'",
-            textInput("cdmats_file", "Type the name of the distance matrix (.csv)")
-          ),
-          conditionalPanel(
-            condition = "input.cdmat_option == 'generate'",
-            numericInput("num_sites", "Number of patches:", value = 5, min = 2)
-          ),
+          textInput("mate_cdmat_file", "Type the file name of the distance matrix for mating movement"),
           actionButton("update_cdmat", tagList(
             "Update ",
             em(span("mate_cdmat", style = "color:#0072B2; font-weight: bold;"))
-          ))
-        ),
-        
-        # disperseLocal_cdmat
-        div(
-          class = "upload-block",
-          h5("Dispersal Movement"),
-          fileInput("disperseLocal_cdmat_file", "Choose a distance matrix for dispersal movement (.csv)", accept = ".csv"),
-          actionButton("update_disperseLocal_cdmat", tagList(
-            "Update ",
-            em(span("disperseLocal_cdmat", style = "color:#0072B2; font-weight: bold;"))
           ))
         ),
         
@@ -199,14 +176,17 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
           h5("Dispersal Movement"),
           radioButtons(
             "cor_matrix_source",
-            "Upload matrix to generate correlated variables at the patch level:",
-            choices = c("Upload file" = "file", "Do not use a Correlation Matrix" = "N"),
+            tagList(
+              "Do you want to use a correlation matrix?:",
+              em(span("correlation_matrix", style = "color:#0072B2;"))
+            ),
+            choices = c("Yes" = "file", "Do not use a Correlation Matrix" = "N"),
             selected = "N"
           ),
           conditionalPanel(
             condition = "input.cor_matrix_source == 'file'",
             tagList(
-              fileInput("Patch_r", "Choose Correlation Matrix File", accept = ".csv"),
+              textInput("Patch_r", "Type the file name of the Correlation Matrix File"),
               actionButton("update_corrmatrix", tagList(
                 "Update ",
                 em(span("correlation_matrix", style = "color:#0072B2; font-weight: bold;"))
@@ -221,14 +201,17 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
           h5("Mortality Matrix"),
           radioButtons(
             "subpopmort_source",
-            "Subpopulation mortality matrix source:",
-            choices = c("Upload file" = "file", "Do not use a subpopulation mortality matrix" = "N"),
+            tagList(
+              "Subpopulation mortality matrix source:",
+              em(span("subpopmort_file", style = "color:#0072B2; font-weight: bold;"))
+            ),
+            choices  = c("Yes" = "file", "Do not use a subpopulation mortality matrix" = "N"),
             selected = "N"
           ),
           conditionalPanel(
             condition = "input.subpopmort_source == 'file'",
             tagList(
-              fileInput("Subpopmort_file", "Choose Percent Mortality Matrix", accept = ".csv"),
+              textInput("Subpopmort_file", "Write name of Percent Mortality Matrix"),
               actionButton("update_subpopmort", tagList(
                 "Update ",
                 em(span("subpopmort_file", style = "color:#0072B2; font-weight: bold;"))
@@ -250,8 +233,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
           # Growth Tab #
           #################
           tabPanel(
-            
-            "Growth",
+             "Growth",
             HTML("<b style='color:red;'>⚠ Warning: If in RunVars.csv, the value for cdevolveans points to fitness-based growth, CDMetaPOP will use the growth parameters from the PatchVars.csv. Therefore, the growth parameters from the PopVars.csv will be ignored.</b>")
             ,
             selectInput("popmodel", tagList("Enter choice for population growth ", em(span("popmodel", style = "color:#0072B2;"))),
@@ -567,12 +549,11 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
           ),
           
           
-          ####################################
-          # Movement Tab 
-          ####################################
-          tabPanel(
-            "Movement",
-            
+          # ####################################
+          # # Movement Tab 
+          # ####################################
+           tabPanel(
+             "Movement",
             # MATE section
             wellPanel(
               h4("Mate Movement"),
@@ -584,150 +565,134 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
                            inline = TRUE),
               conditionalPanel(
                 condition =  "input.apply_max_threshold == 'Yes'",
-                numericInput("matemovethresh", tagList("Select a threshold option in effective distance units for how far an individual can search for a mate  ", 
+                numericInput("matemovethresh", tagList("Select a threshold option in effective distance units for how far an individual can search for a mate  ",
                                                        em(span("matemovethresh", style = "color:#0072B2;"))), value = 0, min = 0),
                 bsTooltip(
                   "matemovethresh",
                   "If you want to set your own maximum threshold for mate movement, enter a value greater than 0. Otherwise, leave No and the maximum movement value will be the maximum value entered in the uploaded cost distance matrix.",
                   "left")
                 ),
-              
+
               actionButton("update_mate", "Update Mating"),
               actionButton("help_mate", "?", class = "btn-info")
             ),
-            
+
             # MIGRATION Section
             wellPanel(
               radioButtons("apply_migration", "Apply Migration?",
-                           choices = c("No", "Yes"), 
-                           selected = "No", 
+                           choices = c("No", "Yes"),
+                           selected = "No",
                            inline = TRUE),
-              
+
               # Show migration settings only if 'Yes' is selected
               conditionalPanel(
                 condition = "input.apply_migration == 'Yes'",
-                
+
                 # MIGRATE OUT Section
                 wellPanel(
                   h4("Migrate Out Movement"),
+                  textInput("migrateout_cdmat_file", "Type the file name of the distance matrix for migrating out movement"),
+                  actionButton("update_migrateout_cdmat",
+                               tagList("Update ", em(span("migrateout_cdmat", style = "color:#0072B2; font-weight: bold;")))),
                   numericInput("migrateoutno",
-                               tagList("Migrate Out Movement Option Number", 
+                               tagList("Migrate Out Movement Option Number",
                                        em(span("migratemoveOutno", style = "color:#0072B2;"))),
                                value = 4, min = 1, max = 11, step = 1),
                   uiOutput("migrateout_extra_ui"),
-                  
-                  radioButtons(
-                    "migrateOutthresh",
-                    HTML("Select a threshold option in effective distance units for how far an individual can migrate out (<i><span style='color:#0072B2;'>migrateOutthresh</span></i>):"),
-                    choices = c("cost distance" = "cost distance",
-                                "max" = "max",
-                                "% max" = "%max"),
-                    selected = "cost distance"
-                  ),
-                  
+                    textInput( "migratemoveOutthresh",
+                               tagList(
+                               "Input a threshold option in effective distance units for how far an individual can migrate out:",
+                               em(span("migratemoveOutthresh", style = "color:#0072B2;")))),
                   actionButton("update_migrateout", "Update Migrate Out"),
                   actionButton("help_migrateout", "?", class = "btn-info"),
-                  
-                  fileInput("migrateout_cdmat_file", "Choose a distance matrix for migrating out movement (.csv)", accept = ".csv"),
-                  actionButton("update_migrateout_cdmat", 
-                               tagList("Update ", em(span("migrateout_cdmat", style = "color:#0072B2; font-weight: bold;"))))
-                ),
-                
+              ),
+
                 # MIGRATE BACK Section
                 wellPanel(
                   h4("Migrate Back Movement"),
-                  numericInput("migratebackno", 
-                               tagList("Probability of Migrate Back", 
+                  textInput("migrateback_cdmat_file", "Type the file name of the distance matrix for migrating back movement"),
+
+                  actionButton("update_migrateback_cdmat",
+                               tagList("Update ", em(span("migrateback_cdmat", style = "color:#0072B2; font-weight: bold;")))),
+
+                  numericInput("migratebackno",
+                               tagList("Probability of Migrate Back",
                                        em(span("migratemoveBackno", style = "color:#0072B2;"))),
                                value = 4, min = 1, max = 11, step = 1),
+
                   uiOutput("migrateback_extra_ui"),
-                  
-                  radioButtons(
-                    "migrateBackthresh",
-                    HTML("Select a threshold option in effective distance units for how far an individual can migrate back (<i><span style='color:#0072B2;'>migrateBackthresh</span></i>):"),
-                    choices = c("cost distance" = "cost distance",
-                                "max" = "max",
-                                "% max" = "%max"),
-                    selected = "cost distance"
-                  ),
-                  
+
+                  textInput("migratemoveBackthresh",
+                            tagList("Input a threshold option in effective distance units for how far an individual can migrate back: ",
+                                    em(span("migratemoveBackthresh", style = "color:#0072B2;")))),
+
                   selectInput(
                     "HomeAttempt",
                     HTML("There is a possibility that a migrant that did not become a strayer attempts to immigrate back to its original natal patch but cannot. Select the case (<i><span style='color:#0072B2;'>HomeAttempt</span></i>):"),
                     selected = "mortality",
                     choices = c("mortality", "stray_emiPop", "stray_natalPop")
                   ),
-                  
                   actionButton("update_migrateback", "Update Migrate Back"),
                   actionButton("help_migrateback", "?", class = "btn-info"),
-                  fileInput("migrateback_cdmat_file", "Choose a distance matrix for migrating back movement (.csv)", accept = ".csv"),
-                  actionButton("update_migrateback_cdmat", 
-                               tagList("Update ", em(span("migrateback_cdmat", style = "color:#0072B2; font-weight: bold;"))))
-                ),
-                # STRAY section
-                wellPanel(
-                  h4("Stray Movement"),
-                  numericInput("strayno", tagList("Probability of Stray ", em(span("StrayBackno", style = "color:#0072B2;"))), value = 4, min = 1, max = 11, step = 1),
-                  uiOutput("stray_extra_ui"),
-                  radioButtons(
-                    "StrayBackthresh",
-                    HTML(
-                      paste0(
-                        "Select a threshold option in effective distance units for how far an individual can stray ",
-                        "(<i><span style='color:#0072B2;'>StrayBackthresh</span></i>):"
-                      )
-                    ),
-                    choices = c(
-                      "cost distance" = "cost distance",
-                      "max" = "max",
-                      "% max" = "%max"
-                    ),
-                    selected = "cost distance"
-                  ),
-                  actionButton("update_stray", "Update Stray"),
-                  actionButton("help_stray", "?", class = "btn-info"),
-                  fileInput("stray_cdmat_file", "Choose a distance matrix for stray movement (.csv)", accept = ".csv"),
-                  actionButton("update_stray_cdmat", 
-                               tagList("Update ", em(span("stray_cdmat", style = "color:#0072B2; font-weight: bold;"))))
+                  )
                 )
+              ),
+              # STRAY section
+              wellPanel(
+                radioButtons("apply_stray", "Apply Stray?",
+                             choices = c("No", "Yes"),
+                             selected = "No",
+                             inline = TRUE),
+                # Show stray settings only if 'Yes' is selected
+                conditionalPanel(
+                  condition = "input.apply_stray == 'Yes'",
+
+                h4("Stray Movement"),
+                textInput("stray_cdmat_file", "Type the file name of the distance matrix for stray movement"),
+                actionButton("update_stray_cdmat",
+                             tagList("Update ", em(span("stray_cdmat", style = "color:#0072B2; font-weight: bold;")))),
+
+                numericInput("strayno",
+                             tagList("Probability of Stray ", em(span("StrayBackno", style = "color:#0072B2;"))),
+                             value = 4, min = 1, max = 11, step = 1),
+                uiOutput("stray_extra_ui"),
+                textInput(
+                  "StrayBackthresh",
+                  tagList("Input a threshold option in effective distance units for how far an individual can stray: ",
+                      em(span("StrayBackthresh", style="color:#0072B2;")))),
+
+                actionButton("update_stray", "Update Stray"),
+                actionButton("help_stray", "?", class = "btn-info"),
+          )
               )
-            ),
-            
-            
-            # DISPERSE section
-            wellPanel(
-              radioButtons("apply_dispersal", "Apply Dispersal?",
-                           choices = c("No", "Yes"), 
-                           selected = "No", 
-                           inline = TRUE),
-              
+          ),
+
+          # DISPERSE section
+          wellPanel(
+            radioButtons("apply_dispersal", "Apply Dispersal?",
+                         choices = c("No", "Yes"),
+                         selected = "No",
+                         inline = TRUE),
+
               # Show dispersal settings only if 'Yes' is selected
               conditionalPanel(
                 condition = "input.apply_dispersal == 'Yes'",
                 h4("Dispersal Movement"),
+                textInput("disperse_cdmat_file", "Type the file name of the distance matrix for dispersal movement"),
+                actionButton("update_disperse_cdmat",
+                             tagList("Update ", em(span("disperse_cdmat", style = "color:#0072B2; font-weight: bold;")))),
+                
                 numericInput("disperseLocalno", tagList("Probability of Dispersal ", em(span("disperseLocalno", style = "color:#0072B2;"))), value = 4, min = 1, max = 11, step = 1),
                 uiOutput("disperseLocal_extra_ui"),
-                radioButtons(
+                textInput(
                   "disperseLocalthresh",
-                  HTML(
-                    paste0(
-                      "Select a threshold option in effective distance units for how far an individual can disperse ",
-                      "(<i><span style='color:#0072B2;'>disperseLocalthresh</span></i>):"
-                    )
-                  ),
-                  choices = c(
-                    "cost distance" = "cost distance",
-                    "max" = "max",
-                    "% max" = "%max"
-                  ),
-                  selected = "cost distance"
-                ),
+                  tagList("Input a threshold option in effective distance units for how far an individual can disperse ",
+                      em(span("disperseLocalthresh", style="color:#0072B2;")))),
+
                 actionButton("update_disperseLocal", "Update Disperse Local"),
-                actionButton("help_disperse", "?", class = "btn-info")
-              )
+                actionButton("help_disperse", "?", class = "btn-info"),
             )
           ),
-          
           ####################################
           # Plasticity tab
           ####################################
@@ -820,20 +785,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
       )
     )
   )
-  
-  
-  #####################################################
-  # FUNCTIONS 
-  #####################################################
-  
-  generate_cdmat <- function(n_sites) {
-    # Example: make a simple symmetric distance matrix
-    mat <- matrix(runif(n_sites^2), n_sites, n_sites)
-    mat <- (mat + t(mat)) / 2  # Make symmetric
-    diag(mat) <- 0  # Zero diagonal
-    as.data.frame(mat)
-  }
-  
+
   ######################################################
   # SERVER 
   #######################################################
@@ -1361,30 +1313,10 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     })
     
     observeEvent(input$help_mate, { showModal(movement_help_text) })
-    # output$matemovethreshinput <- renderUI({
-    #   if (input$matemovethresh == "%max") {
-    #     numericInput(
-    #       "matemovethresh_pct",
-    #       "Specify the % of max distance (1–100):",
-    #       value = 50,
-    #       min = 1,
-    #       max = 100,
-    #       step = 1
-    #     )
-    #   } else {
-    #     NULL
-    #   }
-    # })
     observeEvent(input$update_mate, {
       temp <- template_data()
-      
       thresh_value <- input$matemovethresh
-      # if (thresh_value == "%max") {
-      #   thresh_value <- paste0(input$matemovethresh_pct, "%max")
-      # }
-      
       temp$matemovethresh <- thresh_value
-      
       template_data(temp)
     })
     
@@ -1439,33 +1371,11 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
       }
       template_data(temp)
     })
-    
-    observeEvent(input$help_migrateout, { showModal(movement_help_text) })
-    # Threshold input for migrate out
-    output$migrateoutthreshinput <- renderUI({
-      if (input$migrateOutthresh == "%max") {
-        numericInput(
-          "migrateOutthresh_pct",
-          "Specify the % of max distance (1–100):",
-          value = 50,
-          min = 1,
-          max = 100,
-          step = 1
-        )
-      } else {
-        NULL
-      }
-    })
+
     observeEvent(input$update_migrateout, {
       temp <- template_data()
-      
-      thresh_value <- input$migrateOutthresh
-      if (thresh_value == "%max") {
-        thresh_value <- paste0(input$migrateOutthresh_pct, "%max")
-      }
-      
-      temp$migrateOutthresh <- thresh_value
-      
+     thresh_value <- input$migratemoveOutthresh
+     temp$migratemoveOutthresh <- thresh_value
       template_data(temp)
     })
     
@@ -1532,31 +1442,10 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
       template_data(temp)
     })
     
-    output$migrateBackthreshinput <- renderUI({
-      if (input$migrateBackthresh == "%max") {
-        numericInput(
-          "migrateBackthresh_pct",
-          "Specify the % of max distance (1–100):",
-          value = 50,
-          min = 1,
-          max = 100,
-          step = 1
-        )
-      } else {
-        NULL
-      }
-    })
-    
     observeEvent(input$update_migrateback, {
       temp <- template_data()
-      
-      thresh_value <- input$migrateBackthresh
-      if (thresh_value == "%max") {
-        thresh_value <- paste0(input$migrateBackthresh_pct, "%max")
-      }
-      
+      thresh_value <- input$migratemoveBackthresh
       temp$migrateBackthresh <- thresh_value
-      
       template_data(temp)
     })
     
@@ -1615,30 +1504,38 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
       template_data(temp)
     })
     
-    output$StrayBackthreshinput <- renderUI({
-      if (input$StrayBackthresh == "%max") {
-        numericInput(
-          "StrayBackthresh_pct",
-          "Specify the % of max distance (1–100):",
-          value = 50,
-          min = 1,
-          max = 100,
-          step = 1
-        )
-      } else {
-        NULL
-      }
-    })
+    # output$StrayBackthreshinput <- renderUI({
+    #   if (input$StrayBackthresh == "%max") {
+    #     numericInput(
+    #       "StrayBackthresh_pct",
+    #       "Specify the % of max distance (1–100):",
+    #       value = 50,
+    #       min = 1,
+    #       max = 100,
+    #       step = 1
+    #     )
+    #   } else {
+    #     NULL
+    #   }
+    # })
+    # 
+    # observeEvent(input$update_stray, {
+    #   temp <- template_data()
+    #   thresh_value <- input$StrayBackthresh
+    #   if (thresh_value == "%max") {
+    #     thresh_value <- paste0(input$StrayBackthresh_pct, "%max")
+    #   }
+    #   temp$StrayBackthresh <- thresh_value
+    #   template_data(temp)
+    # })
     
     observeEvent(input$update_stray, {
       temp <- template_data()
-      thresh_value <- input$StrayBackthresh
-      if (thresh_value == "%max") {
-        thresh_value <- paste0(input$StrayBackthresh_pct, "%max")
-      }
-      temp$StrayBackthresh <- thresh_value
+      thresh_value <- input$strayBackthresh
+      temp$strayBackthresh <- thresh_value
       template_data(temp)
     })
+    
     
     observeEvent(input$help_stray, { showModal(movement_help_text) })
     
@@ -1748,30 +1645,37 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
       template_data(temp)
     })
     
-    output$disperseLocalthreshinput <- renderUI({
-      if (input$disperseLocalthresh == "%max") {
-        numericInput(
-          "disperseLocalthresh_pct",
-          "Specify the % of max distance (1–100):",
-          value = 50,
-          min = 1,
-          max = 100,
-          step = 1
-        )
-      } else {
-        NULL
-      }
-    })
-    
-    observeEvent(input$update_disperse, {
+    observeEvent(input$update_disperseLocal, {
       temp <- template_data()
       thresh_value <- input$disperseLocalthresh
-      if (thresh_value == "%max") {
-        thresh_value <- paste0(input$disperseLocalthresh_pct, "%max")
-      }
       temp$disperseLocalthresh <- thresh_value
       template_data(temp)
     })
+
+    # output$disperseLocalthreshinput <- renderUI({
+    #   if (input$disperseLocalthresh == "%max") {
+    #     numericInput(
+    #       "disperseLocalthresh_pct",
+    #       "Specify the % of max distance (1–100):",
+    #       value = 50,
+    #       min = 1,
+    #       max = 100,
+    #       step = 1
+    #     )
+    #   } else {
+    #     NULL
+    #   }
+    # })
+    # 
+    # observeEvent(input$update_disperse, {
+    #   temp <- template_data()
+    #   thresh_value <- input$disperseLocalthresh
+    #   if (thresh_value == "%max") {
+    #     thresh_value <- paste0(input$disperseLocalthresh_pct, "%max")
+    #   }
+    #   temp$disperseLocalthresh <- thresh_value
+    #   template_data(temp)
+    # })
     
     observeEvent(input$help_disperse, { showModal(movement_help_text) })
     
@@ -1899,47 +1803,29 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
       
       # Update only the 'xyfilename' column with the subdir name
       temp <- template_data()
-      temp$xyfilename <- input$patchvars_file
+      temp$xyfilename <- trimws(input$patchvars_file)
       template_data(temp)
     })
     
-    # Update mating CDMat from Uploaded File
+    # Update CDMAT text
     observeEvent(input$update_cdmat, {
+      req(input$mate_cdmat_file)
+      # Update the cdmat column with the dir and subdir name
       temp <- template_data()
-      
-      if (input$cdmat_option == "type") {
-        req(input$cdmats_file)
-        cdmats_name <- input$cdmats_file
-        
-        
-      } else if (input$cdmat_option == "generate") {
-        req(input$n_sites)
-        # If you actually generate a file, get its name/path here
-        cdmats_name <- paste0("generated_matrix_", input$n_sites, ".csv")
-        
-        
-      } else {
-        showNotification("Please select a valid option for CDMat.", type = "error")
-        return()
-      }
-      
-      temp$mate_cdmat <- cdmats_name
+      temp$mate_cdmat <- trimws(input$mate_cdmat_file)
       template_data(temp)
     })
     
-    # Update MigrationOut CDMat from Uploaded File
+    # Update MigrationOut CDMat from entered text
     observeEvent(input$update_migrateout_cdmat, {
       req(input$migrateout_cdmat_file)
       
       # Get the original filename
-      migrate_cdmats_name <- input$migrateout_cdmat_file$name
-      
-      # Construct the full file path
-      # migrate_cdmats_path <- file.path(getwd(), migrate_cdmats_name)
-      
+      migrate_cdmats_name <- input$migrateout_cdmat_file
+
       # Update the 'migrate_cdmat' column with the subdir name
       temp <- template_data()
-      temp$migrateout_cdmat <- migrate_cdmats_name
+      temp$migrateout_cdmat <- trimws(migrate_cdmats_name)
       template_data(temp)
     })
     
@@ -1949,52 +1835,44 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
       req(input$migrateback_cdmat_file)
       
       # Get the original filename
-      migrateback_cdmats_name <- input$migrateback_cdmat_file$name
+      migrateback_cdmats_name <- input$migrateback_cdmat_file
       
-      # Construct the full file path
-      #migrateback_cdmats_path <- file.path(getwd(), migrateback_cdmats_name)
-      
-      # Update =the 'migrateback_cdmat' column 
+      # Update the 'migratemoveback_cdmat' column 
       temp <- template_data()
-      temp$migrateback_cdmat <- paste0("cdmats/", migrateback_cdmats_name, sep = "")
+      temp$migrateback_cdmat <- trimws(migrateback_cdmats_name)
       template_data(temp)
     })
     
-    # Update Stray CDMat from Uploaded File
+    # Update Stray CDMat from text
     
     observeEvent(input$update_stray_cdmat, {
       req(input$stray_cdmat_file)
       
       # Get the original filename
-      stray_cdmats_name <- input$stray_cdmat_file$name
-      
-      # Construct the full file path
-      #stray_cdmats_path <- file.path(getwd(), stray_cdmats_name)
-      
+      stray_cdmats_name <- input$stray_cdmat_file
+
       # Update  the 'stray_cdmat' column 
       temp <- template_data()
       temp$stray_cdmat <- stray_cdmats_name
       template_data(temp)
     })
     
-    # Update dispLocal_cdmat from Uploaded File
-    
-    observeEvent(input$update_disperseLocal_cdmat, {
-      req(input$disperseLocal_cdmat_file)
+    # Updated Dispersal CDMat from text
+    observeEvent(input$update_dispersal_cdmat, {
+      req(input$dispersal_cdmat_file)
       
       # Get the original filename
-      dispLocal_cdmats_name <- input$disperseLocal_cdmat_file$name
-      
-      # Construct the full file path
-      #dispLocal_cdmats_path <- file.path(getwd(), dispLocal_cdmats_name)
-      
-      # Update only the 'dispLocal_cdmat' column with the full file path
+      dispersal_cdmats_name <- input$dispersal_cdmat_file
+
+      # Update  the 'dispersal_cdmat' column 
       temp <- template_data()
-      temp$disperseLocal_cdmat <- dispLocal_cdmats_name
+      temp$dispersal_cdmat <- dispersal_cdmats_name
       template_data(temp)
     })
-    
-    # Update Correlation matrix from Uploaded File
+
+    ###########################################################   
+    # Update Correlation matrix from text or "N" selection
+    ##########################################################
     observeEvent(input$update_corrmatrix, {
       temp <- template_data()
       
@@ -2002,36 +1880,34 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
         temp$correlation_matrix <- "N"
       } else if (!is.null(input$Patch_r)) {
         # Use uploaded filename
-        corr_name <- input$Patch_r$name
+        corr_name <- trimws(input$Patch_r)
         #corr_path <- file.path(getwd(), corr_name)
-        temp$correlation_matrix <- paste0("otherfiles/", corr_name, sep = "")
-      } else {
-        showNotification("Please upload a correlation matrix file or select 'Use N'", type = "error")
-        return()
-      }
+        temp$correlation_matrix <- corr_name
+       }
       
       template_data(temp)
     })
-    
+   ###################################################### 
+    # Update Mortality matrix from text or "N" selection
+    ##########################################################
     observeEvent(input$update_subpopmort, {
       temp <- template_data()
       
       if (input$subpopmort_source == "N") {
         temp$subpopmort_file <- "N"
       } else if (!is.null(input$Subpopmort_file)) {
-        mort_name <- input$Subpopmort_file$name
+        #mort_name <- input$Subpopmort_file$name
         #mort_path <- file.path(getwd(), mort_name)
-        temp$subpopmort_file <- paste0("otherfiles/", mort_name, sep = "") 
-      } else {
-        showNotification("Please upload a subpopmort file or select 'Use N'", type = "error")
-        return()
+        temp$subpopmort_file <- trimws(input$Subpopmort_file)
       }
       
       template_data(temp)
     })
     
-    
+    ###################################################### 
     # Preview Template
+    ##########################################################
+    
     output$preview_template <- renderTable({
       template_data()
     })
