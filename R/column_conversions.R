@@ -4,7 +4,6 @@
 #'
 #' @param x Specify the file name and path.
 #' @return Dataframe of columns for each value that was originally separated by the delimiter.
-#' @import tidyr
 #' @export
 separate_column <- function(file_path, column_name, sep) {
   

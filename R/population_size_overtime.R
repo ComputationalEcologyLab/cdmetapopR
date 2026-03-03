@@ -30,6 +30,8 @@ pop_count_plot <- function(data) {
 #'
 #' @param dataframe Import the summary_popAllTime.csv dataframe
 #' @return a ggplot object representing the overtime  population size for the four sexes
+#' @import ggplot2
+#' @importFrom tidyr pivot_longer
 #' @export
 
 pop_sex_plot <- function(data) {
@@ -79,6 +81,8 @@ p<- ggplot(long_data, aes(x = as.numeric(Year), y = as.numeric(value))) +
 #' This function plots population dynamics overtime showing a count of the mature individuals over the years of the simulation separated by their sex. It is based off the N_Mature columns of the CDMetaPOP output file summary_popAllTime
 #'
 #' @param x Specify the path to the summary_popAllTime.csv dataframe
+#' @import ggplot2
+#' @importFrom tidyr pivot_longer
 #' @return a ggplot object representing the overtime population size of sexually mature individuals
 #' @export
 
@@ -316,7 +320,7 @@ pop_year_class <- function(file_path, n = 5) {
 #' @param years vector of values referring to the years to select. It defaults to c(1,25,50,100)
 #' @return a ggplot boxplot showing the population numbers of different patches
 #' @import ggplot2
-#' @import tidyr
+#' @importFrom tidyr pivot_longer
 #' @export
 
 pop_patch_count <- function(data, years = c(1,25,50,100)) {

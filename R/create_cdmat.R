@@ -11,8 +11,8 @@
 #'
 #'
 #' @import gdistance
-#' @import terra
-#' @import raster
+#' @importFrom terra extract rast
+#' @importFrom grDevices is.raster
 #'
 #' @return An NxN matrix of cost distances among patch locations
 #'
