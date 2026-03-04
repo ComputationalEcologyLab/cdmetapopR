@@ -5,6 +5,7 @@
 #' @param x Specify the path to the summary_popAllTime.csv dataframe
 #' @return a ggplot object representing the overtime average sizes of the individuals in the simulation separated by age. 
 #' @import ggplot2
+#' @importFrom utils read.table
 #' @import reshape2
 #' @export
 

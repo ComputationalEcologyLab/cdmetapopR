@@ -5,6 +5,7 @@
 #' @param dataframe Import the summary_popAllTime.csv dataframe
 #' @import ggplot2
 #' @import reshape2
+#' @importFrom utils read.table
 #' @return a ggplot object representing the overtime general population size
 #' @export
 
@@ -30,6 +31,9 @@ pop_count_plot <- function(data) {
 #'
 #' @param dataframe Import the summary_popAllTime.csv dataframe
 #' @return a ggplot object representing the overtime  population size for the four sexes
+#' @import ggplot2
+#' @importFrom utils read.table
+#' @importFrom tidyr pivot_longer
 #' @export
 
 pop_sex_plot <- function(data) {
@@ -79,6 +83,9 @@ p<- ggplot(long_data, aes(x = as.numeric(Year), y = as.numeric(value))) +
 #' This function plots population dynamics overtime showing a count of the mature individuals over the years of the simulation separated by their sex. It is based off the N_Mature columns of the CDMetaPOP output file summary_popAllTime
 #'
 #' @param x Specify the path to the summary_popAllTime.csv dataframe
+#' @import ggplot2
+#' @importFrom utils read.table
+#' @importFrom tidyr pivot_longer
 #' @return a ggplot object representing the overtime population size of sexually mature individuals
 #' @export
 
@@ -140,6 +147,7 @@ pop_mature_plot <- function(file_path) {
 #' This function plots the proportion of progeny over the total, after egg deaths are taken into account
 #'
 #' @param x Specify the path to the summary_popAllTime.csv dataframe
+#' @importFrom utils read.table
 #' @return a ggplot object representing the size of progeny surviving egg deaths every year
 #' @export
 
@@ -198,6 +206,7 @@ births <- function(file_path){
 #' This function plots the ratio of the Myy progeny overtime 
 #'
 #' @param x Specify the path to the summary_popAllTime.csv dataframe
+#' @importFrom utils read.table
 #' @return a ggplot object representing the overtime progeny size of YYMales
 #' @export
 
@@ -257,6 +266,7 @@ myy_progeny_plot <- function(file_path) {
 #'
 #' @param x Specify the path to the summary_classAllTime.csv dataframe
 #' @param n An integer that specifies the time intervals of the time series. It defaults to 5 years.
+#' @importFrom utils read.table
 #' @return a ggplot object representing the  general population size at 5 years intervals for the different age classes. 
 #' @export
 
@@ -316,7 +326,8 @@ pop_year_class <- function(file_path, n = 5) {
 #' @param years vector of values referring to the years to select. It defaults to c(1,25,50,100)
 #' @return a ggplot boxplot showing the population numbers of different patches
 #' @import ggplot2
-#' @import tidyr
+#' @importFrom utils read.table
+#' @importFrom tidyr pivot_longer
 #' @export
 
 pop_patch_count <- function(data, years = c(1,25,50,100)) {
@@ -344,6 +355,7 @@ return(p)
 #' This function produces a vector with the number of patches that suffered extinction at a given year. It is based off the N_Initial column of the CDMetaPOP output file summary_popAllTime. 
 #' @param dataframe summary_popAllTime.csv dataframe
 #' @param year value referring to the year to select. It defaults to 100
+#' @importFrom utils read.table
 #' @return integer vector
 #' @export
 
@@ -362,6 +374,7 @@ return(extinct)
 #'
 #' This function produces a  plot with population sizes of age 1+ individuals. It is based on the N_Initial_class column of the CDMetaPOP output file summary_classAllTime. 
 #' @param dataframe summary_classAllTime.csv dataframe
+#' @importFrom utils read.table
 #' @return ggplot
 #' @export
 

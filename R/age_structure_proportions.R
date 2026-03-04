@@ -8,7 +8,7 @@
 #' @param species If the simulation includes more species... The code for this needs to be adjusted
 #' @return a dataframe with a  column for each montecarlo run (MC) with the proportion of the population for each given age (in rows) and the last column with the average value across all montecarlo runs at any given age. 
 #' @examples 
-#' define  your path to the output_test folder: mypath = "~/UM/CDMetaPop/EBT/EBT_Inputs/data/output_test1728487700/"
+#' mypath = "~/UM/CDMetaPop/data/output_test1728487700/"
 #' @export
 
 age_structure_proportions <- function(path = mypath, runs = 1, gen = 49, species = 0) {

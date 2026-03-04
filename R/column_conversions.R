@@ -3,8 +3,8 @@
 #' This function eases the separation of column content generated from cdmetapop outputs. CDMetaPOP uses delimiters and different delimiter options are specified for different fields. Delimiter ‘|’ or ‘bar’ is used time parameters. The delimiter ‘~’ (‘tilda’) is used to assign parameters based on sex. The delimiter ‘;’ is the default and used in various contexts to split fields and patches parameters. The delimiter ‘:’ is used to split parameters used for functions. Note that Loo uses one instance of ‘;’ in an Hindex option. See CDMetaPOP manual for more specific uses and examples. 
 #'
 #' @param x Specify the file name and path.
+#' @importFrom utils read.table
 #' @return Dataframe of columns for each value that was originally separated by the delimiter.
-#' @import tidyr
 #' @export
 separate_column <- function(file_path, column_name, sep) {
   

@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(cdmetapop)
+library(cdmetapopR)
 
-test_check("cdmetapop")
+test_check("cdmetapopR")

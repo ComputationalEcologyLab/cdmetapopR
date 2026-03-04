@@ -12,7 +12,14 @@ Description: This package provides a set of helper functions to analyze
 Imports: ggplot2,
   reshape2,
   tidyr,
-  dplyr
+  dplyr, 
+  adegenet,
+  gdistance,
+  graph4lg,
+  poppr,
+  shiny,
+  shinyBS, 
+  terra
 License: GPL (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

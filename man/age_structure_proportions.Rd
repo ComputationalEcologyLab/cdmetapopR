@@ -22,5 +22,5 @@ a dataframe with a  column for each montecarlo run (MC) with the proportion of t
 This function summarizes the proportions of the age structure in the simulated population. It is calculated counting the values in the column 'age' of the chosen 'ind' generation.
 }
 \examples{
-define  your path to the output_test folder: mypath = "~/UM/CDMetaPop/EBT/EBT_Inputs/data/output_test1728487700/"
+mypath = "~/UM/CDMetaPop/data/output_test1728487700/"
 }
