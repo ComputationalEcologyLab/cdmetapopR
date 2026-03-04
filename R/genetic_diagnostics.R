@@ -1,7 +1,8 @@
 #' Create heterozygosity plot
 #'
 #' This function plots heterozygosity overtime. It is based on the Ho and He columns of the CDMetaPOP output file summary_popAllTime
-#' @import ggplot2
+#' @import ggplot2 
+#' @importFrom utils read.table
 #' @importFrom tidyr pivot_longer
 #' @param x dataframe summary_popAllTime.csv 
 #' @return a ggplot object representing the overtime observed and expected heterozygosities values in the simulation. 
@@ -38,6 +39,7 @@ hets_plot <- function(data) {
 #' @param dataframe summary_popAllTime.csv 
 #' @param n An integer that specifies the time intervals of the time series. It defaults to 5 years. 
 #' @import ggplot2 
+#' @importFrom utils read.table
 #' @importFrom dplyr group_by summarize
 #' @return a ggplot object representing the overtime observed and expected heterozygosities values in the simulation. 
 #' @export

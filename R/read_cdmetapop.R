@@ -3,6 +3,7 @@
 #' This function imports in r a cdmetapop output file as a dataframe
 #'
 #' @param x Specify the file name and path.
+#' @importFrom utils read.table
 #' @return Dataframe
 #' @export
 read.cdmetapop <- function(file_path) {

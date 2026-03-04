@@ -4,7 +4,7 @@
 #' @description Takes input coordinates and produces a symmetrical cost distance matrix with options for Euclidean distance, equal distance, or least cost paths based on a provided resistance surface
 #'
 #' @param coords A set of spatial coordinates in the form of a 2-column data frame or matrix
-#' @param method Method for creating the cost distance matrix, must be "Euclidean", "Equal", or "LCP"
+#' @param method Method for creating the cost distance matrix, must be "euclidean", "equal", or "lcp"
 #' @param resistance Raster object representing resistance surface for generating cost distance matrix
 #'
 #' @details Hello
@@ -29,7 +29,7 @@
 #' coords <- data.frame(x=x, y=y)
 #' r <- terra::rast(nrows=10, ncols=10, xmin = 0, xmax = 10, ymin = 0, ymax = 10)
 #' terra::values(r) <- 1
-#' create_cdmat(coords=coords, method="LCP", resistance=r)
+#' create_cdmat(coords=coords, method="lcp", resistance=r)
 
 # Function reads in a 2-column set of coordinates and creates
 # a distance matrix
