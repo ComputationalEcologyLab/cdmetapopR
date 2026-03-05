@@ -7,6 +7,10 @@
 #' @import reshape2
 #' @importFrom utils read.table
 #' @return a ggplot object representing the overtime general population size
+#' @examples
+#' path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+#' data <- read.csv(path)
+#' pop_count_plot(data)
 #' @export
 
 
@@ -34,20 +38,13 @@ pop_count_plot <- function(data) {
 #' @import ggplot2
 #' @importFrom utils read.table
 #' @importFrom tidyr pivot_longer
+#' @examples
+#' path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+#' data <- read.csv(path)
+#' pop_sex_plot(data)
 #' @export
 
 pop_sex_plot <- function(data) {
-  # namevec <- colnames(data)
-  # data <- data.frame(as.integer(data[,1]))
-  # colnames(data) <- namevec[1]
-  # 
-  # for(i in 2:length(namevec)){
-  #   tmp <- read.table(text = data[,i], sep = "|")
-  #   tmp2 <- paste (namevec[i], seq_len(ncol(tmp)), sep = "_")
-  #   colnames(tmp) <- tmp2
-  #   data <- cbind(data, tmp)
-  #   rm(tmp, tmp2)
-  # }
 
   N_males<-read.table(text = data$N_Males, sep = "|")  
   N_Males_1 <- N_males[,1]
@@ -87,6 +84,9 @@ p<- ggplot(long_data, aes(x = as.numeric(Year), y = as.numeric(value))) +
 #' @importFrom utils read.table
 #' @importFrom tidyr pivot_longer
 #' @return a ggplot object representing the overtime population size of sexually mature individuals
+#' @examples
+#' path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+#' pop_mature_plot(path)
 #' @export
 
 pop_mature_plot <- function(file_path) {
@@ -149,6 +149,9 @@ pop_mature_plot <- function(file_path) {
 #' @param x Specify the path to the summary_popAllTime.csv dataframe
 #' @importFrom utils read.table
 #' @return a ggplot object representing the size of progeny surviving egg deaths every year
+#' @examples
+#' path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+#' births(path)
 #' @export
 
 
@@ -196,8 +199,6 @@ births <- function(file_path){
          x = "Year",
          y = "Progeny")
   
-
-  
   return(p)
 }
 
@@ -207,6 +208,9 @@ births <- function(file_path){
 #'
 #' @param x Specify the path to the summary_popAllTime.csv dataframe
 #' @importFrom utils read.table
+#' @examples
+#' path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+#' myy_progeny_plot(path)
 #' @return a ggplot object representing the overtime progeny size of YYMales
 #' @export
 
@@ -238,9 +242,9 @@ myy_progeny_plot <- function(file_path) {
     rm(tmp, tmp2)
   }
   
-  if (!"package:ggplot2" %in% search()) {
-    message("The 'ggplot2' package is not loaded. Please load it using library(ggplot2)")
-    return(NULL)  # Exit the function if ggplot2 isn't loaded
+  # if (!"package:ggplot2" %in% search()) {
+  #   message("The 'ggplot2' package is not loaded. Please load it using library(ggplot2)")
+  #   return(NULL)  # Exit the function if ggplot2 isn't loaded
   }
   
   #calculate proportion of exclusive Myy progeny over the total, after egg deaths are taken into account
@@ -268,6 +272,10 @@ myy_progeny_plot <- function(file_path) {
 #' @param n An integer that specifies the time intervals of the time series. It defaults to 5 years.
 #' @importFrom utils read.table
 #' @return a ggplot object representing the  general population size at 5 years intervals for the different age classes. 
+#' @examples
+#' path <- system.file("extdata", "summary_classAllTime.csv", package = "cdmetapopR")
+#' pop_year_class(path, n = 2)
+
 #' @export
 
 pop_year_class <- function(file_path, n = 5) {
@@ -312,8 +320,8 @@ pop_year_class <- function(file_path, n = 5) {
   p <- ggplot(data = df_filtered, mapping = aes(x = Year, y = N_Initial_Class, fill = Ages)) +
     geom_bar(position = "dodge", stat = "identity")+
     labs(title = "Population size by age class",
-       x = "Year",
-       y = "Population Size")
+         x = "Year",
+         y = "Population Size")
   
   return(p)
 }
@@ -328,10 +336,14 @@ pop_year_class <- function(file_path, n = 5) {
 #' @import ggplot2
 #' @importFrom utils read.table
 #' @importFrom tidyr pivot_longer
+#' @examples
+#' path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+#' data <- read.csv(path)
+#' pop_patch_count(data, years = c(0,2,4,8))
 #' @export
 
 pop_patch_count <- function(data, years = c(1,25,50,100)) {
-  abundance <- read.table(text = data[,4], sep = "|")
+  abundance <- read.table(text = data$N_Initial, sep = "|")
   colnames(abundance) <- c("pop", paste("patch", seq_len(ncol(abundance)-1), sep = ""))
   abundance <-cbind(1:nrow(abundance), abundance [,-1])
   colnames(abundance)[1] <- "Year"
@@ -340,7 +352,7 @@ pop_patch_count <- function(data, years = c(1,25,50,100)) {
     pivot_longer(cols = starts_with("patch"), names_to = "Patch", values_to = "Value")
   colnames(df.melted) <- c("Year", "Patch", "Abundance")
   df.filtered <- df.melted %>%
-    filter(Year %in% years)
+    dplyr::filter(Year %in% years)
   
   # Plot
   p<- ggplot(df.filtered, aes(x = as.factor(Year), y = Abundance)) +
@@ -357,10 +369,13 @@ return(p)
 #' @param year value referring to the year to select. It defaults to 100
 #' @importFrom utils read.table
 #' @return integer vector
+#' @examples
+#' path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+#' data <- read.csv(path)
+#' extinct_patch(data, year = 8)
 #' @export
 
 extinct_patch <- function(data, year = 100) {
-  #abundance <- read.table(text = data[,4], sep = "|")
   abundance <- read.table(text = data$N_Initial, sep = "|")
   colnames(abundance) <- c("pop", paste("patch", seq_len(ncol(abundance)-1), sep = ""))
   abundance <-cbind(1:nrow(abundance), abundance [,-1])
@@ -375,6 +390,10 @@ return(extinct)
 #' This function produces a  plot with population sizes of age 1+ individuals. It is based on the N_Initial_class column of the CDMetaPOP output file summary_classAllTime. 
 #' @param dataframe summary_classAllTime.csv dataframe
 #' @importFrom utils read.table
+#' @examples
+#' path <- system.file("extdata", "summary_classAllTime.csv", package = "cdmetapopR")
+#' data <- read.csv(path)
+#' age_plus_one_plot(data)
 #' @return ggplot
 #' @export
 
