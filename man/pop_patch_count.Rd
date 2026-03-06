@@ -17,3 +17,8 @@ a ggplot boxplot showing the population numbers of different patches
 \description{
 This function plots the population abundance per Patch. It is based off the N_Initial column of the CDMetaPOP output file summary_popAllTime.
 }
+\examples{
+path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+data <- read.csv(path)
+pop_patch_count(data, years = c(0,2,4,8))
+}

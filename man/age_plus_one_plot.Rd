@@ -15,3 +15,8 @@ ggplot
 \description{
 This function produces a  plot with population sizes of age 1+ individuals. It is based on the N_Initial_class column of the CDMetaPOP output file summary_classAllTime.
 }
+\examples{
+path <- system.file("extdata", "summary_classAllTime.csv", package = "cdmetapopR")
+data <- read.csv(path)
+age_plus_one_plot(data)
+}

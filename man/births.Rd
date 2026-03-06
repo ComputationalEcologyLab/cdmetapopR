@@ -15,3 +15,7 @@ a ggplot object representing the size of progeny surviving egg deaths every year
 \description{
 This function plots the proportion of progeny over the total, after egg deaths are taken into account
 }
+\examples{
+path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+births(path)
+}

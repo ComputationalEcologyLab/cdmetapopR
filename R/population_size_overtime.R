@@ -13,7 +13,6 @@
 #' pop_count_plot(data)
 #' @export
 
-
 pop_count_plot <- function(data) {
   mydata<-read.table(text = data$N_Initial, sep = "|")  
   mydata_1 <- mydata[,1]
@@ -27,7 +26,6 @@ pop_count_plot <- function(data) {
          x = "Year")
   return(p)
 }
-
 
 #' Create abundance by year plots for the different sex - Male/Female/MYY/FYY
 #'
@@ -241,12 +239,7 @@ myy_progeny_plot <- function(file_path) {
     data <- cbind(data, tmp)
     rm(tmp, tmp2)
   }
-  
-  # if (!"package:ggplot2" %in% search()) {
-  #   message("The 'ggplot2' package is not loaded. Please load it using library(ggplot2)")
-  #   return(NULL)  # Exit the function if ggplot2 isn't loaded
-  }
-  
+
   #calculate proportion of exclusive Myy progeny over the total, after egg deaths are taken into account
   yy_progeny_ratio <- data$MyyProgeny_1/(data$Births_1 - data$EggDeaths_1)
   
