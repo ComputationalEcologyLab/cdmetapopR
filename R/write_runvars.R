@@ -169,40 +169,40 @@ write_runvars <- function(output_file = "my_new_runvars.csv") {
             "1. Create a main folder named ", strong("data"), ".",
             "2. Inside the data folder, place the ", code("runVars.csv"), "file.",
             "3. Also inside the data folder, create the following subdirectories:",
-            br(), "   • ", code("popvars"), " — contains file ", code("popVars.csv"),
-            br(), "   • ", code("patchvars"), " — contains file ", code("patchVars.csv"),
-            br(), "   • ", code("classvars"), " — contains file ", code("classVars"),
-            br(), "   • ", code("genes"), " — contains files ", code("allele frequency files (.csv)"),
-            br(), "   • ", code("cdmats"), " — contains files for movement matrices",
-            br(), "   • ", code("otherfiles"), " — contains other files, e.g. correlation matrices",
+            br(), "   * ", code("popvars"), " - contains file ", code("popVars.csv"),
+            br(), "   * ", code("patchvars"), " - contains file ", code("patchVars.csv"),
+            br(), "   * ", code("classvars"), " - contains file ", code("classVars"),
+            br(), "   * ", code("genes"), " - contains files ", code("allele frequency files (.csv)"),
+            br(), "   * ", code("cdmats"), " - contains files for movement matrices",
+            br(), "   * ", code("otherfiles"), " - contains other files, e.g. correlation matrices",
             br(), br(),
             "The correct structure should look like this:"
           ),
           tags$pre(
             "data/
-│
-├── runVars.csv
-│
-├── popvars/
-│   └── popVars.csv
-│
-├── patchvars/
-│   └── patchVars.csv
-│
-└── classvars/
-│   └── classVars.csv
-│
-└── genes/
-│   └── allelefrequencies.csv
-│
-└── cdmats/
-|   ├── cdmat1.csv
-│   ├── cdmat2.csv
-│   └── cdmat3.csv
 |
-└── otherfiles/
-│   ├── correlation_matrix1.csv
-│   └── correlation_matrix2.csv"
+|-- runVars.csv
+|
+|-- popvars/
+|   |--popVars.csv
+|
+|-- patchvars/
+|   |--patchVars.csv
+|
+|--classvars/
+|   |--classVars.csv
+|
+|--genes/
+|   |--allelefrequencies.csv
+|
+|--cdmats/
+|   |-- cdmat1.csv
+|   |-- cdmat2.csv
+|   |--cdmat3.csv
+|
+|--otherfiles/
+|   |-- correlation_matrix1.csv
+|   |--correlation_matrix2.csv"
             
           ),
           easyClose = TRUE,

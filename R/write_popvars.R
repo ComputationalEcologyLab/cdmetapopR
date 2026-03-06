@@ -234,7 +234,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
           #################
           tabPanel(
              "Growth",
-            HTML("<b style='color:red;'>⚠ Warning: If in RunVars.csv, the value for cdevolveans points to fitness-based growth, CDMetaPOP will use the growth parameters from the PatchVars.csv. Therefore, the growth parameters from the PopVars.csv will be ignored.</b>")
+            HTML("<b style='color:red;'>Warning: If in RunVars.csv, the value for cdevolveans points to fitness-based growth, CDMetaPOP will use the growth parameters from the PatchVars.csv. Therefore, the growth parameters from the PopVars.csv will be ignored.</b>")
             ,
             selectInput("popmodel", tagList("Enter choice for population growth ", em(span("popmodel", style = "color:#0072B2;"))),
                         selected = "packing",
@@ -245,7 +245,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
                         selected = "temperature",
                         choices = c("N", "known", "vonB", "temperature", "temperature_hindex", "bioenergetics")
             ),
-            numericInput("growth_Loo", tagList("Enter the value(s) for the von Bertalanffy asymptotic length value (L∞) ", em(span("growth_Loo", style = "color:#0072B2;"))), value = 250),
+            numericInput("growth_Loo", tagList("Enter the value(s) for the von Bertalanffy asymptotic length value (Loo) ", em(span("growth_Loo", style = "color:#0072B2;"))), value = 250),
             numericInput("growth_R0", tagList("Enter the value for the von Bertalanffy Growth Rate value (R0) ", em(span("growth_R0", style = "color:#0072B2;"))), value = 0.57, min = 0),
             numericInput("growth_temp_max", tagList("Maximum Temperature ", em(span("growth_temp_max", style = "color:#0072B2;"))), value = 12),
             numericInput("growth_temp_CV", tagList("Enter a value between 0-1 for the temperature coefficient of variation ", em(span("growth_temp_CV", style = "color:#0072B2;"))), value = 0.25, min = 0, max = 1),
@@ -286,9 +286,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
                         selected = "age3"
             ),
             uiOutput("mature_input"), # This will render either selectInput or numericInput
-            numericInput("egg_delay", tagList("Enter an integer ≥ 0 for the number of years (time-steps) between mating and gestation/emergence. Please note that 0 is the most common option here.", em(span("egg_delay", style = "color:#0072B2;"))), value = 0, step = 0.1, min = 0),
-            #uiOutput("mature_eqn_slope"), # This will render either selectInput or numericInput
-            #uiOutput("mature_eqn_int"), # This will render either selectInput or numericInput
+            numericInput("egg_delay", tagList("Enter an integer >= 0 for the number of years (time-steps) between mating and gestation/emergence. Please note that 0 is the most common option here.", em(span("egg_delay", style = "color:#0072B2;"))), value = 0, step = 0.1, min = 0),
             numericInput("mature_eqn_slope", tagList("Enter the value for the slope of the maturity equation ", em(span("mature_eqn_slope", style = "color:#0072B2;"))), value = 0.0539),
             numericInput("mature_eqn_int", tagList("Enter the value for the intercept of the maturity equation ", em(span("mature_eqn_int", style = "color:#0072B2;"))), value = -6.313),
             actionButton("update_reproduction", "Update Reproduction")
@@ -302,7 +300,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
             uiOutput("offno"),
             bsTooltip(
               "offno",
-              "‘1’ – random draw between 0 and mean fecundity value. ‘2’ - Poisson draw of mean fecundity value.‘3’ - constant number of offspring of mean fecundity value.‘4’ - normal draw with mean fecundity and standard deviation.",
+              "'1' - random draw between 0 and mean fecundity value. '2' - Poisson draw of mean fecundity value.'3' - constant number of offspring of mean fecundity value.'4' - normal draw with mean fecundity and standard deviation.",
               "right"
             ),
             selectInput("offans_InheritClassVars", tagList("Select how offsprings will inherit their parent's classvars file ", em(span("offans_InheritClassVars", style = "color:#0072B2;"))),
@@ -400,12 +398,12 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
             numericInput("loci", tagList("Number of Loci ", em(span("loci", style = "color:#0072B2;"))), value = 2, min = 2),
             bsTooltip(
               "loci",
-              "‘2’ – max number dependent on computer resources - The number of loci (microsatellites/snps). Recommended maximum number of loci dependent on computer resources and recommend test runs for tradeoffs in performance. If a file is specified in the ClassVars.csv input file, then the number of loci entered here must match this file", "right"
+              "'2' - max number dependent on computer resources - The number of loci (microsatellites/snps). Recommended maximum number of loci dependent on computer resources and recommend test runs for tradeoffs in performance. If a file is specified in the ClassVars.csv input file, then the number of loci entered here must match this file", "right"
             ),
             numericInput("alleles", tagList("Starting Alleles per Locus ", em(span("alleles", style = "color:#0072B2;"))), value = 2, min = 2),
             bsTooltip(
               "alleles",
-              "The number of starting alleles per locus. If a file is specified in the PatchVars.csv input file (Genes Initialize column), then the number of alleles entered here must match this file. Polymorphism or varying number of alleles can be used by specifying the maximum number of alleles here and filling in allele frequency values of 0 for ‘filler’ alleles in other loci locations", "right"
+              "The number of starting alleles per locus. If a file is specified in the PatchVars.csv input file (Genes Initialize column), then the number of alleles entered here must match this file. Polymorphism or varying number of alleles can be used by specifying the maximum number of alleles here and filling in allele frequency values of 0 for 'filler' alleles in other loci locations", "right"
             ),
             
             wellPanel(
@@ -487,7 +485,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
                   tagList(
                     div(
                       style = "color: red; font-weight: bold; margin-bottom: 10px;",
-                      "⚠️ Advanced Users Only - see CDmetaPOP manual for additional details")
+                      "Warning - Advanced Users Only - see CDmetaPOP manual for additional details")
                     ),
                   textAreaInput(
                     "multiSelectionText",
@@ -749,7 +747,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
                 sliderInput(
                   "plastic_response_reduction",
                   HTML(
-                    "Response reduction (0–1) (<i><span style='color:#0072B2;'>plasticBehavioralResponse</span></i>):"
+                    "Response reduction (0-1) (<i><span style='color:#0072B2;'>plasticBehavioralResponse</span></i>):"
                   ),
                   min = 0, max = 1, value = 0, step = 0.01
                 ),
@@ -806,44 +804,44 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
         modalDialog(
           title = "How to Organize Your Data Directory",
           helpText(
-            "Directories and input files can have any name. The following is an example method for structuring your input files.",
+            "Please organize your data in the following way:",
             "1. Create a main folder named ", strong("data"), ".",
             "2. Inside the data folder, place the ", code("runVars.csv"), "file.",
-            "3. Also inside the data folder, you may want to create the following subdirectories:",
-            br(), "   • ", code("popvars"), " — contains file ", code("popVars.csv"),
-            br(), "   • ", code("patchvars"), " — contains file ", code("patchVars.csv"),
-            br(), "   • ", code("classvars"), " — contains file ", code("classVars"),
-            br(), "   • ", code("genes"), " — contains files ", code("allele frequency files (.csv)"),
-            br(), "   • ", code("cdmats"), " — contains files for movement matrices",
-            br(), "   • ", code("otherfiles"), " — contains other files, e.g. correlation matrices",
+            "3. Also inside the data folder, create the following subdirectories:",
+            br(), "   * ", code("popvars"), " - contains file ", code("popVars.csv"),
+            br(), "   * ", code("patchvars"), " - contains file ", code("patchVars.csv"),
+            br(), "   * ", code("classvars"), " - contains file ", code("classVars"),
+            br(), "   * ", code("genes"), " - contains files ", code("allele frequency files (.csv)"),
+            br(), "   * ", code("cdmats"), " - contains files for movement matrices",
+            br(), "   * ", code("otherfiles"), " - contains other files, e.g. correlation matrices",
             br(), br(),
-            "The file structure should look something like this:"
+            "The correct structure should look like this:"
           ),
           tags$pre(
             "data/
-│
-├── runVars.csv
-│
-├── popvars/
-│   └── popVars.csv
-│
-├── patchvars/
-│   └── patchVars.csv
-│
-└── classvars/
-│   └── classVars.csv
-│
-└── genes/
-│   └── allelefrequencies.csv
-│
-└── cdmats/
-|   ├── cdmat1.csv
-│   ├── cdmat2.csv
-│   └── cdmat3.csv
 |
-└── otherfiles/
-│   ├── correlation_matrix1.csv
-│   └── correlation_matrix2.csv"
+|-- runVars.csv
+|
+|-- popvars/
+|   |--popVars.csv
+|
+|-- patchvars/
+|   |--patchVars.csv
+|
+|--classvars/
+|   |--classVars.csv
+|
+|--genes/
+|   |--allelefrequencies.csv
+|
+|--cdmats/
+|   |-- cdmat1.csv
+|   |-- cdmat2.csv
+|   |--cdmat3.csv
+|
+|--otherfiles/
+|   |-- correlation_matrix1.csv
+|   |--correlation_matrix2.csv"
             
           ),
           easyClose = TRUE,
@@ -901,7 +899,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     # This insert tooltip for assortative mating model
     observe({
       addTooltip(session, "AssortativeMate_Model",
-                 "‘1’ – Random mating; ‘2’ – Strict self-preference mating; ‘3’ – Self-preference; ‘4’ – Dominance-preference; ‘5’ – Linear-preference",
+                 "'1' - Random mating; '2' - Strict self-preference mating; '3' - Self-preference; '4' - Dominance-preference; '5' - Linear-preference",
                  placement = "right",
                  trigger = "hover"
       )
@@ -920,9 +918,9 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
         "offans_InheritClassVars",
         HTML("
       <div style='text-align: left; white-space: normal;'>
-        <strong>'Random'</strong> – equal probability of receiving mother’s or father’s ClassVars file and associated parameters;<br>
-        <strong>'Hindex'</strong> – weighted probability of receiving ClassVars files associated with Hindex values;<br>
-        <strong>'Mother'</strong> – all offspring inherit the mother’s ClassVars
+        <strong>'Random'</strong> - equal probability of receiving mother's or father's ClassVars file and associated parameters;<br>
+        <strong>'Hindex'</strong> - weighted probability of receiving ClassVars files associated with Hindex values;<br>
+        <strong>'Mother'</strong> - all offspring inherit the mother's ClassVars
       </div>
     "),
         placement = "right",
@@ -958,7 +956,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     # This inserts tooltip for loci
     observe({
       addTooltip(session, "loci",
-                 "‘2’ to max.  Max number is dependent on computer resources",
+                 "'2' to max.  Max number is dependent on computer resources",
                  placement = "right",
                  trigger = "hover"
       )
@@ -970,11 +968,11 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
       id = "mutationtype",
       title = HTML(
         "<div style='text-align: left; white-space: normal;'>
-        <strong>‘random’</strong> – kth-allele mutation model.<br>
-        <strong>‘forward’</strong> – step-wise mutation in which an allele can mutate forwards only.<br>
-        <strong>‘backward’</strong> – step-wise mutation in which an allele can mutate backwards only.<br>
-        <strong>‘forwardbackward’</strong> – step-wise mutation in which an allele can mutate forward or backwards only.<br>
-        <strong>‘forwardAbackwardBrandomN’</strong> – special case for the 2-locus selection model
+        <strong>'random'</strong> - kth-allele mutation model.<br>
+        <strong>'forward'</strong> - step-wise mutation in which an allele can mutate forwards only.<br>
+        <strong>'backward'</strong> - step-wise mutation in which an allele can mutate backwards only.<br>
+        <strong>'forwardbackward'</strong> - step-wise mutation in which an allele can mutate forward or backwards only.<br>
+        <strong>'forwardAbackwardBrandomN'</strong> - special case for the 2-locus selection model
       </div>"
       ),
       placement = "left",
@@ -991,8 +989,8 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
         title = HTML(
           "<div style='text-align: left; white-space: normal;'>
         Tracking maternal genes:<br>
-        <strong>‘Y’</strong> - the last locus becomes the maternal marker (mtDNA) and every offspring inherits this locus from its mother only.<br>
-        <strong>‘N’</strong> - regular Mendel inheritance occurs for the last locus.
+        <strong>'Y'</strong> - the last locus becomes the maternal marker (mtDNA) and every offspring inherits this locus from its mother only.<br>
+        <strong>'N'</strong> - regular Mendel inheritance occurs for the last locus.
       </div>"
         ),
         placement = "right",
@@ -1159,9 +1157,9 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
       sel <- input$implementSelectionChoice
       
       if (all(c("Out", "Out_age") %in% sel)) {
-        HTML("<b style='color:red;'>⚠️ Warning: You selected both 'Out' and 'Out_age' (not allowed together).</b>")
+        HTML("<b style='color:red;'>Warning: You selected both 'Out' and 'Out_age' (not allowed together).</b>")
       } else if (all(c("Back", "Back_age") %in% sel)) {
-        HTML("<b style='color:red;'>⚠️ Warning: You selected both 'Back' and 'Back_age' (not allowed together).</b>")
+        HTML("<b style='color:red;'>Warning: You selected both 'Back' and 'Back_age' (not allowed together).</b>")
       } else {
         NULL
       }
@@ -1243,17 +1241,17 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     movement_help_text <- modalDialog(
       title = "Instructions for Movement",
       p("This feature allows you to control the probability of movement of individuals and effective distance distribution by transforming the cost distance matrix using different functions. All probabilities are scaled between 0 and 1. Some of the functions listed below are naturally between 0-1, while others use the minimum, maximum, and threshold values of the effective distance matrix to rescale. If a cost value exceeds the threshold provided by the user, then probability will be 0."),
-      p("•	‘1’ = Linear: probability = (1 – (1/Threshold) * Effective Distance)"),
-      p("•	‘2’ = Inverse Square: probability = (1 / (Effective Distance^2))"),
-      p("•	‘3’ = Nearest Neighbor"),
-      p("•	‘4’ = Random Mixing"),
-      p("•	‘5’ = Negative Exponential: probability =  (A * 10^(-B * Effective Distance))"),
-      p("•	‘6’ = Random Within Patch"),
-      p("•	‘7’ = Gaussian function: probability = A * exp ( - (Cost Distance – B)^2 / (2 * C^2))"),
-      p("•	‘8’ = Use the cost distance matrix"),
-      p("•	‘9’ = Provide a probability matrix rather than a cost distance matrix in the cdmat column: no function is applied to values and the straight probability matrix is used."),
-      p("•	‘10’ = Pareto function: For divide by zero issue, Cost distance = cost distance + b and probability =(a*(b^a))/(cost distance^(a+1))"),
-      p("•	‘11’ = FIDIMO distribution function"),
+      p("*	'1' = Linear: probability = (1 - (1/Threshold) * Effective Distance)"),
+      p("*	'2' = Inverse Square: probability = (1 / (Effective Distance^2))"),
+      p("*	'3' = Nearest Neighbor"),
+      p("*	'4' = Random Mixing"),
+      p("*	'5' = Negative Exponential: probability =  (A * 10^(-B * Effective Distance))"),
+      p("*	'6' = Random Within Patch"),
+      p("*	'7' = Gaussian function: probability = A * exp ( - (Cost Distance - B)^2 / (2 * C^2))"),
+      p("*	'8' = Use the cost distance matrix"),
+      p("*	'9' = Provide a probability matrix rather than a cost distance matrix in the cdmat column: no function is applied to values and the straight probability matrix is used."),
+      p("*	'10' = Pareto function: For divide by zero issue, Cost distance = cost distance + b and probability =(a*(b^a))/(cost distance^(a+1))"),
+      p("*	'11' = FIDIMO distribution function"),
       p("See CDmetaPOP user manual for more detailed information about each function"),
       easyClose = TRUE,
       footer = modalButton("Close")
@@ -1265,14 +1263,14 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
           textInput(
             "mate_extra_A",
             HTML(
-              "This is the A parameter used for function answers ‘5’, ‘7’, ‘10’, and ‘11’. If the CDClimate module was initiated with multiple years in the RunVars field ‘cdclimgentime’, then the same number of surfaces may be given here separated by a ‘|’ (<i><span style='color:#0072B2;'>matemoveparA</span></i>):"
+              "This is the A parameter used for function answers '5', '7', '10', and '11'. If the CDClimate module was initiated with multiple years in the RunVars field 'cdclimgentime', then the same number of surfaces may be given here separated by a '|' (<i><span style='color:#0072B2;'>matemoveparA</span></i>):"
             ),
             value = "0"
           ),
           textInput(
             "mate_extra_B",
             HTML(
-              "This is the B parameter used for function answers ‘5’, ‘7’, ‘10’, and ‘11’. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>matemoveparB</span></i>):"
+              "This is the B parameter used for function answers '5', '7', '10', and '11'. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>matemoveparB</span></i>):"
             ),
             value = "0"
           )
@@ -1284,7 +1282,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
             textInput(
               "mate_extra_C",
               HTML(
-                "This is the C parameter used for the function answer ‘7’ and ‘11’. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>matemoveparC</span></i>):"
+                "This is the C parameter used for the function answer '7' and '11'. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>matemoveparC</span></i>):"
               ),
               value = "0"
             )
@@ -1327,14 +1325,14 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
           textInput(
             "migrateout_extra_A",
             HTML(
-              "This is the A parameter used for function answers ‘5’, ‘7’, ‘10’, and ‘11’. If the CDClimate module was initiated with multiple years in the RunVars field ‘cdclimgentime’, then the same number of surfaces may be given here separated by a ‘|’ (<i><span style='color:#0072B2;'>migratemoveOutparA</span></i>):"
+              "This is the A parameter used for function answers '5', '7', '10', and '11'. If the CDClimate module was initiated with multiple years in the RunVars field 'cdclimgentime', then the same number of surfaces may be given here separated by a '|' (<i><span style='color:#0072B2;'>migratemoveOutparA</span></i>):"
             ),
             value = "0"
           ),
           textInput(
             "migrateout_extra_B",
             HTML(
-              "This is the B parameter used for function answers ‘5’, ‘7’, ‘10’, and ‘11’. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>migratemoveOutparB</span></i>):"
+              "This is the B parameter used for function answers '5', '7', '10', and '11'. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>migratemoveOutparB</span></i>):"
             ),
             value = "0"
           )
@@ -1346,7 +1344,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
             textInput(
               "migrateout_extra_C",
               HTML(
-                "This is the C parameter used for the function answer ‘7’ and ‘11’. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>migratemoveOutparC</span></i>):"
+                "This is the C parameter used for the function answer '7' and '11'. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>migratemoveOutparC</span></i>):"
               ),
               value = "0"
             )
@@ -1386,14 +1384,14 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
           textInput(
             "migrateback_extra_A",
             HTML(
-              "This is the A parameter used for function answers ‘5’, ‘7’, ‘10’, and ‘11’. If the CDClimate module was initiated with multiple years in the RunVars field ‘cdclimgentime’, then the same number of surfaces may be given here separated by a ‘|’ (<i><span style='color:#0072B2;'>migratemoveBackparA</span></i>):"
+              "This is the A parameter used for function answers '5', '7', '10', and '11'. If the CDClimate module was initiated with multiple years in the RunVars field 'cdclimgentime', then the same number of surfaces may be given here separated by a '|' (<i><span style='color:#0072B2;'>migratemoveBackparA</span></i>):"
             ),
             value = "0"
           ),
           textInput(
             "migrateback_extra_B",
             HTML(
-              "This is the B parameter used for function answers ‘5’, ‘7’, ‘10’, and ‘11’. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>migratemoveBackparB</span></i>):"
+              "This is the B parameter used for function answers '5', '7', '10', and '11'. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>migratemoveBackparB</span></i>):"
             ),
             value = "0"
           )
@@ -1405,7 +1403,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
             textInput(
               "migrateback_extra_C",
               HTML(
-                "This is the C parameter used for the function answer ‘7’ and ‘11’. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>migratemoveBackparC</span></i>):"
+                "This is the C parameter used for the function answer '7' and '11'. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>migratemoveBackparC</span></i>):"
               ),
               value = "0"
             )
@@ -1458,14 +1456,14 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
           textInput(
             "stray_extra_A",
             HTML(
-              "This is the A parameter used for function answers ‘5’, ‘7’, ‘10’, and ‘11’. If the CDClimate module was initiated with multiple years in the RunVars field ‘cdclimgentime’, then the same number of surfaces may be given here separated by a ‘|’ (<i><span style='color:#0072B2;'>StrayBackparA</span></i>):"
+              "This is the A parameter used for function answers '5', '7', '10', and '11'. If the CDClimate module was initiated with multiple years in the RunVars field 'cdclimgentime', then the same number of surfaces may be given here separated by a '|' (<i><span style='color:#0072B2;'>StrayBackparA</span></i>):"
             ),
             value = "0"
           ),
           textInput(
             "stray_extra_B",
             HTML(
-              "This is the B parameter used for function answers ‘5’, ‘7’, ‘10’, and ‘11’. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>StrayBackparB</span></i>):"
+              "This is the B parameter used for function answers '5', '7', '10', and '11'. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>StrayBackparB</span></i>):"
             ),
             value = "0"
           )
@@ -1476,7 +1474,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
             textInput(
               "stray_extra_C",
               HTML(
-                "This is the C parameter used for the function answer ‘7’ and ‘11’. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>StrayBackparC</span></i>):"
+                "This is the C parameter used for the function answer '7' and '11'. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>StrayBackparC</span></i>):"
               ),
               value = "0"
             )
@@ -1504,38 +1502,12 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
       template_data(temp)
     })
     
-    # output$StrayBackthreshinput <- renderUI({
-    #   if (input$StrayBackthresh == "%max") {
-    #     numericInput(
-    #       "StrayBackthresh_pct",
-    #       "Specify the % of max distance (1–100):",
-    #       value = 50,
-    #       min = 1,
-    #       max = 100,
-    #       step = 1
-    #     )
-    #   } else {
-    #     NULL
-    #   }
-    # })
-    # 
-    # observeEvent(input$update_stray, {
-    #   temp <- template_data()
-    #   thresh_value <- input$StrayBackthresh
-    #   if (thresh_value == "%max") {
-    #     thresh_value <- paste0(input$StrayBackthresh_pct, "%max")
-    #   }
-    #   temp$StrayBackthresh <- thresh_value
-    #   template_data(temp)
-    # })
-    
     observeEvent(input$update_stray, {
       temp <- template_data()
       thresh_value <- input$strayBackthresh
       temp$strayBackthresh <- thresh_value
       template_data(temp)
     })
-    
     
     observeEvent(input$help_stray, { showModal(movement_help_text) })
     
@@ -1547,14 +1519,14 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
           textInput(
             "disperse_extra_A",
             HTML(
-              "This is the A parameter used for function answers ‘5’, ‘7’, ‘10’, and ‘11’. If the CDClimate module was initiated with multiple years in the RunVars field ‘cdclimgentime’, then the same number of surfaces may be given here separated by a ‘|’ (<i><span style='color:#0072B2;'>disperseLocalparA</span></i>):"
+              "This is the A parameter used for function answers '5', '7', '10', and '11'. If the CDClimate module was initiated with multiple years in the RunVars field 'cdclimgentime', then the same number of surfaces may be given here separated by a '|' (<i><span style='color:#0072B2;'>disperseLocalparA</span></i>):"
             ),
             value = "0"
           ),
           textInput(
             "disperse_extra_B",
             HTML(
-              "This is the B parameter used for function answers ‘5’, ‘7’, ‘10’, and ‘11’. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>disperseLocalparB</span></i>):"
+              "This is the B parameter used for function answers '5', '7', '10', and '11'. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>disperseLocalparB</span></i>):"
             ),
             value = "0"
           )
@@ -1565,7 +1537,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
             textInput(
               "disperse_extra_C",
               HTML(
-                "This is the C parameter used for the function answer ‘7’ and ‘11’. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>disperseLocalparC</span></i>):"
+                "This is the C parameter used for the function answer '7' and '11'. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>disperseLocalparC</span></i>):"
               ),
               value = "0"
             )
@@ -1583,14 +1555,14 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
           textInput(
             "disperseLocal_extra_A",
             HTML(
-              "This is the A parameter used for function answers ‘5’, ‘7’, ‘10’, and ‘11’. If the CDClimate module was initiated with multiple years in the RunVars field ‘cdclimgentime’, then the same number of surfaces may be given here separated by a ‘|’ (<i><span style='color:#0072B2;'>disperseLocalparA</span></i>):"
+              "This is the A parameter used for function answers '5', '7', '10', and '11'. If the CDClimate module was initiated with multiple years in the RunVars field 'cdclimgentime', then the same number of surfaces may be given here separated by a '|' (<i><span style='color:#0072B2;'>disperseLocalparA</span></i>):"
             ),
             value = "0"
           ),
           textInput(
             "disperseLocal_extra_B",
             HTML(
-              "This is the B parameter used for function answers ‘5’, ‘7’, ‘10’, and ‘11’. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>disperseLocalparB</span></i>):"
+              "This is the B parameter used for function answers '5', '7', '10', and '11'. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>disperseLocalparB</span></i>):"
             ),
             value = "0"
           )
@@ -1601,7 +1573,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
             textInput(
               "disperseLocal_extra_C",
               HTML(
-                "This is the C parameter used for the function answer ‘7’ and ‘11’. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>disperseLocalparC</span></i>):"
+                "This is the C parameter used for the function answer '7' and '11'. Specify same number of values here if CDClimate is initiated, e.g., 0.05|0|0 (<i><span style='color:#0072B2;'>disperseLocalparC</span></i>):"
               ),
               value = "0"
             )
@@ -1656,7 +1628,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     #   if (input$disperseLocalthresh == "%max") {
     #     numericInput(
     #       "disperseLocalthresh_pct",
-    #       "Specify the % of max distance (1–100):",
+    #       "Specify the % of max distance (1-100):",
     #       value = 50,
     #       min = 1,
     #       max = 100,
@@ -1736,7 +1708,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
         numericInput(
           "selfans",
           HTML(
-            "Indicate the probability (0–1) that hermaphroditic individuals will self-fertilize (<i><span style='color:#0072B2;'>selfans</span></i>):"
+            "Indicate the probability (0-1) that hermaphroditic individuals will self-fertilize (<i><span style='color:#0072B2;'>selfans</span></i>):"
           ),
           value = 0.5,
           min = 0,

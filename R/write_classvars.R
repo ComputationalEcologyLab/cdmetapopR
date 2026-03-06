@@ -96,7 +96,7 @@ write_classvars <- function(output_file = "my_new_classvars.csv") {
           ########################################
           tabPanel("Sex Ratio",
                    helpText("Initializes the sex of the population which can give a ratio of females to males per age class. Up to 4 values may be specified here: e.g., 0.5~0.5~0, for females~males~trojan YY males. The values must equal 1, be separated with a tilda (~), and the number of values provided must be equal to the value given for the sex_chromo variable in the PopVars file.   
-                            *A special case for Wright Fisher assumption can be specified here by entering ‘WrightFisher’ and only should be used when considering a panmictic population (see CDMetaPOP manual on Special Cases for more details). 
+                            *A special case for Wright Fisher assumption can be specified here by entering 'WrightFisher' and only should be used when considering a panmictic population (see CDMetaPOP manual on Special Cases for more details). 
                             "), 
           textInput("sex_ratio", tagList("Enter the sex ratio at initialization (e.g. 0.5~0.5 for 50% males & 50% females): ", em(span("Sex Ratio", style = "color:#0072B2;"))), 
                              value = "0.5~0.5"),
@@ -176,7 +176,7 @@ write_classvars <- function(output_file = "my_new_classvars.csv") {
                    helpText("Define the probability of being a reproductively mature individual and stay this way."), 
                    
                    uiOutput("Maturation_inputs"),
-                   helpText("If size option is specified (sizecontrol in RunVars), then these values are not used and population fit parameters based on size/length relationships are used instead. 3 sex class values can be used here, as well, separated by ‘~’."),
+                   helpText("If size option is specified (sizecontrol in RunVars), then these values are not used and population fit parameters based on size/length relationships are used instead. 3 sex class values can be used here, as well, separated by '~'."),
                    
                    actionButton("update_Maturation", "Update Maturation Parameters"),
        
@@ -266,44 +266,44 @@ write_classvars <- function(output_file = "my_new_classvars.csv") {
         modalDialog(
           title = "How to Organize Your Data Directory",
           helpText(
-            "Directories and input files can have any name. The following is an example method for structuring your input files.",
+            "Please organize your data in the following way:",
             "1. Create a main folder named ", strong("data"), ".",
             "2. Inside the data folder, place the ", code("runVars.csv"), "file.",
-            "3. Also inside the data folder, you may want to create the following subdirectories:",
-            br(), "   • ", code("popvars"), " — contains file ", code("popVars.csv"),
-            br(), "   • ", code("patchvars"), " — contains file ", code("patchVars.csv"),
-            br(), "   • ", code("classvars"), " — contains file ", code("classVars"),
-            br(), "   • ", code("genes"), " — contains files ", code("allele frequency files (.csv)"),
-            br(), "   • ", code("cdmats"), " — contains files for movement matrices",
-            br(), "   • ", code("otherfiles"), " — contains other files, e.g. correlation matrices",
+            "3. Also inside the data folder, create the following subdirectories:",
+            br(), "   * ", code("popvars"), " - contains file ", code("popVars.csv"),
+            br(), "   * ", code("patchvars"), " - contains file ", code("patchVars.csv"),
+            br(), "   * ", code("classvars"), " - contains file ", code("classVars"),
+            br(), "   * ", code("genes"), " - contains files ", code("allele frequency files (.csv)"),
+            br(), "   * ", code("cdmats"), " - contains files for movement matrices",
+            br(), "   * ", code("otherfiles"), " - contains other files, e.g. correlation matrices",
             br(), br(),
-            "The file structure should look something like this:"
+            "The correct structure should look like this:"
           ),
           tags$pre(
             "data/
-│
-├── runVars.csv
-│
-├── popvars/
-│   └── popVars.csv
-│
-├── patchvars/
-│   └── patchVars.csv
-│
-└── classvars/
-│   └── classVars.csv
-│
-└── genes/
-│   └── allelefrequencies.csv
-│
-└── cdmats/
-|   ├── cdmat1.csv
-│   ├── cdmat2.csv
-│   └── cdmat3.csv
 |
-└── otherfiles/
-│   ├── correlation_matrix1.csv
-│   └── correlation_matrix2.csv"
+|-- runVars.csv
+|
+|-- popvars/
+|   |--popVars.csv
+|
+|-- patchvars/
+|   |--patchVars.csv
+|
+|--classvars/
+|   |--classVars.csv
+|
+|--genes/
+|   |--allelefrequencies.csv
+|
+|--cdmats/
+|   |-- cdmat1.csv
+|   |-- cdmat2.csv
+|   |--cdmat3.csv
+|
+|--otherfiles/
+|   |-- correlation_matrix1.csv
+|   |--correlation_matrix2.csv"
             
           ),
           easyClose = TRUE,
@@ -311,6 +311,7 @@ write_classvars <- function(output_file = "my_new_classvars.csv") {
         )
       )
     })
+    
 
     
     ###################################################
