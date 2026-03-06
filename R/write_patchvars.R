@@ -109,7 +109,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
           
           numericInput("K", tagList("Enter the carrying capacity of your patches. A K value of 0 means individuals will not move into the patch. ", em(span("K", style = "color:#0072B2;"))), 
                        value = 0),
-          numericInput("K_StDev", tagList("Enter the ± annual variation for your patches ", em(span("K StDev", style = "color:#0072B2;"))), 
+          numericInput("K_StDev", tagList("Enter the +/- annual variation for your patches ", em(span("K StDev", style = "color:#0072B2;"))), 
                        value = 0),
           selectInput("Natal_Grounds", tagList("Identify whether your patches are natal ground locations ", em(span("Natal Grounds", style = "color:#0072B2;"))),
                    selected = 1,
@@ -207,7 +207,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                                   value = 0),
                      bsTooltip(
                        "GrowthTemperatureOutStDev",
-                       "Standard deviations around each temperature value are applied annually to each patch. Enter 0 here and this field will be deterministic, using the ‘Growth Temperature Out’ value at each time step.",
+                       "Standard deviations around each temperature value are applied annually to each patch. Enter 0 here and this field will be deterministic, using the 'Growth Temperature Out' value at each time step.",
                        placement = "right",
                        trigger = "hover"
                      ),
@@ -215,7 +215,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                                   value = 0),
                      bsTooltip(
                        "GrowDaysOut",
-                       "Patch site growing days corresponding to the growth time ‘out’ for growth option ‘temperature’. ",
+                       "Patch site growing days corresponding to the growth time 'out' for growth option 'temperature'. ",
                        placement = "right",
                        trigger = "hover"
                      ),
@@ -223,7 +223,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                                   value = 155),
                      bsTooltip(
                        "GrowDaysOutStDev",
-                       "Standard deviations around each grow days value are applied annually to each patch. Enter 0 here and this field will be deterministic, using the ‘Growth Days Out’ value at each time step.",
+                       "Standard deviations around each grow days value are applied annually to each patch. Enter 0 here and this field will be deterministic, using the 'Growth Days Out' value at each time step.",
                        placement = "right",
                        trigger = "hover"
                      ),
@@ -233,7 +233,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                                   value = 0),
                      bsTooltip(
                        "GrowthTemperatureBackStDev",
-                       "Standard deviations around each temperature value are applied annually to each patch. Enter 0 here and this field will be deterministic, using the ‘Growth Temperature Back’ value at each time step.",
+                       "Standard deviations around each temperature value are applied annually to each patch. Enter 0 here and this field will be deterministic, using the 'Growth Temperature Back' value at each time step.",
                        placement = "right",
                        trigger = "hover"
                      ),
@@ -241,7 +241,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                                   value = 0),
                      bsTooltip(
                        "GrowDaysBack",
-                       "Patch site growing days corresponding to the growth time ‘back’ for growth option ‘temperature’",
+                       "Patch site growing days corresponding to the growth time 'back' for growth option 'temperature'",
                        placement = "right",
                        trigger = "hover"
                      ),
@@ -249,7 +249,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                                   value = 0),
                      bsTooltip(
                        "GrowDaysBackStDev",
-                       "Standard deviations around each grow days value are applied annually to each patch. Enter 0 here and this field will be deterministic, using the ‘Growth Days Back’ value at each time step.",
+                       "Standard deviations around each grow days value are applied annually to each patch. Enter 0 here and this field will be deterministic, using the 'Growth Days Back' value at each time step.",
                        placement = "right",
                        trigger = "hover"
                      ),
@@ -264,7 +264,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
         ########################################
         
           tabPanel("Fitness",
-        helpText("⚠️ Warning: Selection parameters entered here are dependent on what is defined in the cdevolveans parameter of the PopVars.csv file."),
+        helpText("Warning: Selection parameters entered here are dependent on what is defined in the cdevolveans parameter of the PopVars.csv file."),
         
         radioButtons("apply_selection", "Do you want to apply selection?",
                      choices = c("No", "Basic 1-locus", "Basic 2-locus Epistatic", "Growth-dependent selection", "Maturation-dependent selection"), 
@@ -298,7 +298,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                                   min = 0, step = 0.05, max = 1),
                      bsTooltip(
                        "Capture_Probability_Out",
-                       "If ‘1’ - capture probability will be controlled by ClassVars. **Warning**: If values for capture occur in both patchvars and classvars, these will be multiplied to achieve a final capture probability.",
+                       "If '1' - capture probability will be controlled by ClassVars. **Warning**: If values for capture occur in both patchvars and classvars, these will be multiplied to achieve a final capture probability.",
                        placement = "right",
                        trigger = "hover"
                      ),
@@ -307,7 +307,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                                   min = 0, max = 1, step = 0.05),
                      bsTooltip(
                        "Capture_Probability_Back",
-                       "If ‘1’ - Capture probability will be controlled by ClassVars. **Warning**: If values for capture occur in both patchvars and classvars, these will be multiplied to achieve a final capture probability. ", 
+                       "If '1' - Capture probability will be controlled by ClassVars. **Warning**: If values for capture occur in both patchvars and classvars, these will be multiplied to achieve a final capture probability. ", 
                        placement = "right",
                        trigger = "hover"
                      ),
@@ -329,7 +329,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                                   min = 0, step = 0.05, max = 1),
                      bsTooltip(
                        "HabitatOut",
-                       "The HabitatOut parameter functions as a habitat-based modifier for plastic dispersal behaviors during emigration events. It only impacts the probability matrix if the first term of plasticgeneans in the RunVars.csv file is set as “Hab”",
+                       "The HabitatOut parameter functions as a habitat-based modifier for plastic dispersal behaviors during emigration events. It only impacts the probability matrix if the first term of plasticgeneans in the RunVars.csv file is set as *Hab*",
                        placement = "right",
                        trigger = "hover"
                      ),
@@ -338,7 +338,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                                   min = 0, step = 0.05, max = 1),
                      bsTooltip(
                        "HabitatBack",
-                       "The HabitatBack parameter functions as a habitat-based modifier for plastic dispersal behaviors during immigration events. It only impacts the probability matrix if the first term of plasticgeneans in the RunVars.csv file is set as “Hab”",
+                       "The HabitatBack parameter functions as a habitat-based modifier for plastic dispersal behaviors during immigration events. It only impacts the probability matrix if the first term of plasticgeneans in the RunVars.csv file is set as *Hab*",
                        placement = "right",
                        trigger = "hover"
                      ),
@@ -396,44 +396,44 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
         modalDialog(
           title = "How to Organize Your Data Directory",
           helpText(
-            "Directories and input files can have any name. The following is an example method for structuring your input files.",
+            "Please organize your data in the following way:",
             "1. Create a main folder named ", strong("data"), ".",
             "2. Inside the data folder, place the ", code("runVars.csv"), "file.",
-            "3. Also inside the data folder, you may want to create the following subdirectories:",
-            br(), "   • ", code("popvars"), " — contains file ", code("popVars.csv"),
-            br(), "   • ", code("patchvars"), " — contains file ", code("patchVars.csv"),
-            br(), "   • ", code("classvars"), " — contains file ", code("classVars"),
-            br(), "   • ", code("genes"), " — contains files ", code("allele frequency files (.csv)"),
-            br(), "   • ", code("cdmats"), " — contains files for movement matrices",
-            br(), "   • ", code("otherfiles"), " — contains other files, e.g. correlation matrices",
+            "3. Also inside the data folder, create the following subdirectories:",
+            br(), "   * ", code("popvars"), " - contains file ", code("popVars.csv"),
+            br(), "   * ", code("patchvars"), " - contains file ", code("patchVars.csv"),
+            br(), "   * ", code("classvars"), " - contains file ", code("classVars"),
+            br(), "   * ", code("genes"), " - contains files ", code("allele frequency files (.csv)"),
+            br(), "   * ", code("cdmats"), " - contains files for movement matrices",
+            br(), "   * ", code("otherfiles"), " - contains other files, e.g. correlation matrices",
             br(), br(),
-            "The file structure should look something like this:"
+            "The correct structure should look like this:"
           ),
           tags$pre(
             "data/
-│
-├── runVars.csv
-│
-├── popvars/
-│   └── popVars.csv
-│
-├── patchvars/
-│   └── patchVars.csv
-│
-└── classvars/
-│   └── classVars.csv
-│
-└── genes/
-│   └── allelefrequencies.csv
-│
-└── cdmats/
-|   ├── cdmat1.csv
-│   ├── cdmat2.csv
-│   └── cdmat3.csv
 |
-└── otherfiles/
-│   ├── correlation_matrix1.csv
-│   └── correlation_matrix2.csv"
+|-- runVars.csv
+|
+|-- popvars/
+|   |--popVars.csv
+|
+|-- patchvars/
+|   |--patchVars.csv
+|
+|--classvars/
+|   |--classVars.csv
+|
+|--genes/
+|   |--allelefrequencies.csv
+|
+|--cdmats/
+|   |-- cdmat1.csv
+|   |-- cdmat2.csv
+|   |--cdmat3.csv
+|
+|--otherfiles/
+|   |-- correlation_matrix1.csv
+|   |--correlation_matrix2.csv"
             
           ),
           easyClose = TRUE,
