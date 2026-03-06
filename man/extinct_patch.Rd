@@ -17,3 +17,8 @@ integer vector
 \description{
 This function produces a vector with the number of patches that suffered extinction at a given year. It is based off the N_Initial column of the CDMetaPOP output file summary_popAllTime.
 }
+\examples{
+path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+data <- read.csv(path)
+extinct_patch(data, year = 8)
+}

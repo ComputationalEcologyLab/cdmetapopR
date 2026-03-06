@@ -15,3 +15,7 @@ a ggplot object representing the overtime population size of sexually mature ind
 \description{
 This function plots population dynamics overtime showing a count of the mature individuals over the years of the simulation separated by their sex. It is based off the N_Mature columns of the CDMetaPOP output file summary_popAllTime
 }
+\examples{
+path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+pop_mature_plot(path)
+}

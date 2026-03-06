@@ -15,3 +15,7 @@ a ggplot object representing the overtime progeny size of YYMales
 \description{
 This function plots the ratio of the Myy progeny overtime
 }
+\examples{
+path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+myy_progeny_plot(path)
+}

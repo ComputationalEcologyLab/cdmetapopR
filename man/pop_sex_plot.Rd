@@ -15,3 +15,8 @@ a ggplot object representing the overtime  population size for the four sexes
 \description{
 This function plots population dynamics overtime showing the count of the individuals separated by sex over the years of the simulation. It is based off the following columns: N_Males_1, N_YYMales_1, N_Females_1 and N_YYFemales of the CDMetaPOP output file summary_popAllTime
 }
+\examples{
+path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+data <- read.csv(path)
+pop_sex_plot(data)
+}

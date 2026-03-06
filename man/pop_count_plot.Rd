@@ -15,3 +15,8 @@ a ggplot object representing the overtime general population size
 \description{
 This function plots population dynamics overtime showing a count of the individuals over the years of the simulation. It is based off the N_Initial column of the CDMetaPOP output file summary_popAllTime
 }
+\examples{
+path <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
+data <- read.csv(path)
+pop_count_plot(data)
+}

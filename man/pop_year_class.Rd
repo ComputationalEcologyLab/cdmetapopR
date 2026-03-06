@@ -17,3 +17,7 @@ a ggplot object representing the  general population size at 5 years intervals f
 \description{
 This function plots population dynamics overtime according by the age of the individuals. It shows the count of the individuals over the years of the simulation separated by age. It is based off the N_Initial_Class column of the CDMetaPOP output file summary_classAllTime
 }
+\examples{
+path <- system.file("extdata", "summary_classAllTime.csv", package = "cdmetapopR")
+pop_year_class(path, n = 2)
+}

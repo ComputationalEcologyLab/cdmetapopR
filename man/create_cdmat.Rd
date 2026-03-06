@@ -13,7 +13,7 @@ create_cdmat(
 \arguments{
 \item{coords}{A set of spatial coordinates in the form of a 2-column data frame or matrix}
 
-\item{method}{Method for creating the cost distance matrix, must be "Euclidean", "Equal", or "LCP"}
+\item{method}{Method for creating the cost distance matrix, must be "euclidean", "equal", or "lcp"}
 
 \item{resistance}{Raster object representing resistance surface for generating cost distance matrix}
 }
@@ -37,5 +37,5 @@ y <- runif(6, min=0, max=10)
 coords <- data.frame(x=x, y=y)
 r <- terra::rast(nrows=10, ncols=10, xmin = 0, xmax = 10, ymin = 0, ymax = 10)
 terra::values(r) <- 1
-create_cdmat(coords=coords, method="LCP", resistance=r)
+create_cdmat(coords=coords, method="lcp", resistance=r)
 }
