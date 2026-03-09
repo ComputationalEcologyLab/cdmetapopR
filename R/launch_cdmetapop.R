@@ -36,7 +36,7 @@ launch_cdmetapop <- function(pythonFilepath = python,
     shell(paste(pythonFilepath, CDMetaPOPFilepath, runvarsDirectory, runvarsFilename, outputDirectory, "& pause"),
           invisible=FALSE, wait=FALSE)
   } else{
-    system(paste(pythonFilepath, CDMetaPOPFilepath, runvarsFilename, runVars, 
+    system(paste(pythonFilepath, CDMetaPOPFilepath, runvarsDirectory, runvarsFilename,
                  outputDirectory, "; read -p 'Press enter to continue'"), wait=FALSE)
   }
 }
