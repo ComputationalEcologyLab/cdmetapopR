@@ -30,6 +30,8 @@ Function to run CDMetaPOP from R
 This function will launch a command prompt (Windows) or terminal (Linux/Mac) that will call Python and supply the 5 arguments needed to launch CDMetaPOP simulations
 }
 \examples{
+\dontrun{ 
+# Example: This function launches a system command to initiate CDMetaPOP.
 pythonFilepath="C:/Users/User1/anaconda3/python.exe" 
 CDMetaPOPFilepath="C:/Users/User1/CDMetaPOP_v3.03/src/CDMetaPOP.py"
 runvarsDirectory = "C:/Users/User1/CDMetaPOP_v3.03/example_files/"
@@ -41,5 +43,5 @@ mymodel <- launch_cdmetapop(pythonFilepath,
                            runvarsDirectory,
                            runvarsFilename,
                            outputDirectory = "test_")
-
+}
 }
