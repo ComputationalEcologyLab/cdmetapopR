@@ -2,12 +2,18 @@ Package: cdmetapopR
 Title: Utility functions for CDMetaPOP outputs
 Version: 0.0.1
 Authors@R: 
-    person(given = "Dominique", 
+    c(person(given = "Dominique", 
     family = "Alò", 
     role = c("aut","cre"),
     email = "dominiquealo@gmail.com",
-    comment = c(ORCID = "0000-0003-0579-4156"))
-Description: This package provides a set of helper functions to analyze
+    comment = c(ORCID = "0000-0003-0579-4156")),
+    person(given = "Casey", 
+    family = "Day", 
+    role = c("aut")),
+    person(given = "Allison", 
+    family = "Williams", 
+    role = c("aut")))
+Description: This package provides a set of helper functions to launch, analyze,
     and visualize the output files of CDMetaPOP
 Imports: ggplot2,
   reshape2,
