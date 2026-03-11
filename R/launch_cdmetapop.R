@@ -12,6 +12,8 @@
 #' @export
 #' 
 #' @examples
+#' \dontrun{ 
+#' # Example: This function launches a system command to initiate CDMetaPOP.
 #' pythonFilepath="C:/Users/User1/anaconda3/python.exe" 
 #' CDMetaPOPFilepath="C:/Users/User1/CDMetaPOP_v3.03/src/CDMetaPOP.py"
 #' runvarsDirectory = "C:/Users/User1/CDMetaPOP_v3.03/example_files/"
@@ -23,7 +25,7 @@
 #'                            runvarsDirectory,
 #'                            runvarsFilename,
 #'                            outputDirectory = "test_")
-#' 
+#' }
 
 
 launch_cdmetapop <- function(pythonFilepath = python,
@@ -36,7 +38,7 @@ launch_cdmetapop <- function(pythonFilepath = python,
     shell(paste(pythonFilepath, CDMetaPOPFilepath, runvarsDirectory, runvarsFilename, outputDirectory, "& pause"),
           invisible=FALSE, wait=FALSE)
   } else{
-    system(paste(pythonFilepath, CDMetaPOPFilepath, runvarsFilename, runVars, 
+    system(paste(pythonFilepath, CDMetaPOPFilepath, runvarsDirectory, runvarsFilename,
                  outputDirectory, "; read -p 'Press enter to continue'"), wait=FALSE)
   }
 }
