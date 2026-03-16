@@ -67,7 +67,7 @@ helper_plot_count <- function(data) {
   n_init <- read.table(text = data$N_Initial, sep = "|")[,1]
   df <- data.frame(Year = as.numeric(data$Year), N = as.numeric(n_init))
   
-  ggplot(df, aes(x = Year, y = N)) +
+  ggplot(df, aes(x = .data$Year, y = .data$N)) +
     geom_line(color = "steelblue", linewidth = 0.8) +
     labs(title = "Population Size Timeseries", y = "Population Size", x = "Year")
 }
@@ -82,7 +82,7 @@ helper_plot_sex <- function(data) {
   )
   long_data <- tidyr::pivot_longer(df, cols = -Year, names_to = "category", values_to = "value")
   
-  ggplot(long_data, aes(x = as.numeric(Year), y = as.numeric(value))) +
+  ggplot(long_data, aes(x = as.numeric(.data$Year), y = as.numeric(.data$value))) +
     geom_line(linewidth = 0.8) +  
     facet_wrap(~ category) +
     labs(title = "Population Sizes by Sex", x = "Year", y = "Count")
@@ -98,7 +98,7 @@ helper_plot_mature <- function(data) {
   )
   long_data <- tidyr::pivot_longer(df, cols = -Year, names_to = "category", values_to = "value")
   
-  ggplot(long_data, aes(x = as.numeric(Year), y = as.numeric(value))) +
+  ggplot(long_data, aes(x = as.numeric(.data$Year), y = as.numeric(.data$value))) +
     geom_line(color = "darkgreen", linewidth = 0.8) +  
     facet_wrap(~ category) +
     labs(title = "Sexually Mature Population", x = "Year", y = "Count")
@@ -109,7 +109,7 @@ helper_plot_births <- function(data) {
   deaths <- read.table(text = data$EggDeaths, sep = "|")[,1]
   df <- data.frame(Year = data$Year, Progeny = births - deaths)
   
-  ggplot(df, aes(x = Year, y = Progeny)) +
+  ggplot(df, aes(x = .data$Year, y = .data$Progeny)) +
     geom_line(color = "purple", linewidth = 0.8) +
     labs(title = "Progeny by Year (Post Egg-Mortality)", x = "Year", y = "Count")
 }
@@ -122,7 +122,7 @@ helper_plot_myy <- function(data) {
   ratio <- myy / (births - deaths)
   df <- data.frame(Year = data$Year, Ratio = ratio)
   
-  ggplot(df, aes(x = Year, y = Ratio)) +
+  ggplot(df, aes(x = .data$Year, y = .data$Ratio)) +
     geom_line(color = "firebrick", linewidth = 0.8) +
     labs(title = "MYY Progeny Ratio", x = "Year", y = "Proportion")
 }
@@ -135,7 +135,7 @@ helper_plot_age_class <- function(data, n = 5) {
   long_data <- tidyr::pivot_longer(age_data, cols = starts_with("Age_"), names_to = "Ages", values_to = "Count")
   df_filtered <- long_data[long_data$Year %% n == 0, ]
   
-  ggplot(df_filtered, aes(x = as.factor(Year), y = Count, fill = Ages)) +
+  ggplot(df_filtered, aes(x = as.factor(.data$Year), y = .data$Count, fill = .data$Ages)) +
     geom_bar(position = "dodge", stat = "identity") +
     labs(title = "Population Size by Age Class", x = "Year", y = "Count")
 }
@@ -149,7 +149,7 @@ helper_plot_patch <- function(data, years = c(1, 25, 50, 100)) {
   long_data <- tidyr::pivot_longer(abundance, cols = starts_with("Patch_"), names_to = "Patch", values_to = "Abundance")
   df_filtered <- long_data[long_data$Year %in% years, ]
   
-  ggplot(df_filtered, aes(x = as.factor(Year), y = Abundance)) +
+  ggplot(df_filtered, aes(x = as.factor(.data$Year), y = .data$Abundance)) +
     geom_boxplot(fill = "steelblue", outlier.alpha = 0.5) +
     labs(title = "Patch Population Distribution", x = "Year", y = "Abundance")
 }
@@ -159,7 +159,7 @@ helper_plot_age_plus <- function(data) {
   pop_plus <- rowSums(age_class[, 3:ncol(age_class)], na.rm = TRUE)
   df <- data.frame(Year = data$Year, Pop = pop_plus)
   
-  ggplot(df, aes(x = Year, y = Pop)) +
+  ggplot(df, aes(x = .data$Year, y = .data$Pop)) +
     geom_line(color = "orange", linewidth = 0.8) +
     labs(title = "Population Size (Age 1+)", x = "Year", y = "Count")
 }

@@ -7,7 +7,7 @@
 read.cdmetapop(file_path)
 }
 \arguments{
-\item{x}{Specify the file name and path.}
+\item{file_path}{Specify the file name and path.}
 }
 \value{
 Dataframe

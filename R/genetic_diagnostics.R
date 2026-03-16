@@ -4,7 +4,7 @@
 #' @import ggplot2 
 #' @importFrom utils read.table
 #' @importFrom tidyr pivot_longer
-#' @param x dataframe summary_popAllTime.csv 
+#' @param data dataframe summary_popAllTime.csv 
 #' @return a ggplot object representing the overtime observed and expected heterozygosities values in the simulation. 
 #' @export
 
@@ -23,7 +23,7 @@ hets_plot <- function(data) {
                               values_to = "value")
     
     # Create the plot
-    p<- ggplot(long_data, aes(x = as.numeric(Year), y = as.numeric(value))) +
+    p<- ggplot(long_data, aes(x = as.numeric(.data$Year), y = as.numeric(.data$value))) +
       geom_line() +  
       facet_wrap(~ category) +
       labs(title = "Expected vs Observed Heterozygosity",
@@ -36,7 +36,7 @@ hets_plot <- function(data) {
 #'
 #' This function plots the total number of unique alleles for every year of the simulation. It is based on the Allele column of the CDMetaPOP output file summary_popAllTime
 #'
-#' @param dataframe summary_popAllTime.csv 
+#' @param data dataframe summary_popAllTime.csv 
 #' @param n An integer that specifies the time intervals of the time series. It defaults to 5 years. 
 #' @import ggplot2 
 #' @importFrom utils read.table
@@ -54,9 +54,9 @@ alleles_by_year <- function(data, n = 5){
   # Filter the data to include every 'n' years
   alleles.melted_filtered <- alleles.melted[alleles.melted[["Year"]] %% n == 0, ]
   allele_count <- alleles.melted_filtered %>%
-    group_by(Year) %>%
-    summarize(allele_count = sum(Allele_number))
-  p <- ggplot(allele_count, aes (x = Year, y = allele_count)) +
+    group_by(.data$Year) %>%
+    summarize(allele_count = sum(.data$Allele_number))
+  p <- ggplot(allele_count, aes (x = .data$Year, y = .data$allele_count)) +
     geom_bar(stat = "identity", fill = "steelblue") + 
     labs(title = "Total Number of Unique Alleles by Year", x = "Year", y = "Unique allele count")+
     theme_minimal()

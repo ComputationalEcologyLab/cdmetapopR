@@ -7,7 +7,7 @@
 hets_plot(data)
 }
 \arguments{
-\item{x}{dataframe summary_popAllTime.csv}
+\item{data}{dataframe summary_popAllTime.csv}
 }
 \value{
 a ggplot object representing the overtime observed and expected heterozygosities values in the simulation.
