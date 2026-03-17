@@ -7,9 +7,9 @@
 alleles_by_year(data, n = 5)
 }
 \arguments{
-\item{n}{An integer that specifies the time intervals of the time series. It defaults to 5 years.}
+\item{data}{dataframe summary_popAllTime.csv}
 
-\item{dataframe}{summary_popAllTime.csv}
+\item{n}{An integer that specifies the time intervals of the time series. It defaults to 5 years.}
 }
 \value{
 a ggplot object representing the overtime observed and expected heterozygosities values in the simulation.

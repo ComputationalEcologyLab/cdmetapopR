@@ -7,7 +7,11 @@
 separate_column(file_path, column_name, sep)
 }
 \arguments{
-\item{x}{Specify the file name and path.}
+\item{file_path}{Specify the file name and path.}
+
+\item{column_name}{Specify the column name to separate.}
+
+\item{sep}{Specify the separator to use.}
 }
 \value{
 Dataframe of columns for each value that was originally separated by the delimiter.
