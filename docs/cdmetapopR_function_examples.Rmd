@@ -1,0 +1,478 @@
+---
+title: "cdmetapopR Function Examples"
+subtitle: "Worked examples using the Adaptive_Run_08 example outputs"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: flatly
+    self_contained: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 8,
+  fig.height = 5,
+  out.width = "100%"
+)
+
+pkg_root <- normalizePath(file.path(".."), winslash = "/", mustWork = TRUE)
+pkgload::load_all(pkg_root)
+library(ggplot2)
+```
+
+# Overview
+
+This document shows example uses for the exported functions in `cdmetapopR`.
+The examples use the package example output files in `inst/extdata/Adaptive_Run_08`.
+
+The example data include:
+
+- 2 batches
+- 2 Monte Carlo replicates per batch
+- `summary_popAllTime.csv`
+- `summary_classAllTime.csv`
+- `summary_popAllTime_DiseaseStates.csv`
+- `ind0.csv` through `ind9.csv`
+
+```{r example-paths}
+ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+
+pop_file <- file.path(ex_dir, "run0batch0mc0species0", "summary_popAllTime.csv")
+class_file <- file.path(ex_dir, "run0batch0mc0species0", "summary_classAllTime.csv")
+ind_file <- file.path(ex_dir, "run0batch0mc0species0", "ind9.csv")
+
+ex_dir
+list.files(ex_dir)
+```
+
+# Reading and Conversion Helpers
+
+## `read.cdmetapop()`
+
+Use `read.cdmetapop()` to read a CDMetaPOP CSV file into R while keeping the CDMetaPOP-delimited columns as character columns.
+
+```{r read-cdmetapop}
+pop_data_chr <- read.cdmetapop(pop_file)
+
+dim(pop_data_chr)
+head(pop_data_chr[, 1:6])
+```
+
+## `separate_column()`
+
+Use `separate_column()` when a CDMetaPOP column stores multiple values inside one delimited cell. The example below splits the fourth column, `N_Initial`, using `|`.
+
+```{r separate-column}
+n_initial_by_patch <- separate_column(pop_file, column_name = 4, sep = "|")
+
+dim(n_initial_by_patch)
+head(n_initial_by_patch[, 1:8])
+```
+
+## `unite_column()`
+
+Use `unite_column()` to combine several columns into one delimited column.
+
+```{r unite-column}
+small_df <- data.frame(
+  Patch = c("A", "B", "C"),
+  N_1 = c(25, 30, 35),
+  N_2 = c(34, 44, 34)
+)
+
+unite_column(
+  dataframe = small_df,
+  column_name = "N_combined",
+  sep = "|",
+  cols = c("N_1", "N_2")
+)
+```
+
+## `create_cdmat()`
+
+Use `create_cdmat()` to create a cost distance matrix from patch coordinates. The simplest options are Euclidean distance and equal distance.
+
+```{r create-cdmat}
+coords <- data.frame(
+  x = c(0, 1, 3, 6),
+  y = c(0, 2, 2, 5)
+)
+
+create_cdmat(coords, method = "euclidean")
+create_cdmat(coords, method = "equal")
+```
+
+## `cdmetapop_to_gene()`
+
+Use `cdmetapop_to_gene()` to convert an `ind##.csv` file to GENEPOP or GENALEX format. The function writes the converted file to the current working directory, so this example uses a temporary directory.
+
+```{r cdmetapop-to-gene}
+old_wd <- getwd()
+setwd(tempdir())
+
+cdmetapop_to_gene(ind_file, format = "genepop")
+list.files(pattern = "^my_genepop")
+
+setwd(old_wd)
+```
+
+# Population Summary Plots
+
+`summary_pop()` works with `summary_popAllTime.csv` files. The input can be a single file, a vector of files, a data frame, or a directory containing CDMetaPOP output folders.
+
+When a directory is supplied, `summary_pop()` discovers the matching output folders and can summarize across batches and Monte Carlo replicates.
+
+## Initial Population Size
+
+```{r summary-pop-n-initial}
+summary_pop(ex_dir, type = "N_initial")
+```
+
+## Sex Counts
+
+By default, `type = "sex"` shows males and females only.
+
+```{r summary-pop-sex}
+summary_pop(ex_dir, type = "sex")
+```
+
+Use `include_yys = TRUE` to include YY males and YY females.
+
+```{r summary-pop-sex-yys}
+summary_pop(ex_dir, type = "sex", include_yys = TRUE)
+```
+
+## Mature Counts
+
+By default, `type = "mature"` shows mature males and mature females only.
+
+```{r summary-pop-mature}
+summary_pop(ex_dir, type = "mature")
+```
+
+Use `include_yys = TRUE` to include mature YY males and mature YY females.
+
+```{r summary-pop-mature-yys}
+summary_pop(ex_dir, type = "mature", include_yys = TRUE)
+```
+
+## Births
+
+```{r summary-pop-births}
+summary_pop(ex_dir, type = "births")
+```
+
+## Myy Ratio
+
+```{r summary-pop-myy-ratio}
+summary_pop(ex_dir, type = "myy_ratio")
+```
+
+## Patch Abundance from `summary_popAllTime.csv`
+
+```{r summary-pop-patch}
+summary_pop(ex_dir, type = "patch", years = c(0, 5, 9))
+```
+
+## Deprecated `plot_population()`
+
+`plot_population()` still works as a deprecated wrapper, but new code should use `summary_pop()` or `summary_class()`.
+
+```{r plot-population-deprecated}
+plot_population(ex_dir, type = "N_initial")
+```
+
+# Class Summary Plots
+
+`summary_class()` works with `summary_classAllTime.csv` files.
+
+## Age Class Counts
+
+```{r summary-class-age-class}
+summary_class(ex_dir, type = "age_class", n = 10)
+```
+
+## Age Plus One
+
+```{r summary-class-age-plus-one}
+summary_class(ex_dir, type = "age_plus_one")
+```
+
+# Disease State Summaries
+
+`summarize_states()` works with `summary_popAllTime_DiseaseStates.csv` files. It summarizes disease-state counts across Monte Carlo replicates and compares batches.
+
+## Default State Names
+
+```{r summarize-states-default}
+summarize_states(ex_dir)
+```
+
+## Custom State and Scenario Names
+
+```{r summarize-states-custom}
+summarize_states(
+  ex_dir,
+  state_names = c("State 1", "State 2", "State 3"),
+  scenario_names = c("Batch 0", "Batch 1")
+)
+```
+
+## Cumulative State
+
+Use `cumulative_states` for a state that should be plotted as a running total within each Monte Carlo replicate.
+
+```{r summarize-states-cumulative}
+summarize_states(
+  ex_dir,
+  state_names = c("State 1", "State 2", "State 3"),
+  scenario_names = c("Batch 0", "Batch 1"),
+  cumulative_states = "State 3"
+)
+```
+
+# Individual File Summaries
+
+`summary_ind()` works with `ind##.csv` files. The input can be one file, multiple files, a run folder, a top-level output directory, or a data frame.
+
+For one-year plots, specify `year`. For movement over time, specify `years`.
+
+## Age Histogram
+
+```{r summary-ind-age}
+summary_ind(ex_dir, type = "age", year = 9, batch = 0, mc = 0)
+```
+
+## Size Histogram
+
+```{r summary-ind-size}
+summary_ind(ex_dir, type = "size", year = 9, batch = 0, mc = 0)
+```
+
+## Size by Age
+
+```{r summary-ind-age-size}
+summary_ind(ex_dir, type = "age_size", year = 9, batch = 0, mc = 0)
+```
+
+## Hindex Histogram
+
+```{r summary-ind-hindex}
+summary_ind(ex_dir, type = "hindex", year = 9, batch = 0, mc = 0)
+```
+
+## Movement Distance Histogram
+
+`CDist = -9999` is treated as no movement and is excluded from the histogram.
+
+```{r summary-ind-cdist}
+summary_ind(ex_dir, type = "cdist", year = 9, batch = 0, mc = 0)
+```
+
+## Movement Over Time
+
+```{r summary-ind-movement}
+summary_ind(ex_dir, type = "movement", years = 0:9, batch = 0, mc = 0)
+```
+
+# Individual-Level Genetics
+
+The individual-level genetics functions use genotype columns named like `L0A0`, `L0A1`, `L1A0`, and so on.
+
+## Allele Frequencies by Patch
+
+```{r allele-frequencies-by-patch}
+allele_frequencies_ind(ex_dir, year = 9, batch = 0, mc = 0)
+```
+
+## Mean Allele Frequencies Across Patches
+
+Use `mean_across_patches = TRUE` to summarize allele frequencies across patches for the selected year.
+
+```{r allele-frequencies-mean}
+allele_frequencies_ind(
+  ex_dir,
+  year = 9,
+  batch = 0,
+  mc = 0,
+  mean_across_patches = TRUE
+)
+```
+
+## Heterozygosity by Patch
+
+```{r heterozygosity-by-patch}
+heterozygosity_ind(ex_dir, year = 9, batch = 0, mc = 0)
+```
+
+## Mean Heterozygosity Across Patches
+
+```{r heterozygosity-mean}
+heterozygosity_ind(
+  ex_dir,
+  year = 9,
+  batch = 0,
+  mc = 0,
+  mean_across_patches = TRUE
+)
+```
+
+## Pairwise FST
+
+```{r pairwise-fst}
+pairwise_fst_ind(ex_dir, year = 9, batch = 0, mc = 0)
+```
+
+# Patch Maps from Individual Files
+
+`summary_patch_map()` maps patch locations from the individual files. Point size reflects the number of individuals in each patch.
+
+## All Individuals
+
+```{r summary-patch-map-all}
+summary_patch_map(
+  ex_dir,
+  years = c(0, 5, 9),
+  batch = 0,
+  mc = 0,
+  crs = 5070
+)
+```
+
+## One Disease State
+
+Use `states` to count only individuals in selected disease states.
+
+```{r summary-patch-map-state}
+summary_patch_map(
+  ex_dir,
+  years = c(0, 5, 9),
+  batch = 0,
+  mc = 0,
+  states = 1,
+  crs = 5070
+)
+```
+
+## Faceted by Disease State
+
+```{r summary-patch-map-state-facet, fig.height=7}
+summary_patch_map(
+  ex_dir,
+  years = c(0, 9),
+  batch = 0,
+  mc = 0,
+  states = c(0, 1),
+  facet_by_state = TRUE,
+  crs = 5070
+)
+```
+
+# Older Summary Helpers
+
+These functions are still exported and can be useful for specific legacy workflows.
+
+## `age_structure_proportions()`
+
+```{r age-structure-proportions}
+age_structure_proportions(
+  path = paste0(ex_dir, "/"),
+  runs = 1,
+  gen = 9,
+  species = 0
+)
+```
+
+## `dispersal()`
+
+With `plot = FALSE`, `dispersal()` returns a data frame of movement proportions.
+
+```{r dispersal-table}
+dispersal(
+  path = paste0(ex_dir, "/"),
+  run = 0,
+  batch = 0,
+  mc = 1,
+  gen = 9,
+  species = 0,
+  plot = FALSE
+)
+```
+
+With `plot = TRUE`, it draws a base R barplot and returns the same kind of summary.
+
+```{r dispersal-plot}
+dispersal(
+  path = paste0(ex_dir, "/"),
+  run = 0,
+  batch = 0,
+  mc = 0,
+  gen = 9,
+  species = 0,
+  plot = TRUE
+)
+```
+
+## `hets_plot()`
+
+```{r hets-plot}
+summary_pop_single <- read.csv(pop_file)
+hets_plot(summary_pop_single)
+```
+
+## `alleles_by_year()`
+
+```{r alleles-by-year}
+alleles_by_year(summary_pop_single, n = 10)
+```
+
+## `size_age_class()`
+
+```{r size-age-class}
+size_age_class(class_file)
+```
+
+# Interactive and External-Run Functions
+
+The following functions are exported, but they launch external software or interactive Shiny apps. They are shown here as code examples but are not run while knitting this document.
+
+## `launch_cdmetapop()`
+
+```{r launch-cdmetapop, eval=FALSE}
+launch_cdmetapop(
+  pythonFilepath = "C:/path/to/python.exe",
+  CDMetaPOPFilepath = "C:/path/to/CDMetaPOP.py",
+  runvarsDirectory = "C:/path/to/example_files/",
+  runvarsFilename = "RunVars.csv",
+  outputDirectory = "test_output"
+)
+```
+
+## Template Editors
+
+```{r write-template-functions, eval=FALSE}
+write_runvars(output_file = "my_new_runvars.csv")
+write_popvars(output_file = "my_new_popvars.csv")
+write_patchvars(output_file = "my_new_patchvars.csv")
+write_classvars(output_file = "my_new_classvars.csv")
+```
+
+# Deprecated Internal Compatibility Function
+
+`locus()` is exported for compatibility with older `gstudio` workflows. It is included in the package because the original function is deprecated elsewhere.
+
+```{r locus-example}
+locus(c("0", "1"), type = "snp")
+```
+
+# Session Info
+
+```{r session-info}
+sessionInfo()
+```

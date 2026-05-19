@@ -11,14 +11,12 @@
 #' @return A data frame with proportions of movers or a plot of the count of movers per year. The data returned is a dataframe that lists the proportion of dispersors for each year and for each Monte Carlo simulation.
 #' @examples
 #' \dontrun{ 
-#' # Example: This function is typically used with large datasets.See the package vignette for a full example.
-#' # Run the function to output a dataframe for all the generations and replicas specified:
-#' dispersal (path = my_dataset, run = 1, batch = 0, mc = 2, gen = 9, species = 0, ind = FALSE, plot = FALSE)
+#' ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+#' dispersal(path = paste0(ex_dir, "/"), run = 0, batch = 1, mc = 1, gen = 9, species = 0)
 #' }
 #' \dontrun{ 
-#' # Example: This function is typically used with large datasets.See the package vignette for a full example.
-#' # Generating a barplot for the example directory
-#' dispersal(path = my_dataset, run = 0, batch = 0, mc = 0, gen = 9, species = 1, ind = FALSE, plot = TRUE)
+#' ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+#' dispersal(path = paste0(ex_dir, "/"), run = 0, batch = 0, mc = 0, gen = 9, species = 0, plot = TRUE)
 #' }
 #' @export
 #' @details 

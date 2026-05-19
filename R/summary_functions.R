@@ -301,126 +301,50 @@
   "pop"
 }
 
-# --- THE MASTER FUNCTION ---
+# --- DEPRECATED WRAPPER ---
 
 #' Plot CDMetaPOP Population Dynamics
 #'
-#' A unified plotting function for CDMetaPOP output files.
+#' @description
+#' `plot_population()` is deprecated. Use [summary_pop()] for
+#' `summary_popAllTime.csv` plots and [summary_class()] for
+#' `summary_classAllTime.csv` plots.
 #'
-#' @param data A dataframe, file path (`.csv`, `.rds`, `.RData`), vector of file
-#'   paths, or a directory containing `summary_popAllTime.csv` and
-#'   `summary_classAllTime.csv` files.
-#' @param type String specifying the plot type: "count", "sex", "mature",
-#'   "births", "myy_ratio", "age_class", "patch", or "age_plus_one".
-#' @param batch_labels Optional named character vector used to relabel faceted
-#'   source groups. Names should match folder names such as `N.out1776184541`
-#'   and values should be the labels you want displayed in the facet strips.
-#' @param show_mc Logical. If `TRUE`, plot individual Monte Carlo trajectories
-#'   when multiple source files are supplied. Defaults to `TRUE`.
-#' @param show_ci Logical. If `TRUE`, plot the mean and a 95% confidence band
-#'   across Monte Carlo replicates when multiple source files are supplied.
-#'   Defaults to `TRUE`.
-#' @param ... Additional arguments passed to specific plot types (e.g., `n` for
-#'   age_class or `years` for patch).
-#'
-#' @details
-#' `plot_population()` can now work with individual summary files, multiple
-#' summary files, or a top-level CDMetaPOP output directory containing many
-#' `run0batch#mc#species#` folders. When a directory is supplied, the function
-#' recursively discovers the summary files needed for the requested plot type:
-#'
-#' - `"count"`, `"sex"`, `"mature"`, `"births"`, `"myy_ratio"`, and `"patch"`
-#'   use `summary_popAllTime.csv`
-#' - `"age_class"` and `"age_plus_one"` use `summary_classAllTime.csv`
-#'
-#' The function reads all matching files, combines them into a single data
-#' frame, and adds metadata columns describing the source of each record:
-#'
-#' - `.source_file`: full file path used to read the summary
-#' - `.source_group`: parent output folder such as `N.out...` or `R.out...`
-#' - `.source_id`: unique identifier for one run / batch / Monte Carlo / species
-#' - `.run`, `.batch`, `.mc`, `.species`: parsed integer identifiers from the
-#'   `run0batch0mc0species0` folder name
-#'
-#' This makes it possible to compare multiple Monte Carlo replicates in one plot
-#' without manually binding files together first. For line-based plots, the
-#' function can also overlay a mean trajectory and a 95% confidence interval
-#' band across Monte Carlo replicates.
-#'
-#' The packaged example directory `inst/extdata/package_ex_out_example`
-#' intentionally includes a very small subset of the full example output:
-#'
-#' - 2 source groups (`N.out...` and `R.out...`)
-#' - 2 Monte Carlo folders in each group (`mc0` and `mc1`)
-#' - both `summary_popAllTime.csv` and `summary_classAllTime.csv`
-#'
-#' This is small enough for package examples while still demonstrating the
-#' multi-file directory workflow.
-#'
-#' @examples
-#' # Example 1: plot a single packaged summary_popAllTime file
-#' pop_file <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
-#' plot_population(pop_file, type = "count")
-#'
-#' # Example 2: plot a single packaged summary_classAllTime file
-#' class_file <- system.file("extdata", "summary_classAllTime.csv", package = "cdmetapopR")
-#' plot_population(class_file, type = "age_class", n = 10)
-#'
-#' # Example 3: use the packaged multi-file example directory
-#' ex_dir <- system.file("extdata", "package_ex_out_example", package = "cdmetapopR")
-#' plot_population(ex_dir, type = "count")
-#' plot_population(ex_dir, type = "sex")
-#' plot_population(ex_dir, type = "age_plus_one")
-#'
-#' # Example 3b: relabel the faceted source groups
-#' batch_labels <- c(
-#'   "N.out1776184541" = "Scenario N",
-#'   "R.out1776189704" = "Scenario R"
-#' )
-#' plot_population(ex_dir, type = "count", batch_labels = batch_labels)
-#'
-#' # Example 3c: suppress individual Monte Carlo lines and keep only the
-#' # mean plus 95% confidence interval
-#' plot_population(ex_dir, type = "count", show_mc = FALSE, show_ci = TRUE)
-#'
-#' # Example 4: pass several files directly
-#' example_files <- list.files(
-#'   ex_dir,
-#'   pattern = "summary_popAllTime.csv$",
-#'   recursive = TRUE,
-#'   full.names = TRUE
-#' )
-#' plot_population(example_files, type = "births")
-#' @import ggplot2
-#' @importFrom tidyr pivot_longer
-#' @importFrom utils read.table
-#' @importFrom tools file_ext
+#' @inheritParams summary_pop
+#' @param type String specifying the plot type.
+#' @param ... Additional arguments passed to [summary_pop()] or
+#'   [summary_class()].
 #' @return A ggplot object.
 #' @export
-plot_population <- function(data, type = "count", batch_labels = NULL, show_mc = TRUE, show_ci = TRUE, ...) {
+plot_population <- function(data, type = "N_initial", batch_labels = NULL, show_mc = TRUE, show_ci = TRUE, ...) {
   type <- strsplit(tolower(type), " ")[[1]][1]
-  summary_type <- .summary_type_for_plot(type)
-  data <- .resolve_cdmetapop_input(data, summary_type = summary_type)
 
-  p <- switch(
-    type,
-    "count"        = helper_plot_count(data, batch_labels = batch_labels, show_mc = show_mc, show_ci = show_ci),
-    "sex"          = helper_plot_sex(data, batch_labels = batch_labels, show_mc = show_mc, show_ci = show_ci),
-    "mature"       = helper_plot_mature(data, batch_labels = batch_labels, show_mc = show_mc, show_ci = show_ci),
-    "births"       = helper_plot_births(data, batch_labels = batch_labels, show_mc = show_mc, show_ci = show_ci),
-    "myy_ratio"    = helper_plot_myy(data, batch_labels = batch_labels, show_mc = show_mc, show_ci = show_ci),
-    "age_class"    = helper_plot_age_class(data, batch_labels = batch_labels, ...),
-    "patch"        = helper_plot_patch(data, batch_labels = batch_labels, ...),
-    "age_plus_one" = helper_plot_age_plus(data, batch_labels = batch_labels, show_mc = show_mc, show_ci = show_ci),
-    stop("Invalid type. Choose: 'count', 'sex', 'mature', 'births', 'myy_ratio', 'age_class', 'patch', or 'age_plus_one'.")
+  if (type %in% c("age_class", "age_plus_one")) {
+    .Deprecated("summary_class")
+    return(summary_class(
+      data = data,
+      type = type,
+      batch_labels = batch_labels,
+      show_mc = show_mc,
+      show_ci = show_ci,
+      ...
+    ))
+  }
+
+  .Deprecated("summary_pop")
+  summary_pop(
+    data = data,
+    type = type,
+    batch_labels = batch_labels,
+    show_mc = show_mc,
+    show_ci = show_ci,
+    ...
   )
-
-  p + .theme_cdmetapop()
 }
 
 # --- SUB-HELPER FUNCTIONS ---
 
-helper_plot_count <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
+helper_plot_n_initial <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
   n_init <- .extract_pipe_table(data$N_Initial)[, 1]
   df <- data.frame(
     Year = as.numeric(data$Year),
@@ -434,21 +358,19 @@ helper_plot_count <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci
   .plot_line_by_source(
     df,
     "N",
-    "Population Size Timeseries",
-    "Population Size",
+    "N_initial Timeseries",
+    "N_initial",
     batch_labels = batch_labels,
     show_mc = show_mc,
     show_ci = show_ci
   )
 }
 
-helper_plot_sex <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
+helper_plot_sex <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE, include_yys = FALSE) {
   df <- data.frame(
     Year = as.numeric(data$Year),
-    "Wild-males" = as.numeric(.extract_pipe_table(data$N_Males)[, 1]),
-    "YYMales" = as.numeric(.extract_pipe_table(data$N_YYMales)[, 1]),
-    "Wild-females" = as.numeric(.extract_pipe_table(data$N_Females)[, 1]),
-    "YYFemales" = as.numeric(.extract_pipe_table(data$N_YYFemales)[, 1]),
+    "Males" = as.numeric(.extract_pipe_table(data$N_Males)[, 1]),
+    "Females" = as.numeric(.extract_pipe_table(data$N_Females)[, 1]),
     .source_group = data$.source_group,
     .source_id = data$.source_id,
     .mc = data$.mc,
@@ -456,9 +378,16 @@ helper_plot_sex <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci =
     check.names = FALSE
   )
 
+  sex_cols <- c("Males", "Females")
+  if (include_yys) {
+    df[["YY Males"]] <- as.numeric(.extract_pipe_table(data$N_YYMales)[, 1])
+    df[["YY Females"]] <- as.numeric(.extract_pipe_table(data$N_YYFemales)[, 1])
+    sex_cols <- c(sex_cols, "YY Males", "YY Females")
+  }
+
   long_data <- tidyr::pivot_longer(
     df,
-    cols = c("Wild-males", "YYMales", "Wild-females", "YYFemales"),
+    cols = sex_cols,
     names_to = "category",
     values_to = "value"
   )
@@ -517,13 +446,11 @@ helper_plot_sex <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci =
   p + labs(title = "Population Sizes by Sex", x = "Year", y = "Count")
 }
 
-helper_plot_mature <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
+helper_plot_mature <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE, include_yys = FALSE) {
   df <- data.frame(
     Year = as.numeric(data$Year),
-    "Mature Wild-F" = as.numeric(.extract_pipe_table(data$N_MatureFemales)[, 1]),
-    "Mature Wild-M" = as.numeric(.extract_pipe_table(data$N_MatureMales)[, 1]),
-    "Mature YYM" = as.numeric(.extract_pipe_table(data$N_MatureYYMales)[, 1]),
-    "Mature YYF" = as.numeric(.extract_pipe_table(data$N_MatureYYFemales)[, 1]),
+    "Mature Females" = as.numeric(.extract_pipe_table(data$N_MatureFemales)[, 1]),
+    "Mature Males" = as.numeric(.extract_pipe_table(data$N_MatureMales)[, 1]),
     .source_group = data$.source_group,
     .source_id = data$.source_id,
     .mc = data$.mc,
@@ -531,9 +458,16 @@ helper_plot_mature <- function(data, batch_labels = NULL, show_mc = TRUE, show_c
     check.names = FALSE
   )
 
+  mature_cols <- c("Mature Females", "Mature Males")
+  if (include_yys) {
+    df[["Mature YY Males"]] <- as.numeric(.extract_pipe_table(data$N_MatureYYMales)[, 1])
+    df[["Mature YY Females"]] <- as.numeric(.extract_pipe_table(data$N_MatureYYFemales)[, 1])
+    mature_cols <- c(mature_cols, "Mature YY Males", "Mature YY Females")
+  }
+
   long_data <- tidyr::pivot_longer(
     df,
-    cols = c("Mature Wild-F", "Mature Wild-M", "Mature YYM", "Mature YYF"),
+    cols = mature_cols,
     names_to = "category",
     values_to = "value"
   )

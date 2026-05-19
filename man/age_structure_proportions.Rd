@@ -22,5 +22,6 @@ a dataframe with a  column for each montecarlo run (MC) with the proportion of t
 This function summarizes the proportions of the age structure in the simulated population. It is calculated counting the values in the column 'age' of the chosen 'ind' generation.
 }
 \examples{
-mypath = "~/UM/CDMetaPop/data/output_test1728487700/"
+mypath <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+age_structure_proportions(path = paste0(mypath, "/"), runs = 1, gen = 9)
 }

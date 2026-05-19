@@ -7,8 +7,9 @@
 #' @param gen Simulation run time (generation or year). Refers to runtime in the RunVars of CDMetaPOP input file. Currently defaults to 49.
 #' @param species If the simulation includes more species... The code for this needs to be adjusted
 #' @return a dataframe with a  column for each montecarlo run (MC) with the proportion of the population for each given age (in rows) and the last column with the average value across all montecarlo runs at any given age. 
-#' @examples 
-#' mypath = "~/UM/CDMetaPop/data/output_test1728487700/"
+#' @examples
+#' mypath <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+#' age_structure_proportions(path = paste0(mypath, "/"), runs = 1, gen = 9)
 #' @export
 
 age_structure_proportions <- function(path = mypath, runs = 1, gen = 49, species = 0) {
