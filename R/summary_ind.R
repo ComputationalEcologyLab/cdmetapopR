@@ -1,10 +1,25 @@
 # --- INTERNAL HELPERS (Not Exported) ---
 
-.parse_ind_metadata <- function(path) {
+.ind_file_pattern <- function(file_type = c("ind", "ind_Sample")) {
+  file_type <- match.arg(file_type)
+  if (identical(file_type, "ind_Sample")) {
+    "^ind([0-9]+)_Sample\\.csv$"
+  } else {
+    "^ind([0-9]+)\\.csv$"
+  }
+}
+
+.ind_file_label <- function(file_type = c("ind", "ind_Sample")) {
+  file_type <- match.arg(file_type)
+  if (identical(file_type, "ind_Sample")) "ind##_Sample.csv" else "ind##.csv"
+}
+
+.parse_ind_metadata <- function(path, file_type = c("ind", "ind_Sample")) {
+  file_type <- match.arg(file_type)
   file_name <- basename(path)
   run_dir <- basename(dirname(path))
 
-  year_match <- regexec("^ind([0-9]+)\\.csv$", file_name)
+  year_match <- regexec(.ind_file_pattern(file_type), file_name)
   year_pieces <- regmatches(file_name, year_match)[[1]]
   year <- if (length(year_pieces) == 2) as.integer(year_pieces[2]) else NA_integer_
 
@@ -31,12 +46,17 @@
     .batch = batch,
     .mc = mc,
     .species = species,
+    .file_type = file_type,
     Year = year,
     stringsAsFactors = FALSE
   )
 }
 
-.discover_ind_files <- function(paths, run = 0, batch = 0, mc = 0, species = 0, years = NULL) {
+.discover_ind_files <- function(paths, run = 0, batch = 0, mc = 0, species = 0, years = NULL, file_type = c("ind", "ind_Sample")) {
+  file_type <- match.arg(file_type)
+  file_pattern <- .ind_file_pattern(file_type)
+  file_label <- .ind_file_label(file_type)
+
   if (!is.character(paths) || length(paths) < 1) {
     stop("path must be a file path, directory path, or character vector of paths.")
   }
@@ -47,7 +67,7 @@
     if (dir.exists(path)) {
       files <- list.files(
         path = path,
-        pattern = "^ind[0-9]+\\.csv$",
+        pattern = file_pattern,
         recursive = TRUE,
         full.names = TRUE
       )
@@ -56,8 +76,8 @@
         data.frame(path = files, from_directory = TRUE, stringsAsFactors = FALSE)
       )
     } else if (file.exists(path)) {
-      if (!grepl("^ind[0-9]+\\.csv$", basename(path))) {
-        stop("Expected an ind##.csv file: ", path)
+      if (!grepl(file_pattern, basename(path))) {
+        stop("Expected a ", file_label, " file: ", path)
       }
       discovered <- rbind(
         discovered,
@@ -69,18 +89,20 @@
   }
 
   if (nrow(discovered) == 0) {
-    stop("No ind##.csv files were found in the supplied input.")
+    stop("No ", file_label, " files were found in the supplied input.")
   }
 
-  metadata <- do.call(rbind, lapply(discovered$path, .parse_ind_metadata))
+  metadata <- do.call(rbind, lapply(discovered$path, .parse_ind_metadata, file_type = file_type))
   metadata$.from_directory <- discovered$from_directory
 
   if (any(metadata$.from_directory)) {
     keep <- !metadata$.from_directory |
-      ((is.na(metadata$.run) | metadata$.run == run) &
-        (is.na(metadata$.batch) | metadata$.batch == batch) &
-        (is.na(metadata$.mc) | metadata$.mc == mc) &
-        (is.na(metadata$.species) | metadata$.species == species))
+      (
+        .matches_cdmetapop_filter(metadata$.run, run) &
+          .matches_cdmetapop_filter(metadata$.batch, batch) &
+          .matches_cdmetapop_filter(metadata$.mc, mc) &
+          .matches_cdmetapop_filter(metadata$.species, species)
+      )
     metadata <- metadata[keep, , drop = FALSE]
   }
 
@@ -91,7 +113,7 @@
   metadata <- metadata[order(metadata$.batch, metadata$.mc, metadata$Year), , drop = FALSE]
 
   if (nrow(metadata) == 0) {
-    stop("No ind##.csv files matched the requested run, batch, MC, species, and year filters.")
+    stop("No ", file_label, " files matched the requested run, batch, MC, species, and year filters.")
   }
 
   metadata
@@ -100,7 +122,7 @@
 .read_ind_files <- function(file_metadata) {
   loaded <- lapply(seq_len(nrow(file_metadata)), function(i) {
     df <- utils::read.csv(file_metadata$.source_file[i], stringsAsFactors = FALSE)
-    meta_cols <- c(".source_file", ".source_group", ".source_id", ".run", ".batch", ".mc", ".species", "Year")
+    meta_cols <- c(".source_file", ".source_group", ".source_id", ".run", ".batch", ".mc", ".species", ".file_type", "Year")
 
     for (nm in meta_cols) {
       df[[nm]] <- file_metadata[[nm]][i]
@@ -109,10 +131,53 @@
     df
   })
 
+  all_cols <- unique(unlist(lapply(loaded, names), use.names = FALSE))
+  loaded <- lapply(loaded, function(df) {
+    missing_cols <- setdiff(all_cols, names(df))
+    for (nm in missing_cols) {
+      df[[nm]] <- NA
+    }
+    df[, all_cols, drop = FALSE]
+  })
+
   do.call(rbind, loaded)
 }
 
-.resolve_ind_input <- function(path, run = 0, batch = 0, mc = 0, species = 0, years = NULL) {
+.patch_filter_is_all <- function(patches) {
+  is.character(patches) && length(patches) == 1 && identical(tolower(patches), "all")
+}
+
+.filter_ind_patches <- function(data, patches = "all") {
+  if (.patch_filter_is_all(patches)) {
+    return(data)
+  }
+
+  .check_ind_columns(data, "PatchID")
+  patch_values <- as.character(patches)
+  existing_patches <- unique(as.character(data$PatchID))
+  missing_patches <- setdiff(patch_values, existing_patches)
+
+  if (length(missing_patches) > 0) {
+    warning(
+      "Patches ",
+      paste(missing_patches, collapse = ", "),
+      " do not exist; including only patches that exist in the specified range.",
+      call. = FALSE
+    )
+  }
+
+  data <- data[as.character(data$PatchID) %in% patch_values, , drop = FALSE]
+
+  if (nrow(data) == 0) {
+    stop("No individuals matched the requested patches.")
+  }
+
+  data
+}
+
+.resolve_ind_input <- function(path, run = 0, batch = 0, mc = 0, species = 0, years = NULL, file_type = c("ind", "ind_Sample"), patches = "all") {
+  file_type <- match.arg(file_type)
+
   if (is.data.frame(path)) {
     if (!"Year" %in% names(path)) {
       path$Year <- NA_integer_
@@ -123,7 +188,8 @@
     path$.batch <- if (".batch" %in% names(path)) path$.batch else NA_integer_
     path$.mc <- if (".mc" %in% names(path)) path$.mc else NA_integer_
     path$.species <- if (".species" %in% names(path)) path$.species else NA_integer_
-    return(path)
+    path$.file_type <- if (".file_type" %in% names(path)) path$.file_type else file_type
+    return(.filter_ind_patches(path, patches = patches))
   }
 
   file_metadata <- .discover_ind_files(
@@ -132,10 +198,11 @@
     batch = batch,
     mc = mc,
     species = species,
-    years = years
+    years = years,
+    file_type = file_type
   )
 
-  .read_ind_files(file_metadata)
+  .filter_ind_patches(.read_ind_files(file_metadata), patches = patches)
 }
 
 .check_ind_columns <- function(data, cols) {
@@ -149,12 +216,13 @@
 
 #' Plot CDMetaPOP Individual File Summaries
 #'
-#' Plots simple summaries from CDMetaPOP `ind##.csv` files. Inputs can be a
-#' data frame, one `ind##.csv` file, multiple `ind##.csv` files, a single run
-#' folder, or a top-level CDMetaPOP output directory containing run folders.
+#' Plots simple summaries from CDMetaPOP `ind##.csv` or
+#' `ind##_Sample.csv` files. Inputs can be a data frame, one individual file,
+#' multiple individual files, a single run folder, or a top-level CDMetaPOP
+#' output directory containing run folders.
 #'
 #' @param path A dataframe, file path, vector of file paths, run directory, or
-#'   top-level output directory containing `ind##.csv` files.
+#'   top-level output directory containing individual files.
 #' @param type String specifying the plot type: `"cdist"`, `"hindex"`,
 #'   `"age"`, `"size"`, `"age_size"`, or `"movement"`.
 #' @param year Integer. Year/generation to plot for one-year plots. Defaults to
@@ -169,6 +237,12 @@
 #'   Defaults to `0`.
 #' @param species Integer. Species index used when `path` is a directory.
 #'   Defaults to `0`.
+#' @param file_type Character. Which individual file type to read. Use
+#'   `"ind"` for `ind##.csv` files or `"ind_Sample"` for `ind##_Sample.csv`
+#'   files. Defaults to `"ind"`.
+#' @param patches Patch IDs to include. Use `"all"` to include all patches, a
+#'   single patch ID such as `5`, or a vector/range such as `c(1, 3, 8)` or
+#'   `1:20`. Defaults to `"all"`.
 #' @param bins Integer. Number of bins for continuous histograms. Defaults to
 #'   `30`.
 #'
@@ -188,7 +262,10 @@ summary_ind <- function(path,
                         batch = 0,
                         mc = 0,
                         species = 0,
+                        file_type = "ind",
+                        patches = "all",
                         bins = 30) {
+  file_type <- match.arg(file_type, c("ind", "ind_Sample"))
   type <- strsplit(tolower(type), " ")[[1]][1]
 
   one_year_types <- c("cdist", "hindex", "age", "size", "age_size")
@@ -206,11 +283,13 @@ summary_ind <- function(path,
     batch = batch,
     mc = mc,
     species = species,
-    years = years_to_read
+    years = years_to_read,
+    file_type = file_type,
+    patches = patches
   )
 
   if (type %in% one_year_types && length(unique(stats::na.omit(data$Year))) > 1) {
-    stop("One-year plot types require a single year. Supply one year or one ind##.csv file.")
+    stop("One-year plot types require a single year. Supply one year or one individual file.")
   }
 
   p <- switch(
@@ -268,7 +347,6 @@ helper_plot_ind_age_size <- function(data) {
 
   ggplot2::ggplot(data, ggplot2::aes(x = as.numeric(.data$age), y = as.numeric(.data$size))) +
     ggplot2::geom_point(alpha = 0.35, color = "steelblue") +
-    ggplot2::geom_smooth(method = "loess", se = FALSE, color = "black", linewidth = 0.8) +
     ggplot2::labs(title = "Individual Size by Age", x = "Age", y = "Size")
 }
 
@@ -306,7 +384,6 @@ helper_plot_ind_movement <- function(data) {
       color = factor(.data$.mc)
     )
   ) +
-    ggplot2::geom_line(linewidth = 0.8) +
     ggplot2::geom_point(size = 2) +
     ggplot2::facet_wrap(~ .batch, labeller = ggplot2::label_both) +
     ggplot2::labs(

@@ -17,6 +17,14 @@
 #' @param show_ci Logical. If `TRUE`, plot the mean and a 95% confidence band
 #'   across Monte Carlo replicates when multiple source files are supplied for
 #'   line-based plots. Defaults to `TRUE`.
+#' @param run Integer run index used when `data` is a directory. Defaults to
+#'   `0`. Use `"all"` to include all runs.
+#' @param batch Integer batch index used when `data` is a directory. Defaults
+#'   to `0`. Use `"all"` to include all batches.
+#' @param mc Integer Monte Carlo index used when `data` is a directory.
+#'   Defaults to `0`. Use `"all"` to include all Monte Carlo replicates.
+#' @param species Integer species index used when `data` is a directory.
+#'   Defaults to `0`. Use `"all"` to include all species.
 #' @param ... Additional arguments passed to specific plot types. Use `n` to
 #'   choose the year interval for `"age_class"` plots.
 #'
@@ -27,9 +35,16 @@
 #' summary_class(ex_dir, type = "age_class", n = 10)
 #' summary_class(ex_dir, type = "age_plus_one")
 #' @export
-summary_class <- function(data, type = "age_class", batch_labels = NULL, show_mc = TRUE, show_ci = TRUE, ...) {
+summary_class <- function(data, type = "age_class", batch_labels = NULL, show_mc = TRUE, show_ci = TRUE, run = 0, batch = 0, mc = 0, species = 0, ...) {
   type <- strsplit(tolower(type), " ")[[1]][1]
-  data <- .resolve_cdmetapop_input(data, summary_type = "class")
+  data <- .resolve_cdmetapop_input(
+    data,
+    summary_type = "class",
+    run = run,
+    batch = batch,
+    mc = mc,
+    species = species
+  )
 
   p <- switch(
     type,

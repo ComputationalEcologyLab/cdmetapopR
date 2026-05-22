@@ -2,23 +2,34 @@
 % Please edit documentation in R/summary_patch_map.R
 \name{summary_patch_map}
 \alias{summary_patch_map}
-\title{Map CDMetaPOP Patch Abundance and Movement}
+\title{Map CDMetaPOP Patch Abundance}
 \usage{
 summary_patch_map(
   path,
+  type = "abundance",
   years = 0,
   run = 0,
   batch = 0,
   mc = 0,
   species = 0,
+  file_type = "ind",
+  patches = "all",
   states = NULL,
   facet_by_state = FALSE,
+  locus = NULL,
+  allele = NULL,
+  metric = "Ho",
+  labels = FALSE,
+  log_scale = FALSE,
   crs = NULL
 )
 }
 \arguments{
 \item{path}{A dataframe, file path, vector of file paths, run directory, or
-top-level output directory containing \code{ind##.csv} files.}
+top-level output directory containing individual files.}
+
+\item{type}{Character. What to map: \code{"abundance"}, \code{"allele_frequency"},
+or \code{"heterozygosity"}. Defaults to \code{"abundance"}.}
 
 \item{years}{Integer vector. Years/generations to map. Defaults to \code{0}.}
 
@@ -34,11 +45,34 @@ Defaults to \code{0}.}
 \item{species}{Integer. Species index used when \code{path} is a directory.
 Defaults to \code{0}.}
 
+\item{file_type}{Character. Which individual file type to read. Use
+\code{"ind"} for \code{ind##.csv} files or \code{"ind_Sample"} for \code{ind##_Sample.csv}
+files. Defaults to \code{"ind"}.}
+
+\item{patches}{Patch IDs to include. Use \code{"all"} to include all patches, a
+single patch ID such as \code{5}, or a vector/range such as \code{c(1, 3, 8)} or
+\code{1:20}. Defaults to \code{"all"}.}
+
 \item{states}{Optional vector of disease states to include. If \code{NULL}, all
 individuals are used.}
 
 \item{facet_by_state}{Logical. If \code{TRUE}, facet by disease state as well as
 year. Defaults to \code{FALSE}.}
+
+\item{locus}{Locus to map for genetic summaries, such as \code{"L0"} or \code{0}.
+Required when \code{type} is \code{"allele_frequency"} or \code{"heterozygosity"}.}
+
+\item{allele}{Allele to map for \code{type = "allele_frequency"}, such as
+\code{"A1"} or \code{1}.}
+
+\item{metric}{Heterozygosity metric to map for \code{type = "heterozygosity"}.
+Use \code{"Ho"} or \code{"He"}. Defaults to \code{"Ho"}.}
+
+\item{labels}{Logical. If \code{TRUE}, add patch ID labels to the map. Defaults
+to \code{FALSE}.}
+
+\item{log_scale}{Logical. If \code{TRUE}, use log1p-transformed abundance for
+point sizes when \code{type = "abundance"}. Defaults to \code{FALSE}.}
 
 \item{crs}{Optional coordinate reference system label. For example, use
 \code{5070} or \code{"EPSG:5070"} for NAD83 / Conus Albers. Coordinates are not
@@ -48,9 +82,9 @@ transformed; this is used for labeling and stored as plot data metadata.}
 A ggplot object with patch-level summary data in \code{plot$data}.
 }
 \description{
-Creates a faceted patch map from CDMetaPOP \code{ind##.csv} files. Points are
-drawn at patch coordinates and scaled by the number of individuals in each
-patch.
+Creates a faceted patch map from CDMetaPOP \code{ind##.csv} or
+\code{ind##_Sample.csv} files. Points are drawn at patch coordinates and scaled
+by the number of individuals in each patch.
 }
 \examples{
 ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
@@ -58,4 +92,6 @@ ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
 summary_patch_map(ex_dir, years = c(0, 5, 9), crs = 5070)
 summary_patch_map(ex_dir, years = c(0, 5, 9), states = 1, crs = 5070)
 summary_patch_map(ex_dir, years = c(0, 9), states = c(0, 1), facet_by_state = TRUE, crs = 5070)
+summary_patch_map(ex_dir, type = "allele_frequency", years = 9, locus = "L0", allele = "A1")
+summary_patch_map(ex_dir, type = "heterozygosity", years = 9, locus = "L0", metric = "Ho")
 }

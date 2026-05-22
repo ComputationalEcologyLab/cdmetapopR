@@ -80,9 +80,13 @@
   data
 }
 
-.discover_cdmetapop_files <- function(paths, summary_type) {
+.matches_cdmetapop_filter <- function(values, filter) {
+  identical(filter, "all") | is.na(values) | values == filter
+}
+
+.discover_cdmetapop_files <- function(paths, summary_type, run = 0, batch = 0, mc = 0, species = 0) {
   target_name <- .summary_filename(summary_type)
-  discovered <- character()
+  discovered <- data.frame(path = character(), from_directory = logical(), stringsAsFactors = FALSE)
 
   for (path in paths) {
     if (dir.exists(path)) {
@@ -92,21 +96,46 @@
         recursive = TRUE,
         full.names = TRUE
       )
-      discovered <- c(discovered, found)
+      discovered <- rbind(
+        discovered,
+        data.frame(path = found, from_directory = TRUE, stringsAsFactors = FALSE)
+      )
     } else if (file.exists(path)) {
-      discovered <- c(discovered, path)
+      discovered <- rbind(
+        discovered,
+        data.frame(path = path, from_directory = FALSE, stringsAsFactors = FALSE)
+      )
     } else {
       stop("Path does not exist: ", path)
     }
   }
 
-  discovered <- unique(discovered[file.exists(discovered)])
+  discovered <- discovered[file.exists(discovered$path), , drop = FALSE]
+  discovered <- discovered[!duplicated(discovered$path), , drop = FALSE]
 
-  if (length(discovered) == 0) {
+  if (nrow(discovered) == 0) {
     stop("No ", target_name, " files were found in the supplied input.")
   }
 
-  discovered
+  metadata <- do.call(rbind, lapply(discovered$path, .parse_cdmetapop_metadata))
+  metadata$.from_directory <- discovered$from_directory
+
+  if (any(metadata$.from_directory)) {
+    keep <- !metadata$.from_directory |
+      (
+        .matches_cdmetapop_filter(metadata$.run, run) &
+          .matches_cdmetapop_filter(metadata$.batch, batch) &
+          .matches_cdmetapop_filter(metadata$.mc, mc) &
+          .matches_cdmetapop_filter(metadata$.species, species)
+      )
+    metadata <- metadata[keep, , drop = FALSE]
+  }
+
+  if (nrow(metadata) == 0) {
+    stop("No ", target_name, " files matched the requested run, batch, MC, and species filters.")
+  }
+
+  metadata$.source_file
 }
 
 .load_cdmetapop_source <- function(path) {
@@ -129,7 +158,7 @@
   stop("Unsupported file type: .", ext)
 }
 
-.resolve_cdmetapop_input <- function(x, summary_type = c("pop", "class")) {
+.resolve_cdmetapop_input <- function(x, summary_type = c("pop", "class"), run = 0, batch = 0, mc = 0, species = 0) {
   summary_type <- match.arg(summary_type)
 
   if (is.data.frame(x)) {
@@ -140,7 +169,14 @@
     stop("Input must be a data frame, a file path, a directory, or a character vector of paths.")
   }
 
-  file_paths <- .discover_cdmetapop_files(x, summary_type)
+  file_paths <- .discover_cdmetapop_files(
+    x,
+    summary_type,
+    run = run,
+    batch = batch,
+    mc = mc,
+    species = species
+  )
   loaded <- lapply(file_paths, .load_cdmetapop_source)
 
   if (length(loaded) == 1) {
@@ -171,6 +207,17 @@
     out <- unname(batch_labels[values])
     out[is.na(out)] <- values[is.na(out)]
     out
+  }
+}
+
+.numeric_label_levels <- function(x) {
+  levels <- unique(as.character(stats::na.omit(x)))
+  numeric_levels <- suppressWarnings(as.numeric(levels))
+
+  if (length(levels) > 0 && all(!is.na(numeric_levels))) {
+    levels[order(numeric_levels)]
+  } else {
+    sort(levels)
   }
 }
 
@@ -301,47 +348,6 @@
   "pop"
 }
 
-# --- DEPRECATED WRAPPER ---
-
-#' Plot CDMetaPOP Population Dynamics
-#'
-#' @description
-#' `plot_population()` is deprecated. Use [summary_pop()] for
-#' `summary_popAllTime.csv` plots and [summary_class()] for
-#' `summary_classAllTime.csv` plots.
-#'
-#' @inheritParams summary_pop
-#' @param type String specifying the plot type.
-#' @param ... Additional arguments passed to [summary_pop()] or
-#'   [summary_class()].
-#' @return A ggplot object.
-#' @export
-plot_population <- function(data, type = "N_initial", batch_labels = NULL, show_mc = TRUE, show_ci = TRUE, ...) {
-  type <- strsplit(tolower(type), " ")[[1]][1]
-
-  if (type %in% c("age_class", "age_plus_one")) {
-    .Deprecated("summary_class")
-    return(summary_class(
-      data = data,
-      type = type,
-      batch_labels = batch_labels,
-      show_mc = show_mc,
-      show_ci = show_ci,
-      ...
-    ))
-  }
-
-  .Deprecated("summary_pop")
-  summary_pop(
-    data = data,
-    type = type,
-    batch_labels = batch_labels,
-    show_mc = show_mc,
-    show_ci = show_ci,
-    ...
-  )
-}
-
 # --- SUB-HELPER FUNCTIONS ---
 
 helper_plot_n_initial <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
@@ -387,7 +393,7 @@ helper_plot_sex <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci =
 
   long_data <- tidyr::pivot_longer(
     df,
-    cols = sex_cols,
+    cols = tidyselect::all_of(sex_cols),
     names_to = "category",
     values_to = "value"
   )
@@ -467,7 +473,7 @@ helper_plot_mature <- function(data, batch_labels = NULL, show_mc = TRUE, show_c
 
   long_data <- tidyr::pivot_longer(
     df,
-    cols = mature_cols,
+    cols = tidyselect::all_of(mature_cols),
     names_to = "category",
     values_to = "value"
   )
@@ -577,6 +583,126 @@ helper_plot_myy <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci =
   )
 }
 
+helper_plot_allelic_richness <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
+  if (!"Alleles" %in% names(data)) {
+    stop("Missing required summary_popAllTime column: Alleles")
+  }
+
+  allele_counts <- .extract_pipe_table(data$Alleles)
+  richness <- allele_counts[, 1]
+
+  df <- data.frame(
+    Year = as.numeric(data$Year),
+    Richness = as.numeric(richness),
+    .source_group = data$.source_group,
+    .source_id = data$.source_id,
+    .mc = data$.mc,
+    stringsAsFactors = FALSE
+  )
+
+  .plot_line_by_source(
+    df,
+    "Richness",
+    "Allelic Richness",
+    "Allelic richness",
+    color = "darkgreen",
+    batch_labels = batch_labels,
+    show_mc = show_mc,
+    show_ci = show_ci
+  )
+}
+
+helper_plot_het <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
+  missing_cols <- setdiff(c("Ho", "He"), names(data))
+  if (length(missing_cols) > 0) {
+    stop("Missing required summary_popAllTime column(s): ", paste(missing_cols, collapse = ", "))
+  }
+
+  df <- data.frame(
+    Year = as.numeric(data$Year),
+    "Observed (Ho)" = as.numeric(.extract_pipe_table(data$Ho)[, 1]),
+    "Expected (He)" = as.numeric(.extract_pipe_table(data$He)[, 1]),
+    .source_group = data$.source_group,
+    .source_id = data$.source_id,
+    .mc = data$.mc,
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+
+  long_data <- tidyr::pivot_longer(
+    df,
+    cols = c("Observed (Ho)", "Expected (He)"),
+    names_to = "Metric",
+    values_to = "Heterozygosity"
+  )
+
+  p <- ggplot(
+    long_data,
+    aes(
+      x = .data$Year,
+      y = .data$Heterozygosity,
+      color = .data$Metric,
+      group = interaction(.data$.source_id, .data$Metric)
+    )
+  )
+
+  if (.plot_has_multiple_sources(long_data)) {
+    summary_df <- .summarize_ci_cdmetapop(
+      data = long_data,
+      value_col = "Heterozygosity",
+      group_cols = c(".source_group", "Metric", "Year")
+    )
+
+    if (show_ci) {
+      p <- p +
+        geom_ribbon(
+          data = summary_df,
+          aes(
+            x = .data$Year,
+            ymin = .data$lower,
+            ymax = .data$upper,
+            fill = .data$Metric,
+            group = interaction(.data$.source_group, .data$Metric)
+          ),
+          inherit.aes = FALSE,
+          alpha = 0.14,
+          color = NA
+        ) +
+        geom_line(
+          data = summary_df,
+          aes(
+            x = .data$Year,
+            y = .data$mean,
+            color = .data$Metric,
+            group = interaction(.data$.source_group, .data$Metric)
+          ),
+          inherit.aes = FALSE,
+          linewidth = 0.95
+        )
+    }
+
+    if (show_mc) {
+      p <- p + geom_line(alpha = 0.35, linewidth = 0.55)
+    }
+
+    p <- p +
+      facet_wrap(
+        ~ .source_group,
+        labeller = ggplot2::labeller(.source_group = .facet_labeler_cdmetapop(batch_labels))
+      ) +
+      labs(fill = "Metric")
+  } else {
+    p <- p + geom_line(linewidth = 0.85)
+  }
+
+  p + labs(
+    title = "Observed and Expected Heterozygosity",
+    x = "Year",
+    y = "Heterozygosity",
+    color = "Metric"
+  )
+}
+
 helper_plot_age_class <- function(data, n = 5, batch_labels = NULL) {
   count_col <- if ("N_Initial_Age" %in% names(data)) "N_Initial_Age" else "N_Initial_Class"
   count_data <- .extract_pipe_table(data[[count_col]])
@@ -587,7 +713,8 @@ helper_plot_age_class <- function(data, n = 5, batch_labels = NULL) {
     age_labels <- 0:(ncol(count_data) - 1)
   }
 
-  colnames(count_data) <- paste0("Age_", age_labels)
+  age_levels <- paste0("Age_", age_labels)
+  colnames(count_data) <- age_levels
   count_data$Year <- as.numeric(data$Year)
   count_data$.source_group <- data$.source_group
   count_data$.source_id <- data$.source_id
@@ -600,6 +727,7 @@ helper_plot_age_class <- function(data, n = 5, batch_labels = NULL) {
   )
 
   long_data$Count <- as.numeric(long_data$Count)
+  long_data$Ages <- factor(long_data$Ages, levels = age_levels)
   df_filtered <- long_data[long_data$Year %% n == 0, ]
 
   if (.plot_has_multiple_sources(df_filtered)) {

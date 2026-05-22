@@ -1,26 +1,39 @@
 # --- INTERNAL HELPERS (Not Exported) ---
 
 .discover_disease_state_files <- function(base_path) {
-  if (!is.character(base_path) || length(base_path) != 1) {
-    stop("base_path must be one directory path.")
+  if (!is.character(base_path) || length(base_path) < 1) {
+    stop("base_path must be a file path, directory path, or character vector of paths.")
   }
 
-  if (!dir.exists(base_path)) {
-    stop("Directory does not exist: ", base_path)
-  }
+  files <- character()
 
-  files <- list.files(
-    path = base_path,
-    pattern = "^summary_popAllTime_DiseaseStates\\.csv$",
-    recursive = TRUE,
-    full.names = TRUE
-  )
+  for (path in base_path) {
+    if (dir.exists(path)) {
+      files <- c(
+        files,
+        list.files(
+          path = path,
+          pattern = "^summary_popAllTime_DiseaseStates\\.csv$",
+          recursive = TRUE,
+          full.names = TRUE
+        )
+      )
+    } else if (file.exists(path)) {
+      if (!identical(basename(path), "summary_popAllTime_DiseaseStates.csv")) {
+        stop("Expected a summary_popAllTime_DiseaseStates.csv file: ", path)
+      }
+      files <- c(files, path)
+    } else {
+      stop("Path does not exist: ", path)
+    }
+
+  }
 
   if (length(files) == 0) {
-    stop("No summary_popAllTime_DiseaseStates.csv files found in: ", base_path)
+    stop("No summary_popAllTime_DiseaseStates.csv files found in the supplied input.")
   }
 
-  files
+  unique(files)
 }
 
 .parse_disease_state_metadata <- function(path) {
@@ -33,10 +46,18 @@
   }
 
   data.frame(
+    Run = as.integer(pieces[2]),
     Batch = as.integer(pieces[3]),
     MC = as.integer(pieces[4]),
     Species = as.integer(pieces[5]),
     Source = basename(dirname(dirname(path))),
+    .source_file = normalizePath(path, winslash = "/", mustWork = FALSE),
+    .source_group = basename(dirname(dirname(path))),
+    .source_id = paste(run_dir, basename(path), sep = "_"),
+    .run = as.integer(pieces[2]),
+    .batch = as.integer(pieces[3]),
+    .mc = as.integer(pieces[4]),
+    .species = as.integer(pieces[5]),
     stringsAsFactors = FALSE
   )
 }
@@ -66,6 +87,104 @@
   }
 
   ncol(.disease_state_totals(sample_df[[state_column]][1]))
+}
+
+.resolve_disease_state_input <- function(base_path,
+                                         run = 0,
+                                         batch = 0,
+                                         mc = 0,
+                                         species = 0,
+                                         state_names = NULL,
+                                         cumulative_states = NULL,
+                                         state_column = "States_SecondUpdate",
+                                         long = TRUE) {
+  disease_files <- .discover_disease_state_files(base_path)
+  metadata <- do.call(rbind, lapply(disease_files, .parse_disease_state_metadata))
+
+  keep <- .matches_cdmetapop_filter(metadata$.run, run) &
+    .matches_cdmetapop_filter(metadata$.batch, batch) &
+    .matches_cdmetapop_filter(metadata$.mc, mc) &
+    .matches_cdmetapop_filter(metadata$.species, species)
+  disease_files <- disease_files[keep]
+  metadata <- metadata[keep, , drop = FALSE]
+
+  if (length(disease_files) == 0) {
+    stop("No summary_popAllTime_DiseaseStates.csv files matched the requested run, batch, MC, and species filters.")
+  }
+
+  detected_count <- .detect_disease_state_count(disease_files[1], state_column)
+
+  if (is.null(state_names)) {
+    state_names <- as.character(seq_len(detected_count))
+  }
+
+  if (length(state_names) != detected_count) {
+    stop("Length of state_names does not match detected states (", detected_count, ").")
+  }
+
+  if (!is.null(cumulative_states) && !all(cumulative_states %in% state_names)) {
+    stop("cumulative_states must be names from state_names.")
+  }
+
+  wide_data <- do.call(
+    rbind,
+    lapply(seq_along(disease_files), function(i) {
+      path <- disease_files[i]
+      df <- utils::read.csv(path, stringsAsFactors = FALSE)
+
+      if (!state_column %in% names(df)) {
+        stop("Column not found in disease summary file: ", state_column)
+      }
+
+      state_df <- .disease_state_totals(df[[state_column]])
+      if (ncol(state_df) != length(state_names)) {
+        stop("State count in ", path, " does not match state_names.")
+      }
+
+      names(state_df) <- state_names
+      out <- cbind(
+        data.frame(
+          Year = as.numeric(df$Year),
+          Run = metadata$Run[i],
+          Batch = metadata$Batch[i],
+          MC = metadata$MC[i],
+          Species = metadata$Species[i],
+          Source = metadata$Source[i],
+          .source_file = metadata$.source_file[i],
+          .source_group = metadata$.source_group[i],
+          .source_id = metadata$.source_id[i],
+          .run = metadata$.run[i],
+          .batch = metadata$.batch[i],
+          .mc = metadata$.mc[i],
+          .species = metadata$.species[i],
+          stringsAsFactors = FALSE
+        ),
+        state_df
+      )
+
+      if (!is.null(cumulative_states)) {
+        for (state in cumulative_states) {
+          out[[state]] <- cumsum(out[[state]])
+        }
+      }
+
+      out
+    })
+  )
+
+  if (!long) {
+    return(wide_data)
+  }
+
+  long_data <- tidyr::pivot_longer(
+    wide_data,
+    cols = dplyr::all_of(state_names),
+    names_to = "State",
+    values_to = "Count"
+  )
+  long_data$Count <- as.numeric(long_data$Count)
+  long_data$State <- factor(long_data$State, levels = state_names)
+  long_data
 }
 
 # --- EXPORTED FUNCTIONS ---
@@ -126,53 +245,17 @@ summarize_states <- function(base_path,
     stop("cumulative_states must be names from state_names.")
   }
 
-  all_data <- do.call(
-    rbind,
-    lapply(disease_files, function(path) {
-      metadata <- .parse_disease_state_metadata(path)
-      df <- utils::read.csv(path, stringsAsFactors = FALSE)
-
-      if (!state_column %in% names(df)) {
-        stop("Column not found in disease summary file: ", state_column)
-      }
-
-      state_df <- .disease_state_totals(df[[state_column]])
-      if (ncol(state_df) != length(state_names)) {
-        stop("State count in ", path, " does not match state_names.")
-      }
-
-      names(state_df) <- state_names
-      out <- cbind(
-        data.frame(
-          Year = as.numeric(df$Year),
-          Batch = metadata$Batch,
-          MC = metadata$MC,
-          Species = metadata$Species,
-          Source = metadata$Source,
-          stringsAsFactors = FALSE
-        ),
-        state_df
-      )
-
-      if (!is.null(cumulative_states)) {
-        for (state in cumulative_states) {
-          out[[state]] <- cumsum(out[[state]])
-        }
-      }
-
-      out
-    })
+  long_data <- .resolve_disease_state_input(
+    base_path,
+    run = "all",
+    batch = "all",
+    mc = "all",
+    species = "all",
+    state_names = state_names,
+    cumulative_states = cumulative_states,
+    state_column = state_column,
+    long = TRUE
   )
-
-  long_data <- tidyr::pivot_longer(
-    all_data,
-    cols = dplyr::all_of(state_names),
-    names_to = "State",
-    values_to = "Count"
-  )
-
-  long_data$Count <- as.numeric(long_data$Count)
-  long_data$State <- factor(long_data$State, levels = state_names)
 
   summary_df <- dplyr::summarise(
     dplyr::group_by(long_data, .data$Batch, .data$Year, .data$State),
@@ -227,6 +310,6 @@ summarize_states <- function(base_path,
       y = "Count",
       x = "Year",
       title = "Disease State Summary",
-      subtitle = paste("Averaged across", length(unique(all_data$MC)), "replications")
+      subtitle = paste("Averaged across", length(unique(long_data$MC)), "replications")
     )
 }

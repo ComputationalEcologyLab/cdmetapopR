@@ -13,12 +13,14 @@ summary_ind(
   batch = 0,
   mc = 0,
   species = 0,
+  file_type = "ind",
+  patches = "all",
   bins = 30
 )
 }
 \arguments{
 \item{path}{A dataframe, file path, vector of file paths, run directory, or
-top-level output directory containing \code{ind##.csv} files.}
+top-level output directory containing individual files.}
 
 \item{type}{String specifying the plot type: \code{"cdist"}, \code{"hindex"},
 \code{"age"}, \code{"size"}, \code{"age_size"}, or \code{"movement"}.}
@@ -41,6 +43,14 @@ Defaults to \code{0}.}
 \item{species}{Integer. Species index used when \code{path} is a directory.
 Defaults to \code{0}.}
 
+\item{file_type}{Character. Which individual file type to read. Use
+\code{"ind"} for \code{ind##.csv} files or \code{"ind_Sample"} for \code{ind##_Sample.csv}
+files. Defaults to \code{"ind"}.}
+
+\item{patches}{Patch IDs to include. Use \code{"all"} to include all patches, a
+single patch ID such as \code{5}, or a vector/range such as \code{c(1, 3, 8)} or
+\code{1:20}. Defaults to \code{"all"}.}
+
 \item{bins}{Integer. Number of bins for continuous histograms. Defaults to
 \code{30}.}
 }
@@ -48,9 +58,10 @@ Defaults to \code{0}.}
 A ggplot object.
 }
 \description{
-Plots simple summaries from CDMetaPOP \code{ind##.csv} files. Inputs can be a
-data frame, one \code{ind##.csv} file, multiple \code{ind##.csv} files, a single run
-folder, or a top-level CDMetaPOP output directory containing run folders.
+Plots simple summaries from CDMetaPOP \code{ind##.csv} or
+\code{ind##_Sample.csv} files. Inputs can be a data frame, one individual file,
+multiple individual files, a single run folder, or a top-level CDMetaPOP
+output directory containing run folders.
 }
 \examples{
 ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")

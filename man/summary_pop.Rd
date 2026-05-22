@@ -10,6 +10,10 @@ summary_pop(
   batch_labels = NULL,
   show_mc = TRUE,
   show_ci = TRUE,
+  run = 0,
+  batch = 0,
+  mc = 0,
+  species = 0,
   ...
 )
 }
@@ -18,7 +22,8 @@ summary_pop(
 paths, or a directory containing \code{summary_popAllTime.csv} files.}
 
 \item{type}{String specifying the plot type: \code{"N_initial"}, \code{"sex"},
-\code{"mature"}, \code{"births"}, \code{"myy_ratio"}, or \code{"patch"}.}
+\code{"mature"}, \code{"births"}, \code{"myy_ratio"}, \code{"patch"},
+\code{"allelic_richness"}, or \code{"het"}.}
 
 \item{batch_labels}{Optional named character vector used to relabel faceted
 source groups. Names should match folder names such as \code{N.out1776184541}
@@ -30,6 +35,18 @@ when multiple source files are supplied. Defaults to \code{TRUE}.}
 \item{show_ci}{Logical. If \code{TRUE}, plot the mean and a 95\% confidence band
 across Monte Carlo replicates when multiple source files are supplied.
 Defaults to \code{TRUE}.}
+
+\item{run}{Integer run index used when \code{data} is a directory. Defaults to
+\code{0}. Use \code{"all"} to include all runs.}
+
+\item{batch}{Integer batch index used when \code{data} is a directory. Defaults
+to \code{0}. Use \code{"all"} to include all batches.}
+
+\item{mc}{Integer Monte Carlo index used when \code{data} is a directory.
+Defaults to \code{0}. Use \code{"all"} to include all Monte Carlo replicates.}
+
+\item{species}{Integer species index used when \code{data} is a directory.
+Defaults to \code{0}. Use \code{"all"} to include all species.}
 
 \item{...}{Additional arguments passed to specific plot types. Use
 \code{include_yys = TRUE} for \code{"sex"} or \code{"mature"} plots, or \code{years} for
@@ -49,4 +66,6 @@ ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
 summary_pop(ex_dir, type = "N_initial")
 summary_pop(ex_dir, type = "sex")
 summary_pop(ex_dir, type = "mature", include_yys = TRUE)
+summary_pop(ex_dir, type = "allelic_richness")
+summary_pop(ex_dir, type = "het")
 }

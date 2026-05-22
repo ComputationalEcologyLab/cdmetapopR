@@ -10,6 +10,10 @@ summary_class(
   batch_labels = NULL,
   show_mc = TRUE,
   show_ci = TRUE,
+  run = 0,
+  batch = 0,
+  mc = 0,
+  species = 0,
   ...
 )
 }
@@ -31,6 +35,18 @@ when multiple source files are supplied for line-based plots. Defaults to
 \item{show_ci}{Logical. If \code{TRUE}, plot the mean and a 95\% confidence band
 across Monte Carlo replicates when multiple source files are supplied for
 line-based plots. Defaults to \code{TRUE}.}
+
+\item{run}{Integer run index used when \code{data} is a directory. Defaults to
+\code{0}. Use \code{"all"} to include all runs.}
+
+\item{batch}{Integer batch index used when \code{data} is a directory. Defaults
+to \code{0}. Use \code{"all"} to include all batches.}
+
+\item{mc}{Integer Monte Carlo index used when \code{data} is a directory.
+Defaults to \code{0}. Use \code{"all"} to include all Monte Carlo replicates.}
+
+\item{species}{Integer species index used when \code{data} is a directory.
+Defaults to \code{0}. Use \code{"all"} to include all species.}
 
 \item{...}{Additional arguments passed to specific plot types. Use \code{n} to
 choose the year interval for \code{"age_class"} plots.}

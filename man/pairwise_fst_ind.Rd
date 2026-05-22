@@ -11,13 +11,15 @@ pairwise_fst_ind(
   batch = 0,
   mc = 0,
   species = 0,
+  file_type = "ind",
+  patches = "all",
   loci = NULL,
   group_col = "PatchID"
 )
 }
 \arguments{
 \item{path}{A dataframe, file path, vector of file paths, run directory, or
-top-level output directory containing \code{ind##.csv} files.}
+top-level output directory containing individual files.}
 
 \item{year}{Integer. Year/generation to plot for one-year plots. Defaults to
 \code{0}.}
@@ -33,6 +35,14 @@ Defaults to \code{0}.}
 
 \item{species}{Integer. Species index used when \code{path} is a directory.
 Defaults to \code{0}.}
+
+\item{file_type}{Character. Which individual file type to read. Use
+\code{"ind"} for \code{ind##.csv} files or \code{"ind_Sample"} for \code{ind##_Sample.csv}
+files. Defaults to \code{"ind"}.}
+
+\item{patches}{Patch IDs to include. Use \code{"all"} to include all patches, a
+single patch ID such as \code{5}, or a vector/range such as \code{c(1, 3, 8)} or
+\code{1:20}. Defaults to \code{"all"}.}
 
 \item{loci}{Optional vector of loci to include, such as \code{c("L0", "L1")} or
 \code{c(0, 1)}. Defaults to all detected loci.}

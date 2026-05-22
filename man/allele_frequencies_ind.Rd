@@ -11,14 +11,16 @@ allele_frequencies_ind(
   batch = 0,
   mc = 0,
   species = 0,
+  file_type = "ind",
+  patches = "all",
   loci = NULL,
   group_col = "PatchID",
-  mean_across_patches = FALSE
+  jitter = TRUE
 )
 }
 \arguments{
 \item{path}{A dataframe, file path, vector of file paths, run directory, or
-top-level output directory containing \code{ind##.csv} files.}
+top-level output directory containing individual files.}
 
 \item{year}{Integer. Year/generation to plot for one-year plots. Defaults to
 \code{0}.}
@@ -35,24 +37,32 @@ Defaults to \code{0}.}
 \item{species}{Integer. Species index used when \code{path} is a directory.
 Defaults to \code{0}.}
 
+\item{file_type}{Character. Which individual file type to read. Use
+\code{"ind"} for \code{ind##.csv} files or \code{"ind_Sample"} for \code{ind##_Sample.csv}
+files. Defaults to \code{"ind"}.}
+
+\item{patches}{Patch IDs to include. Use \code{"all"} to include all patches, a
+single patch ID such as \code{5}, or a vector/range such as \code{c(1, 3, 8)} or
+\code{1:20}. Defaults to \code{"all"}.}
+
 \item{loci}{Optional vector of loci to include, such as \code{c("L0", "L1")} or
 \code{c(0, 1)}. Defaults to all detected loci.}
 
 \item{group_col}{Column used for grouping frequencies. Defaults to
 \code{"PatchID"}.}
 
-\item{mean_across_patches}{Logical. If \code{TRUE}, plot the mean allele
-frequency across patches for the specified year. Defaults to \code{FALSE}.}
+\item{jitter}{Logical. If \code{TRUE}, overlay jittered group-level points on the
+boxplots. Defaults to \code{TRUE}.}
 }
 \value{
 A ggplot object with frequency data in \code{plot$data}.
 }
 \description{
 Calculates allele frequencies from \code{L#A#} genotype columns in CDMetaPOP
-\code{ind##.csv} files.
+\code{ind##.csv} or \code{ind##_Sample.csv} files.
 }
 \examples{
 ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
 allele_frequencies_ind(ex_dir, year = 9)
-allele_frequencies_ind(ex_dir, year = 9, mean_across_patches = TRUE)
+allele_frequencies_ind(ex_dir, year = 9, jitter = FALSE)
 }
