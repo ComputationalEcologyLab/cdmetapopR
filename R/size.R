@@ -2,7 +2,7 @@
 #'
 #' This function plots the overtime average size of individuals at a specific age. It is based on the AgeSize_mean columns of the CDMetaPOP output file summary_classAllTime
 #'
-#' @param x Specify the path to the summary_popAllTime.csv dataframe
+#' @param file_path Specify the path to the summary_popAllTime.csv dataframe
 #' @return a ggplot object representing the overtime average sizes of the individuals in the simulation separated by age. 
 #' @import ggplot2
 #' @importFrom utils read.table

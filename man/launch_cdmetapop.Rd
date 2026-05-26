@@ -5,7 +5,7 @@
 \title{Function to facilitate the running of CDMetaPOP software from R}
 \usage{
 launch_cdmetapop(
-  pythonFilepath = python,
+  pythonFilepath = "python",
   CDMetaPOPFilepath = "CDMetaPOP.py",
   runvarsDirectory = NULL,
   runvarsFilename = "RunVars.csv",

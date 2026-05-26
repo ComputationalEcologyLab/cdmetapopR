@@ -3,7 +3,7 @@
 .ind_file_pattern <- function(file_type = c("ind", "ind_Sample")) {
   file_type <- match.arg(file_type)
   if (identical(file_type, "ind_Sample")) {
-    "^ind([0-9]+)_Sample\\.csv$"
+    "^indSample([0-9]+)\\.csv$"
   } else {
     "^ind([0-9]+)\\.csv$"
   }
@@ -11,7 +11,7 @@
 
 .ind_file_label <- function(file_type = c("ind", "ind_Sample")) {
   file_type <- match.arg(file_type)
-  if (identical(file_type, "ind_Sample")) "ind##_Sample.csv" else "ind##.csv"
+  if (identical(file_type, "ind_Sample")) "indSample##.csv" else "ind##.csv"
 }
 
 .parse_ind_metadata <- function(path, file_type = c("ind", "ind_Sample")) {
@@ -71,10 +71,12 @@
         recursive = TRUE,
         full.names = TRUE
       )
-      discovered <- rbind(
-        discovered,
-        data.frame(path = files, from_directory = TRUE, stringsAsFactors = FALSE)
-      )
+      if (length(files) > 0) {
+        discovered <- rbind(
+          discovered,
+          data.frame(path = files, from_directory = TRUE, stringsAsFactors = FALSE)
+        )
+      }
     } else if (file.exists(path)) {
       if (!grepl(file_pattern, basename(path))) {
         stop("Expected a ", file_label, " file: ", path)

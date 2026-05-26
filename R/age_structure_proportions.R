@@ -12,7 +12,7 @@
 #' age_structure_proportions(path = paste0(mypath, "/"), runs = 1, gen = 9)
 #' @export
 
-age_structure_proportions <- function(path = mypath, runs = 1, gen = 49, species = 0) {
+age_structure_proportions <- function(path = system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR"), runs = 1, gen = 49, species = 0) {
 
   foo<-read.csv(paste0(path, "run0batch0mc",runs-1,"species",species,"/ind",gen,".csv"))
 

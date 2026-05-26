@@ -7,7 +7,7 @@
 size_age_class(file_path)
 }
 \arguments{
-\item{x}{Specify the path to the summary_popAllTime.csv dataframe}
+\item{file_path}{Specify the path to the summary_popAllTime.csv dataframe}
 }
 \value{
 a ggplot object representing the overtime average sizes of the individuals in the simulation separated by age.

@@ -1,9 +1,5 @@
 example_output_dir <- function() {
-  normalizePath(
-    file.path("..", "..", "inst", "extdata", "Adaptive_Run_08"),
-    winslash = "/",
-    mustWork = TRUE
-  )
+  system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
 }
 
 multi_species_example_dir <- function() {
