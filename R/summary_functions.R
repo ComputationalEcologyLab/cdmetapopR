@@ -80,9 +80,13 @@
   data
 }
 
-.discover_cdmetapop_files <- function(paths, summary_type) {
+.matches_cdmetapop_filter <- function(values, filter) {
+  identical(filter, "all") | is.na(values) | values == filter
+}
+
+.discover_cdmetapop_files <- function(paths, summary_type, run = 0, batch = 0, mc = 0, species = 0) {
   target_name <- .summary_filename(summary_type)
-  discovered <- character()
+  discovered <- data.frame(path = character(), from_directory = logical(), stringsAsFactors = FALSE)
 
   for (path in paths) {
     if (dir.exists(path)) {
@@ -92,21 +96,46 @@
         recursive = TRUE,
         full.names = TRUE
       )
-      discovered <- c(discovered, found)
+      discovered <- rbind(
+        discovered,
+        data.frame(path = found, from_directory = TRUE, stringsAsFactors = FALSE)
+      )
     } else if (file.exists(path)) {
-      discovered <- c(discovered, path)
+      discovered <- rbind(
+        discovered,
+        data.frame(path = path, from_directory = FALSE, stringsAsFactors = FALSE)
+      )
     } else {
       stop("Path does not exist: ", path)
     }
   }
 
-  discovered <- unique(discovered[file.exists(discovered)])
+  discovered <- discovered[file.exists(discovered$path), , drop = FALSE]
+  discovered <- discovered[!duplicated(discovered$path), , drop = FALSE]
 
-  if (length(discovered) == 0) {
+  if (nrow(discovered) == 0) {
     stop("No ", target_name, " files were found in the supplied input.")
   }
 
-  discovered
+  metadata <- do.call(rbind, lapply(discovered$path, .parse_cdmetapop_metadata))
+  metadata$.from_directory <- discovered$from_directory
+
+  if (any(metadata$.from_directory)) {
+    keep <- !metadata$.from_directory |
+      (
+        .matches_cdmetapop_filter(metadata$.run, run) &
+          .matches_cdmetapop_filter(metadata$.batch, batch) &
+          .matches_cdmetapop_filter(metadata$.mc, mc) &
+          .matches_cdmetapop_filter(metadata$.species, species)
+      )
+    metadata <- metadata[keep, , drop = FALSE]
+  }
+
+  if (nrow(metadata) == 0) {
+    stop("No ", target_name, " files matched the requested run, batch, MC, and species filters.")
+  }
+
+  metadata$.source_file
 }
 
 .load_cdmetapop_source <- function(path) {
@@ -129,7 +158,7 @@
   stop("Unsupported file type: .", ext)
 }
 
-.resolve_cdmetapop_input <- function(x, summary_type = c("pop", "class")) {
+.resolve_cdmetapop_input <- function(x, summary_type = c("pop", "class"), run = 0, batch = 0, mc = 0, species = 0) {
   summary_type <- match.arg(summary_type)
 
   if (is.data.frame(x)) {
@@ -140,7 +169,14 @@
     stop("Input must be a data frame, a file path, a directory, or a character vector of paths.")
   }
 
-  file_paths <- .discover_cdmetapop_files(x, summary_type)
+  file_paths <- .discover_cdmetapop_files(
+    x,
+    summary_type,
+    run = run,
+    batch = batch,
+    mc = mc,
+    species = species
+  )
   loaded <- lapply(file_paths, .load_cdmetapop_source)
 
   if (length(loaded) == 1) {
@@ -171,6 +207,17 @@
     out <- unname(batch_labels[values])
     out[is.na(out)] <- values[is.na(out)]
     out
+  }
+}
+
+.numeric_label_levels <- function(x) {
+  levels <- unique(as.character(stats::na.omit(x)))
+  numeric_levels <- suppressWarnings(as.numeric(levels))
+
+  if (length(levels) > 0 && all(!is.na(numeric_levels))) {
+    levels[order(numeric_levels)]
+  } else {
+    sort(levels)
   }
 }
 
@@ -301,126 +348,9 @@
   "pop"
 }
 
-# --- THE MASTER FUNCTION ---
-
-#' Plot CDMetaPOP Population Dynamics
-#'
-#' A unified plotting function for CDMetaPOP output files.
-#'
-#' @param data A dataframe, file path (`.csv`, `.rds`, `.RData`), vector of file
-#'   paths, or a directory containing `summary_popAllTime.csv` and
-#'   `summary_classAllTime.csv` files.
-#' @param type String specifying the plot type: "count", "sex", "mature",
-#'   "births", "myy_ratio", "age_class", "patch", or "age_plus_one".
-#' @param batch_labels Optional named character vector used to relabel faceted
-#'   source groups. Names should match folder names such as `N.out1776184541`
-#'   and values should be the labels you want displayed in the facet strips.
-#' @param show_mc Logical. If `TRUE`, plot individual Monte Carlo trajectories
-#'   when multiple source files are supplied. Defaults to `TRUE`.
-#' @param show_ci Logical. If `TRUE`, plot the mean and a 95% confidence band
-#'   across Monte Carlo replicates when multiple source files are supplied.
-#'   Defaults to `TRUE`.
-#' @param ... Additional arguments passed to specific plot types (e.g., `n` for
-#'   age_class or `years` for patch).
-#'
-#' @details
-#' `plot_population()` can now work with individual summary files, multiple
-#' summary files, or a top-level CDMetaPOP output directory containing many
-#' `run0batch#mc#species#` folders. When a directory is supplied, the function
-#' recursively discovers the summary files needed for the requested plot type:
-#'
-#' - `"count"`, `"sex"`, `"mature"`, `"births"`, `"myy_ratio"`, and `"patch"`
-#'   use `summary_popAllTime.csv`
-#' - `"age_class"` and `"age_plus_one"` use `summary_classAllTime.csv`
-#'
-#' The function reads all matching files, combines them into a single data
-#' frame, and adds metadata columns describing the source of each record:
-#'
-#' - `.source_file`: full file path used to read the summary
-#' - `.source_group`: parent output folder such as `N.out...` or `R.out...`
-#' - `.source_id`: unique identifier for one run / batch / Monte Carlo / species
-#' - `.run`, `.batch`, `.mc`, `.species`: parsed integer identifiers from the
-#'   `run0batch0mc0species0` folder name
-#'
-#' This makes it possible to compare multiple Monte Carlo replicates in one plot
-#' without manually binding files together first. For line-based plots, the
-#' function can also overlay a mean trajectory and a 95% confidence interval
-#' band across Monte Carlo replicates.
-#'
-#' The packaged example directory `inst/extdata/package_ex_out_example`
-#' intentionally includes a very small subset of the full example output:
-#'
-#' - 2 source groups (`N.out...` and `R.out...`)
-#' - 2 Monte Carlo folders in each group (`mc0` and `mc1`)
-#' - both `summary_popAllTime.csv` and `summary_classAllTime.csv`
-#'
-#' This is small enough for package examples while still demonstrating the
-#' multi-file directory workflow.
-#'
-#' @examples
-#' # Example 1: plot a single packaged summary_popAllTime file
-#' pop_file <- system.file("extdata", "summary_popAllTime.csv", package = "cdmetapopR")
-#' plot_population(pop_file, type = "count")
-#'
-#' # Example 2: plot a single packaged summary_classAllTime file
-#' class_file <- system.file("extdata", "summary_classAllTime.csv", package = "cdmetapopR")
-#' plot_population(class_file, type = "age_class", n = 10)
-#'
-#' # Example 3: use the packaged multi-file example directory
-#' ex_dir <- system.file("extdata", "package_ex_out_example", package = "cdmetapopR")
-#' plot_population(ex_dir, type = "count")
-#' plot_population(ex_dir, type = "sex")
-#' plot_population(ex_dir, type = "age_plus_one")
-#'
-#' # Example 3b: relabel the faceted source groups
-#' batch_labels <- c(
-#'   "N.out1776184541" = "Scenario N",
-#'   "R.out1776189704" = "Scenario R"
-#' )
-#' plot_population(ex_dir, type = "count", batch_labels = batch_labels)
-#'
-#' # Example 3c: suppress individual Monte Carlo lines and keep only the
-#' # mean plus 95% confidence interval
-#' plot_population(ex_dir, type = "count", show_mc = FALSE, show_ci = TRUE)
-#'
-#' # Example 4: pass several files directly
-#' example_files <- list.files(
-#'   ex_dir,
-#'   pattern = "summary_popAllTime.csv$",
-#'   recursive = TRUE,
-#'   full.names = TRUE
-#' )
-#' plot_population(example_files, type = "births")
-#' @import ggplot2
-#' @importFrom tidyr pivot_longer
-#' @importFrom utils read.table
-#' @importFrom tools file_ext
-#' @return A ggplot object.
-#' @export
-plot_population <- function(data, type = "count", batch_labels = NULL, show_mc = TRUE, show_ci = TRUE, ...) {
-  type <- strsplit(tolower(type), " ")[[1]][1]
-  summary_type <- .summary_type_for_plot(type)
-  data <- .resolve_cdmetapop_input(data, summary_type = summary_type)
-
-  p <- switch(
-    type,
-    "count"        = helper_plot_count(data, batch_labels = batch_labels, show_mc = show_mc, show_ci = show_ci),
-    "sex"          = helper_plot_sex(data, batch_labels = batch_labels, show_mc = show_mc, show_ci = show_ci),
-    "mature"       = helper_plot_mature(data, batch_labels = batch_labels, show_mc = show_mc, show_ci = show_ci),
-    "births"       = helper_plot_births(data, batch_labels = batch_labels, show_mc = show_mc, show_ci = show_ci),
-    "myy_ratio"    = helper_plot_myy(data, batch_labels = batch_labels, show_mc = show_mc, show_ci = show_ci),
-    "age_class"    = helper_plot_age_class(data, batch_labels = batch_labels, ...),
-    "patch"        = helper_plot_patch(data, batch_labels = batch_labels, ...),
-    "age_plus_one" = helper_plot_age_plus(data, batch_labels = batch_labels, show_mc = show_mc, show_ci = show_ci),
-    stop("Invalid type. Choose: 'count', 'sex', 'mature', 'births', 'myy_ratio', 'age_class', 'patch', or 'age_plus_one'.")
-  )
-
-  p + .theme_cdmetapop()
-}
-
 # --- SUB-HELPER FUNCTIONS ---
 
-helper_plot_count <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
+helper_plot_n_initial <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
   n_init <- .extract_pipe_table(data$N_Initial)[, 1]
   df <- data.frame(
     Year = as.numeric(data$Year),
@@ -434,21 +364,19 @@ helper_plot_count <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci
   .plot_line_by_source(
     df,
     "N",
-    "Population Size Timeseries",
-    "Population Size",
+    "N_initial Timeseries",
+    "N_initial",
     batch_labels = batch_labels,
     show_mc = show_mc,
     show_ci = show_ci
   )
 }
 
-helper_plot_sex <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
+helper_plot_sex <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE, include_yys = FALSE) {
   df <- data.frame(
     Year = as.numeric(data$Year),
-    "Wild-males" = as.numeric(.extract_pipe_table(data$N_Males)[, 1]),
-    "YYMales" = as.numeric(.extract_pipe_table(data$N_YYMales)[, 1]),
-    "Wild-females" = as.numeric(.extract_pipe_table(data$N_Females)[, 1]),
-    "YYFemales" = as.numeric(.extract_pipe_table(data$N_YYFemales)[, 1]),
+    "Males" = as.numeric(.extract_pipe_table(data$N_Males)[, 1]),
+    "Females" = as.numeric(.extract_pipe_table(data$N_Females)[, 1]),
     .source_group = data$.source_group,
     .source_id = data$.source_id,
     .mc = data$.mc,
@@ -456,9 +384,16 @@ helper_plot_sex <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci =
     check.names = FALSE
   )
 
+  sex_cols <- c("Males", "Females")
+  if (include_yys) {
+    df[["YY Males"]] <- as.numeric(.extract_pipe_table(data$N_YYMales)[, 1])
+    df[["YY Females"]] <- as.numeric(.extract_pipe_table(data$N_YYFemales)[, 1])
+    sex_cols <- c(sex_cols, "YY Males", "YY Females")
+  }
+
   long_data <- tidyr::pivot_longer(
     df,
-    cols = c("Wild-males", "YYMales", "Wild-females", "YYFemales"),
+    cols = tidyselect::all_of(sex_cols),
     names_to = "category",
     values_to = "value"
   )
@@ -517,13 +452,11 @@ helper_plot_sex <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci =
   p + labs(title = "Population Sizes by Sex", x = "Year", y = "Count")
 }
 
-helper_plot_mature <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
+helper_plot_mature <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE, include_yys = FALSE) {
   df <- data.frame(
     Year = as.numeric(data$Year),
-    "Mature Wild-F" = as.numeric(.extract_pipe_table(data$N_MatureFemales)[, 1]),
-    "Mature Wild-M" = as.numeric(.extract_pipe_table(data$N_MatureMales)[, 1]),
-    "Mature YYM" = as.numeric(.extract_pipe_table(data$N_MatureYYMales)[, 1]),
-    "Mature YYF" = as.numeric(.extract_pipe_table(data$N_MatureYYFemales)[, 1]),
+    "Mature Females" = as.numeric(.extract_pipe_table(data$N_MatureFemales)[, 1]),
+    "Mature Males" = as.numeric(.extract_pipe_table(data$N_MatureMales)[, 1]),
     .source_group = data$.source_group,
     .source_id = data$.source_id,
     .mc = data$.mc,
@@ -531,9 +464,16 @@ helper_plot_mature <- function(data, batch_labels = NULL, show_mc = TRUE, show_c
     check.names = FALSE
   )
 
+  mature_cols <- c("Mature Females", "Mature Males")
+  if (include_yys) {
+    df[["Mature YY Males"]] <- as.numeric(.extract_pipe_table(data$N_MatureYYMales)[, 1])
+    df[["Mature YY Females"]] <- as.numeric(.extract_pipe_table(data$N_MatureYYFemales)[, 1])
+    mature_cols <- c(mature_cols, "Mature YY Males", "Mature YY Females")
+  }
+
   long_data <- tidyr::pivot_longer(
     df,
-    cols = c("Mature Wild-F", "Mature Wild-M", "Mature YYM", "Mature YYF"),
+    cols = tidyselect::all_of(mature_cols),
     names_to = "category",
     values_to = "value"
   )
@@ -643,6 +583,126 @@ helper_plot_myy <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci =
   )
 }
 
+helper_plot_allelic_richness <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
+  if (!"Alleles" %in% names(data)) {
+    stop("Missing required summary_popAllTime column: Alleles")
+  }
+
+  allele_counts <- .extract_pipe_table(data$Alleles)
+  richness <- allele_counts[, 1]
+
+  df <- data.frame(
+    Year = as.numeric(data$Year),
+    Richness = as.numeric(richness),
+    .source_group = data$.source_group,
+    .source_id = data$.source_id,
+    .mc = data$.mc,
+    stringsAsFactors = FALSE
+  )
+
+  .plot_line_by_source(
+    df,
+    "Richness",
+    "Allelic Richness",
+    "Allelic richness",
+    color = "darkgreen",
+    batch_labels = batch_labels,
+    show_mc = show_mc,
+    show_ci = show_ci
+  )
+}
+
+helper_plot_het <- function(data, batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
+  missing_cols <- setdiff(c("Ho", "He"), names(data))
+  if (length(missing_cols) > 0) {
+    stop("Missing required summary_popAllTime column(s): ", paste(missing_cols, collapse = ", "))
+  }
+
+  df <- data.frame(
+    Year = as.numeric(data$Year),
+    "Observed (Ho)" = as.numeric(.extract_pipe_table(data$Ho)[, 1]),
+    "Expected (He)" = as.numeric(.extract_pipe_table(data$He)[, 1]),
+    .source_group = data$.source_group,
+    .source_id = data$.source_id,
+    .mc = data$.mc,
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+
+  long_data <- tidyr::pivot_longer(
+    df,
+    cols = c("Observed (Ho)", "Expected (He)"),
+    names_to = "Metric",
+    values_to = "Heterozygosity"
+  )
+
+  p <- ggplot(
+    long_data,
+    aes(
+      x = .data$Year,
+      y = .data$Heterozygosity,
+      color = .data$Metric,
+      group = interaction(.data$.source_id, .data$Metric)
+    )
+  )
+
+  if (.plot_has_multiple_sources(long_data)) {
+    summary_df <- .summarize_ci_cdmetapop(
+      data = long_data,
+      value_col = "Heterozygosity",
+      group_cols = c(".source_group", "Metric", "Year")
+    )
+
+    if (show_ci) {
+      p <- p +
+        geom_ribbon(
+          data = summary_df,
+          aes(
+            x = .data$Year,
+            ymin = .data$lower,
+            ymax = .data$upper,
+            fill = .data$Metric,
+            group = interaction(.data$.source_group, .data$Metric)
+          ),
+          inherit.aes = FALSE,
+          alpha = 0.14,
+          color = NA
+        ) +
+        geom_line(
+          data = summary_df,
+          aes(
+            x = .data$Year,
+            y = .data$mean,
+            color = .data$Metric,
+            group = interaction(.data$.source_group, .data$Metric)
+          ),
+          inherit.aes = FALSE,
+          linewidth = 0.95
+        )
+    }
+
+    if (show_mc) {
+      p <- p + geom_line(alpha = 0.35, linewidth = 0.55)
+    }
+
+    p <- p +
+      facet_wrap(
+        ~ .source_group,
+        labeller = ggplot2::labeller(.source_group = .facet_labeler_cdmetapop(batch_labels))
+      ) +
+      labs(fill = "Metric")
+  } else {
+    p <- p + geom_line(linewidth = 0.85)
+  }
+
+  p + labs(
+    title = "Observed and Expected Heterozygosity",
+    x = "Year",
+    y = "Heterozygosity",
+    color = "Metric"
+  )
+}
+
 helper_plot_age_class <- function(data, n = 5, batch_labels = NULL) {
   count_col <- if ("N_Initial_Age" %in% names(data)) "N_Initial_Age" else "N_Initial_Class"
   count_data <- .extract_pipe_table(data[[count_col]])
@@ -653,7 +713,8 @@ helper_plot_age_class <- function(data, n = 5, batch_labels = NULL) {
     age_labels <- 0:(ncol(count_data) - 1)
   }
 
-  colnames(count_data) <- paste0("Age_", age_labels)
+  age_levels <- paste0("Age_", age_labels)
+  colnames(count_data) <- age_levels
   count_data$Year <- as.numeric(data$Year)
   count_data$.source_group <- data$.source_group
   count_data$.source_id <- data$.source_id
@@ -666,6 +727,7 @@ helper_plot_age_class <- function(data, n = 5, batch_labels = NULL) {
   )
 
   long_data$Count <- as.numeric(long_data$Count)
+  long_data$Ages <- factor(long_data$Ages, levels = age_levels)
   df_filtered <- long_data[long_data$Year %% n == 0, ]
 
   if (.plot_has_multiple_sources(df_filtered)) {
