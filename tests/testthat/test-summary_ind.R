@@ -1,9 +1,5 @@
 ind_example_dir <- function() {
-  normalizePath(
-    file.path("..", "..", "inst", "extdata", "Adaptive_Run_08"),
-    winslash = "/",
-    mustWork = TRUE
-  )
+  system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
 }
 
 ind_sample_example_dir <- function() {
@@ -19,7 +15,7 @@ ind_sample_example_dir <- function() {
     dir.create(file.path(temp_dir, run_dir), recursive = TRUE)
     file.copy(
       from = file.path(source_dir, run_dir, "ind9.csv"),
-      to = file.path(temp_dir, run_dir, "ind9_Sample.csv")
+      to = file.path(temp_dir, run_dir, "indSample9.csv")
     )
   }
 

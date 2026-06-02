@@ -104,7 +104,7 @@ dispersal <- function (path = path, run = 0, batch = 0, mc = 0, gen = 49, specie
   )
   
   # Generate the barplot
-  barplot(dispersors$movers, 
+  graphics::barplot(dispersors$movers, 
           names.arg = paste0("Y", 0:gen),  # Label the bars with years (Y0, Y1, ...)
           col = "blue", 
           xlab = "Year", 

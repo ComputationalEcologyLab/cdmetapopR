@@ -76,7 +76,7 @@ create_cdmat <- function(coords, method=c("euclidean", "equal", "lcp"), resistan
 
     # Euclidean distance cost matrix
   if(method == "euclidean"){
-    distmat <- dist(coords, method="euclidean", upper=TRUE, diag=TRUE)
+    distmat <- stats::dist(coords, method="euclidean", upper=TRUE, diag=TRUE)
   }
 
   # Cost matrix with equal probability to move to any patch
