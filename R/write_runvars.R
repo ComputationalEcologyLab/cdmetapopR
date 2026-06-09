@@ -24,7 +24,8 @@ write_runvars <- function(output_file = "my_new_runvars.csv") {
     summaryOutput     = "N",
     cdclimgentime     = 0,
     startcomp         = 0,
-    implementcomp     = "Back"
+    implementcomp     = "Back",
+    ncores            = 1
   )
   
   ############################################
@@ -135,6 +136,10 @@ write_runvars <- function(output_file = "my_new_runvars.csv") {
             ), selected = "Back",
             choices = "Back"
             ),
+            numericInput("ncores", tagList(
+              "Number of compute cores to use to run MonteCarlo replicates in parallel: ",
+              em(span("ncores", style = "color:#0072B2;"))
+            ), value = 1, min = 1, step = 1, max=64),
             actionButton("update_parameters", "Update Parameters")
           ),
           tabPanel(
@@ -243,6 +248,7 @@ anadromy: packing for anadromous species.",
       temp$cdclimgentime <- input$cdclimgentime
       temp$startcomp <- input$startcomp
       temp$implementcomp <- input$implementcomp
+      temp$ncores <- input$ncores
       
       # Update the reactive object
       template_data(temp)
