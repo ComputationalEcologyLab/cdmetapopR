@@ -8,7 +8,7 @@
 #' @import shiny
 #' @import shinyBS
 #' @export
-#write_patchvars <- function(output_file = "my_new_patchvars.csv") {
+write_patchvars <- function(output_file = "my_new_patchvars.csv") {
   # Template
   template <- data.frame(
   PatchID = 0, X = NA, Y = NA,
@@ -898,7 +898,7 @@
   }
   
   shinyApp(ui = ui, server = server)
-#}
+}
 
 # Call the function to run the app
 write_patchvars()
