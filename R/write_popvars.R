@@ -94,7 +94,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     subpopmort_file       = "N",
     egg_delay             = 0,
     egg_add               = "mating",
-    implement_disease     = "N" # don't know the options yet... Ask Erin... Which tab???? 
+    implement_disease     = "N"
   )
   ############################################
   ################## UI ######################
@@ -662,8 +662,8 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
                 actionButton("update_stray", "Update Stray"),
                 actionButton("help_stray", "?", class = "btn-info"),
           )
-              )
-          ),
+              ),
+#          ),
 
           # DISPERSE section
           wellPanel(
@@ -690,6 +690,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
                 actionButton("update_disperseLocal", "Update Disperse Local"),
                 actionButton("help_disperse", "?", class = "btn-info"),
             )
+          ),
           ),
           ####################################
           # Plasticity tab
@@ -771,6 +772,37 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
               actionButton("update_plasticity", "Update Plasticity")
             )
           ),
+
+          ####################################
+          # Disease tab                   ####
+          ####################################
+          tabPanel(
+            "Disease",
+            wellPanel(
+              h4("Disease"),
+              # Yes/No choice
+              radioButtons(
+                "apply_disease",
+                HTML(
+                  "Apply disease?"
+                  ),
+                choices = c("Yes", "No"),
+                selected = "No"
+                ),
+              
+              # UI that appears only if Yes
+              conditionalPanel(
+              condition = "input.apply_disease == 'Yes'",
+              
+              selectInput("implement_disease", tagList("This option turns disease processes on and determines where in CDMetaPOP’s life cycle they are applied", em(span("implement_disease", style = "color:#0072B2;"))),
+                          selected = "Y",
+                          choices = c("N", "Back", "Out", "Both")
+              )
+              ),
+              
+    actionButton("update_disease", "Update Disease")
+    )
+),
           
           ####################################
           # Preview Tab
@@ -872,7 +904,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     #####################################################
     
     ###################################
-    # Help growth parameters #
+    # Help growth parameters       #### 
     ###################################
     
     observe({
@@ -883,9 +915,9 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
       )
     })
     
-    ###################################
-    # Help reproduction parameters #
-    ###################################
+    #####################################
+    # Help reproduction parameters   ####
+    #####################################
     
     # This inserts tooltip for sex_chromo
     observe({
@@ -907,7 +939,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     
     
     ###################################
-    # Help offspring parameters #
+    # Help offspring parameters    ####
     ###################################
     
     # This inserts tooltip for offans_InheritClassVars
@@ -941,7 +973,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     })
     
     ###################################
-    # Help genetics parameters #
+    # Help genetics parameters    
     ###################################
     
     # This inserts tooltip for startGenes
@@ -1010,6 +1042,28 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     # Help plasticity parameters #
     ###################################
     
+    ###################################
+    # Help disease parameters      ####
+    ###################################
+    
+    # This inserts tooltip for implement_diseasedisease
+    
+    observe({
+      addTooltip(
+        session, 
+        "implement_disease",
+        HTML("
+      <div style='text-align: left; white-space: normal;'>
+        <strong>'N'</strong> - do not implement the disease module;<br>
+        <strong>'Back'</strong> - implement the disease module in the first DoUpdate();<br>
+        <strong>'Out'</strong> - implement the disease module in the second DoUpdate();<br>
+        <strong>'Both'</strong> - implement the disease module in both DoUpdate()s
+      </div>
+    "),
+        placement = "right",
+        trigger = "hover"
+      )
+    })
     
     #####################################################
     # MAIN PANEL UPDATE
@@ -1062,9 +1116,9 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     
     
     
-    ####################################
-    # Update Offspring/litter/egg/sex ratio options
-    ####################################
+    ####################################################
+    # Update Offspring/litter/egg/sex ratio options ####
+    ####################################################
     
     # Dinamically display numeric input only if 'numeric' is selected
     output$Egg_FemaleProbInput <- renderUI({
@@ -1104,7 +1158,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     })
     
     ####################################
-    # Update Genetics 
+    # Update Genetics               ####
     ####################################
     observeEvent(input$update_genetics, {
       temp <- template_data()
@@ -1118,7 +1172,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     
     
     ####################################
-    # Update Selection options
+    # Update Selection options      ####
     ####################################
     
     
@@ -1235,7 +1289,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     
     
     ####################################
-    # Update Movement
+    # Update Movement               ####
     ####################################
     
     movement_help_text <- modalDialog(
@@ -1654,7 +1708,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     
     
     ####################################
-    # Update Behavioral Plasticity
+    # Update Behavioral Plasticity  ####
     ####################################
     observeEvent(input$update_plasticity, {
       temp <- template_data()
@@ -1681,7 +1735,20 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     
     
     ####################################
-    # Update Reproduction
+    # Update Disease                ####
+    ####################################
+    observeEvent(input$update_disease, {
+      temp <- template_data()
+      if (input$apply_disease == "No") {
+        temp$implement_disease <- "N"
+      } else {
+        temp$implement_disease <- input$implement_disease
+      }
+      template_data(temp)
+    })
+    
+    ####################################
+    # Update Reproduction           ####
     ####################################
     observeEvent(input$update_reproduction, {
       temp <- template_data()
@@ -1766,7 +1833,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     
     
     ###################################################
-    # SIDEPANEL UPDATE
+    # SIDEPANEL UPDATE                             ####
     ###################################################
     
     # Update Patchvars text
@@ -1843,8 +1910,8 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     })
 
     ###########################################################   
-    # Update Correlation matrix from text or "N" selection
-    ##########################################################
+    # Update Correlation matrix from text or "N" selection ####
+    ###########################################################
     observeEvent(input$update_corrmatrix, {
       temp <- template_data()
       
@@ -1859,8 +1926,8 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
       
       template_data(temp)
     })
-   ###################################################### 
-    # Update Mortality matrix from text or "N" selection
+   ##########################################################
+    # Update Mortality matrix from text or "N" selection ####
     ##########################################################
     observeEvent(input$update_subpopmort, {
       temp <- template_data()
@@ -1877,8 +1944,8 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     })
     
     ###################################################### 
-    # Preview Template
-    ##########################################################
+    # Preview Template                                ####
+    ######################################################
     
     output$preview_template <- renderTable({
       template_data()
