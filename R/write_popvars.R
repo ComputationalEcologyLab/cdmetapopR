@@ -248,7 +248,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
             HTML("<b style='color:red;'>⚠ Warning: If in RunVars.csv, the value for cdevolveans points to fitness-based growth, CDMetaPOP will use the growth parameters from the PatchVars.csv. Therefore, the growth parameters from the PopVars.csv will be ignored.</b>"),
             selectInput("growth_option", tagList("Enter choice for Growth Pattern ", em(span("growth_option", style = "color:#0072B2;"))),
                         selected = "N",
-                        choices = c("N", "known", "vonB", "temperature", "temperature_hindex")
+                        choices = c("N", "known", "vonB", "temperature", "temperature_hindex", "bioenergetics")
             ),
             conditionalPanel(
               condition = "!['N', 'known'].includes(input.growth_option)",
@@ -897,7 +897,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
     ###################################
     observe({
       addTooltip(session, "growth_option",
-                 "'Select the growth function option for your model: These functions can work for either size or age control (as specified in RunVars.csv). 'N' - turn off growth and the rest of the growth parameters are ignored.'known' - assign each individual's size by a known amount each year. 'vonB' - von Bertalanffy equation for growth. Newsize = size_Loo * (1 - exp( -size_R0 * ('adjusted' age + 1))). 'temperature' - the von Bertalanffy function is modified by parameters that are fit to temperature. 'temperature_hindex' - the above temperature growth model is used with the individual's HIndex which adjusts the Loo parameter",
+                 "'Select the growth function option for your model: These functions can work for either size or age control (as specified in RunVars.csv). 'N' - turn off growth and the rest of the growth parameters are ignored.'known' - assign each individual's size by a known amount each year. 'vonB' - von Bertalanffy equation for growth. Newsize = size_Loo * (1 - exp( -size_R0 * ('adjusted' age + 1))). 'temperature' - the von Bertalanffy function is modified by parameters that are fit to temperature. 'temperature_hindex' - the above temperature growth model is used with the individual's HIndex which adjusts the Loo parameter. 'bioenergetics' - ...",
                  placement = "right",
                  trigger = "hover"
       )
