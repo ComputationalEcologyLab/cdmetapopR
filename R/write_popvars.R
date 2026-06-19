@@ -247,7 +247,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
             "Growth",
             HTML("<b style='color:red;'>⚠ Warning: If in RunVars.csv, the value for cdevolveans points to fitness-based growth, CDMetaPOP will use the growth parameters from the PatchVars.csv. Therefore, the growth parameters from the PopVars.csv will be ignored.</b>"),
             selectInput("growth_option", tagList("Enter choice for Growth Pattern ", em(span("growth_option", style = "color:#0072B2;"))),
-                        selected = "temperature",
+                        selected = "N",
                         choices = c("N", "known", "vonB", "temperature", "temperature_hindex", "bioenergetics")
             ),
             conditionalPanel(
@@ -1928,15 +1928,15 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
       template_data()
     })
     
-    # Download updated template
-    output$download_popvars <- downloadHandler(
-      filename = function() {
-        paste0(output_file) # Ensure correct file naming
-      },
-      content = function(file) {
-        write.csv(template_data(), file, row.names = FALSE)
-      }
-    )
+# Download updated template
+output$download_popvars <- downloadHandler(
+  filename = function() {
+    paste0("PopVars_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv")
+  },
+  content = function(file) {
+    write.csv(template_data(), file, row.names = FALSE)
+  }
+)
   }
   # Run the application
   shinyApp(ui = ui, server = server)
