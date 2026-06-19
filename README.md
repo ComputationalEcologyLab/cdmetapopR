@@ -12,6 +12,10 @@ devtools::load_all("yourpath/cdmetapopR")
 A full tutorial is available in the vignette:  
 👉 https://computationalecologylab.github.io/cdmetapop_web/
 
+**Shiny App to create Input files**:
+Shiny Apps to create CDMetaPOP input files are also available on this server:  
+👉 https://kratos-shiny.umontana.net/cel-apps/cdmetapopR/
+
 **Help and Support**: 
 If you encounter any issues or bugs, please report them on the GitHub Issues page:
 
