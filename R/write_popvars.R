@@ -237,7 +237,8 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
             selectInput("popmodel", tagList("Enter choice for population growth ", em(span("popmodel", style = "color:#0072B2;"))),
                         selected = "packing",
                         choices = c("N", "logistic", "packing", "anadromy")
-            ),                        
+            ),
+            uiOutput("Popmodel_par1"),
             actionButton("update_population_growth", "Apply changes")
           ),
           #################
