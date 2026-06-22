@@ -3,11 +3,10 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
-- Placeholder for upcoming changes.
+- Removed deprecated functions `alleles_by_year()`, `dispersal()`,
+  `hets_plot()`, `read.cdmetapop()`, `separate_column()`,
+  `size_age_class()`, and `unite_column()`.
 ## [0.0.1-dev] - 2024-11-20
-### Added
-- Added a new function `dispersal()` to calculate the proportions of individuals that move across generations
-
 
 ## [0.0.1-dev] - 2024-11-19
 ### Added
