@@ -237,7 +237,8 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
             selectInput("popmodel", tagList("Enter choice for population growth ", em(span("popmodel", style = "color:#0072B2;"))),
                         selected = "packing",
                         choices = c("N", "logistic", "packing", "anadromy")
-            ),                        
+            ),
+            uiOutput("Popmodel_par1"),
             actionButton("update_population_growth", "Apply changes")
           ),
           #################
@@ -564,7 +565,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
             # MATE section
             wellPanel(
               h4("Mate Movement"),
-              numericInput("matemoveno", tagList("Probability of Mate Movement ", em(span("matemoveno", style = "color:#0072B2;"))), value = 6, min = 1, max = 11, step = 1),
+              numericInput("matemoveno", tagList("Movement option number for Mate Movement ", em(span("matemoveno", style = "color:#0072B2;"))), value = 6, min = 1, max = 11, step = 1),
               uiOutput("mate_extra_ui"),
               radioButtons("apply_max_threshold", "Do you want to define a maximum mating movement threshold?",
                            choices = c("No", "Yes"),
@@ -623,7 +624,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
                                tagList("Apply changes ", em(span("migrateback_cdmat", style = "color:#0072B2; font-weight: bold;")))),
                   
                   numericInput("migratebackno",
-                               tagList("Probability of Migrate Back",
+                               tagList("Movement option number for Migrate Back",
                                        em(span("migratemoveBackno", style = "color:#0072B2;"))),
                                value = 4, min = 1, max = 11, step = 1),
                   
@@ -660,7 +661,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
                              tagList("Apply changes ", em(span("stray_cdmat", style = "color:#0072B2; font-weight: bold;")))),
                 
                 numericInput("strayno",
-                             tagList("Probability of Stray ", em(span("StrayBackno", style = "color:#0072B2;"))),
+                             tagList("Movement option number for Stray ", em(span("StrayBackno", style = "color:#0072B2;"))),
                              value = 4, min = 1, max = 11, step = 1),
                 uiOutput("stray_extra_ui"),
                 textInput(
@@ -688,7 +689,7 @@ write_popvars <- function(output_file = "my_new_popvars.csv") {
                 actionButton("update_disperse_cdmat",
                              tagList("Apply changes ", em(span("disperse_cdmat", style = "color:#0072B2; font-weight: bold;")))),
                 
-                numericInput("disperseLocalno", tagList("Probability of Dispersal ", em(span("disperseLocalno", style = "color:#0072B2;"))), value = 4, min = 1, max = 11, step = 1),
+                numericInput("disperseLocalno", tagList("Movement option number for Dispersal ", em(span("disperseLocalno", style = "color:#0072B2;"))), value = 4, min = 1, max = 11, step = 1),
                 uiOutput("disperseLocal_extra_ui"),
                 textInput(
                   "disperseLocalthresh",
