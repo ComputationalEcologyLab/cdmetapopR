@@ -13,17 +13,17 @@ Authors@R:
     person(given = "Allison", 
     family = "Williams", 
     role = c("aut")))
-Description: This package provides a set of helper functions to launch, analyze,
-    and visualize the output files of CDMetaPOP
+Description: This package provides a set of helper functions to launch, analyze, and visualize the output files of CDMetaPOP.
 Imports: ggplot2,
   tidyr,
-  dplyr, 
+  tidyselect,
+  dplyr,
   adegenet,
   gdistance,
   graph4lg,
   poppr,
   shiny,
-  shinyBS, 
+  shinyBS,
   terra
 License: GPL (>= 2)
 Encoding: UTF-8

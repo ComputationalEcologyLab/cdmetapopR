@@ -1,9 +1,5 @@
 disease_example_dir <- function() {
-  normalizePath(
-    file.path("..", "..", "inst", "extdata", "Adaptive_Run_08"),
-    winslash = "/",
-    mustWork = TRUE
-  )
+  system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
 }
 
 test_that("summarize_states discovers disease summaries from an output directory", {

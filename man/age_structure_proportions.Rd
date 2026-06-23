@@ -4,7 +4,12 @@
 \alias{age_structure_proportions}
 \title{Determine the proportions of the age structure of the population}
 \usage{
-age_structure_proportions(path = mypath, runs = 1, gen = 49, species = 0)
+age_structure_proportions(
+  path = system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR"),
+  runs = 1,
+  gen = 49,
+  species = 0
+)
 }
 \arguments{
 \item{path}{path to the simulation folder}

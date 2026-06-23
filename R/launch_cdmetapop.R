@@ -28,7 +28,7 @@
 #' }
 
 
-launch_cdmetapop <- function(pythonFilepath = python,
+launch_cdmetapop <- function(pythonFilepath = "python",
                              CDMetaPOPFilepath = "CDMetaPOP.py",
                              runvarsDirectory = NULL,
                              runvarsFilename = "RunVars.csv",
