@@ -15,7 +15,6 @@ Authors@R:
     role = c("aut")))
 Description: This package provides a set of helper functions to launch, analyze, and visualize the output files of CDMetaPOP.
 Imports: ggplot2,
-  reshape2,
   tidyr,
   tidyselect,
   dplyr,
