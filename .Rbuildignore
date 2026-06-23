@@ -3,3 +3,7 @@
 ^Rplots\.pdf$
 ^cdmetapopR_manual\.pdf$
 ^docs$
+^doc$
+^Meta$
+^\.positai$
+^\.claude$
