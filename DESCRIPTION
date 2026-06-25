@@ -13,7 +13,7 @@ Authors@R:
     person(given = "Allison", 
     family = "Williams", 
     role = c("aut")))
-Description: Provides a set of helper functions to launch, analyze, and visualize the output files of 'CDMetaPOP' https://computationalecologylab.github.io/cdmetapop_web/.
+Description: Provides a set of helper functions to launch, analyze, and visualize the output files of 'CDMetaPOP' <https://computationalecologylab.github.io/cdmetapop_web/>.
 Imports: ggplot2,
   tidyr,
   tidyselect,
