@@ -18,8 +18,7 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 
-pkg_root <- normalizePath(file.path(".."), winslash = "/", mustWork = TRUE)
-pkgload::load_all(pkg_root)
+library(cdmetapopR)
 library(tidyverse)
 ```
 
