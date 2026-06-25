@@ -7,3 +7,6 @@
 ^Meta$
 ^\.positai$
 ^\.claude$
+^\.github$
+^CONTRIBUTING\.md$
+^manual\.pdf$
