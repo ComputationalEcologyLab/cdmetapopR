@@ -1,5 +1,5 @@
 Package: cdmetapopR
-Title: Utility Functions for CDMetaPOP Outputs
+Title: Utility Functions for 'CDMetaPOP'
 Version: 1.0.0
 Authors@R: 
     c(person(given = "Dominique", 
@@ -13,7 +13,7 @@ Authors@R:
     person(given = "Allison", 
     family = "Williams", 
     role = c("aut")))
-Description: Provides a set of helper functions to launch, analyze, and visualize the output files of CDMetaPOP.
+Description: Provides a set of helper functions to launch, analyze, and visualize the output files of 'CDMetaPOP' https://computationalecologylab.github.io/cdmetapop_web/.
 Imports: ggplot2,
   tidyr,
   tidyselect,
