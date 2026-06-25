@@ -187,12 +187,12 @@
 }
 
 .theme_cdmetapop <- function() {
-  theme_minimal(base_size = 12) +
-    theme(
-      plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
-      panel.grid.minor = element_blank(),
-      strip.background = element_rect(fill = "grey90", color = NA),
-      strip.text = element_text(face = "bold")
+  ggplot2::theme_minimal(base_size = 12) +
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(face = "bold", size = 14, hjust = 0.5),
+      panel.grid.minor = ggplot2::element_blank(),
+      strip.background = ggplot2::element_rect(fill = "grey90", color = NA),
+      strip.text = ggplot2::element_text(face = "bold")
     )
 }
 
