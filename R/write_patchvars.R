@@ -12,7 +12,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
   # Template
   template <- data.frame(
   PatchID = 0, X = NA, Y = NA,
-  SubpatchNO = 0, K = 0, `K StDev` = 0,
+  SubpatchNO = 0, K = 0, `K StDev` = 0, N0 = 0,
   `Natal Grounds` = 1, `Migration Out Grounds` = 0, 
   `Genes.Initialize` = NA, 
   `ClassVars` = NA,
@@ -111,6 +111,8 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                        value = 0),
           numericInput("K_StDev", tagList("Enter the +/- annual variation for your patches ", em(span("K StDev", style = "color:#0072B2;"))), 
                        value = 0),
+          numericInput("N0", tagList("Enter the population number of your patches.", em(span("N0", style = "color:#0072B2;"))), 
+                       value = 0),
           selectInput("Natal_Grounds", tagList("Identify whether your patches are natal ground locations ", em(span("Natal Grounds", style = "color:#0072B2;"))),
                    selected = 1,
                    choices = c(0,1)
@@ -120,7 +122,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
             "Warning - If patches at all Natal Ground = 0 simulation will not run",
             "right"
           ),
-          actionButton("update_patches", "Update Patches")
+          actionButton("update_patches", "Apply changes")
           ),
           
           ########################################
@@ -149,7 +151,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
           numericInput("mortality_eggs_stdev", tagList("Set the standard deviation for the mortality rate during the egg/litter stage ", em(span("Mortality Eggs StDev", style = "color:#0072B2;"))), 
                       value = 0,
                       min = 0, max = 1, step = 0.05),
-          actionButton("update_demography", "Update Demography"),
+          actionButton("update_demography", "Apply changes"),
           ),
           
           ########################################
@@ -184,7 +186,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
             numericInput("dispersal_prob", tagList("Set dispersal probability [0-1] ", em(span("Dispersal Prob", style = "color:#0072B2;"))), 
                          value = 0,
                          min = 0, max = 1, step = 0.05),
-            actionButton("update_movement", "Update Movement Parameters")
+            actionButton("update_movement", "Apply changes")
           ),
         ),
 
@@ -255,7 +257,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                      ),
                      numericInput("GrowDaysBackStDev", tagList("Define the standard deviation around the number of growing days for growth back: ", em(span("GrowDaysBackStDev", style = "color:#0072B2;"))), 
                                   value = 0),
-                            actionButton("update_growth", "Update Growth Parameters")
+                            actionButton("update_growth", "Apply changes")
                    ),
           ),
 
@@ -276,7 +278,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
           condition = "input.apply_selection != 'No'",
            helpText("Warning: If you want to apply selection, make sure to also update the cdevolveans parameter in the PopVars.csv file to match the type of selection you want to apply. See user manual for more details."),
           uiOutput("implementSelectionUI"),
-          actionButton("update_selection", "Update Selection Parameters")
+          actionButton("update_selection", "Apply changes")
         )
           ),
         
@@ -311,7 +313,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                        placement = "right",
                        trigger = "hover"
                      ),
-                       actionButton("update_capture", "Update Capture Probability Parameters"),
+                         actionButton("update_capture", "Apply changes"),
                    ),
                    
                  
@@ -342,7 +344,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                        placement = "right",
                        trigger = "hover"
                      ),
-                     actionButton("update_habitat", "Update Habitat Quality Parameters")
+                    actionButton("update_habitat", "Apply changes")
                    ),
                    
                    radioButtons("apply_competition", "Do you want to include interspecific competition?",
@@ -360,7 +362,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                        "The competition coefficient represents the effect of one species on another. Higher values = greater competitive impact.",
                        placement = "right",
                        trigger = "hover"),                     
-                     actionButton("update_competition", "Update Competition Coefficient")
+                    actionButton("update_competition", "Apply changes")
                    ),
           ),
         
@@ -511,6 +513,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
       temp <- template_data()
       temp$K <- input$K
       temp$`K StDev` <- input$K_StDev
+      temp$N0 <- input$N0
       temp$`Natal Grounds` <- input$Natal_Grounds
       template_data(temp)
     })

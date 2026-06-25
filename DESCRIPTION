@@ -1,6 +1,6 @@
 Package: cdmetapopR
 Title: Utility functions for CDMetaPOP outputs
-Version: 0.0.1
+Version: 1.0.0
 Authors@R: 
     c(person(given = "Dominique", 
     family = "Alò", 
