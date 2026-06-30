@@ -8,36 +8,60 @@
 #' @import shiny
 #' @import shinyBS
 #' @export
-write_patchvars <- function(output_file = "my_new_patchvars.csv") {
+make_patchvars <- function(output_file = "my_new_patchvars.csv") {
   # Template
   template <- data.frame(
-  PatchID = 0, X = NA, Y = NA,
-  SubpatchNO = 0, K = 0, `K StDev` = 0, N0 = 0,
-  `Natal Grounds` = 1, `Migration Out Grounds` = 0, 
-  `Genes.Initialize` = NA, 
-  `ClassVars` = NA,
-  `Mortality Out` = 0, `Mortality Out StDev` = 0,
-  `Mortality Back` = 0, `Mortality Back StDev` = 0,
-  `Mortality Eggs` = 0, `Mortality Eggs StDev` = 0, 
-  `Migration Out Prob` = 0, `Set Migration Out` = "N",
-  `Migration Back Prob` = 1, `Straying Prob` = 0, 
-  `Dispersal Prob` = 0, GrowthTemperatureOut = "N",
-  GrowthTemperatureOutStDev = 0, GrowDaysOut = 155,
-  GrowDaysOutStDev = 0, GrowthTemperatureBack = "N", 
-  GrowthTemperatureBackStDev = 0, GrowDaysBack = 0,
-  GrowDaysBackStDev = 0, `Capture Probability Out` = "N", 
-  `Capture Probability Back` = "N", HabitatOut = 0, 
-  HabitatBack = 0, Fitness_AA = 0, Fitness_Aa = 0,
-  Fitness_aa = 0, Fitness_BB = 0, Fitness_Bb = 0,
-  Fitness_bb = 0, Fitness_AABB = 0, Fitness_AaBB = 0,
-  Fitness_aaBB = 0, Fitness_AABb = 0, Fitness_AaBb = 0, 
-  Fitness_aaBb = 0, Fitness_AAbb = 0, Fitness_Aabb = 0,
-  Fitness_aabb = 0, comp_coef = 0.5,  
-  check.names = FALSE)
+    PatchID = 0, X = NA, Y = NA,
+    SubpatchNO = 0, K = 0, `K StDev` = 0, N0 = 0,
+    `Natal Grounds` = 1, `Migration Out Grounds` = 0, 
+    `Genes.Initialize` = NA, 
+    `ClassVars` = NA,
+    `Mortality Out` = 0, `Mortality Out StDev` = 0,
+    `Mortality Back` = 0, `Mortality Back StDev` = 0,
+    `Mortality Eggs` = 0, `Mortality Eggs StDev` = 0, 
+    `Migration Out Prob` = 0, `Set Migration Out` = "N",
+    `Migration Back Prob` = 1, `Straying Prob` = 0, 
+    `Dispersal Prob` = 0, GrowthTemperatureOut = "N",
+    GrowthTemperatureOutStDev = 0, GrowDaysOut = 155,
+    GrowDaysOutStDev = 0, GrowthTemperatureBack = "N", 
+    GrowthTemperatureBackStDev = 0, GrowDaysBack = 0,
+    GrowDaysBackStDev = 0, `Capture Probability Out` = "N", 
+    `Capture Probability Back` = "N", HabitatOut = 0, 
+    HabitatBack = 0, Fitness_AA = 0, Fitness_Aa = 0,
+    Fitness_aa = 0, Fitness_BB = 0, Fitness_Bb = 0,
+    Fitness_bb = 0, Fitness_AABB = 0, Fitness_AaBB = 0,
+    Fitness_aaBB = 0, Fitness_AABb = 0, Fitness_AaBb = 0, 
+    Fitness_aaBb = 0, Fitness_AAbb = 0, Fitness_Aabb = 0,
+    Fitness_aabb = 0, comp_coef = 0.5,  
+    check.names = FALSE)
   ############################################
   ################## UI ######################
   ############################################
   ui <- fluidPage(
+    tags$head(
+      tags$style(HTML(" 
+    .upload-block {
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+    .upload-block h5 {
+      margin-top: 0;
+      font-weight: bold;
+      color: #333;
+    }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+  "))
+    ),
     titlePanel("Build a PatchVars.csv File"),
     p(
       "Welcome! This shiny app instance will help you put together a PatchVars.csv file to use as a CDmetaPOP input file.",
@@ -58,7 +82,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
           actionButton("directory_help", "Show help")
         ),
         div(class = "upload-block",
-          h5("Coordinates File"),
+            h5("Coordinates File"),
             fileInput("coordinates_upload", "Upload the coordinates of your study system. It must be a csv file with two columns named X and Y", accept = ".csv"),
             actionButton(
               inputId = "update_coordinates",
@@ -96,6 +120,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
       
       mainPanel(
         tabsetPanel(
+          id = "main_tabs",
           ########################################
           # Patches tab
           ########################################
@@ -105,24 +130,24 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                      em(span("PatchesID", style = "color:#0072B2; font-weight: bold;")),
                      "."
                    ),
-          tableOutput("patch_table"),
-          
-          numericInput("K", tagList("Enter the carrying capacity of your patches. A K value of 0 means individuals will not move into the patch. ", em(span("K", style = "color:#0072B2;"))), 
-                       value = 0),
-          numericInput("K_StDev", tagList("Enter the +/- annual variation for your patches ", em(span("K StDev", style = "color:#0072B2;"))), 
-                       value = 0),
-          numericInput("N0", tagList("Enter the population number of your patches.", em(span("N0", style = "color:#0072B2;"))), 
-                       value = 0),
-          selectInput("Natal_Grounds", tagList("Identify whether your patches are natal ground locations ", em(span("Natal Grounds", style = "color:#0072B2;"))),
-                   selected = 1,
-                   choices = c(0,1)
+                   tableOutput("patch_table"),
+                   
+                   numericInput("K", tagList("Enter the carrying capacity of your patches. A K value of 0 means individuals will not move into the patch. ", em(span("K", style = "color:#0072B2;"))), 
+                                value = 0),
+                   numericInput("K_StDev", tagList("Enter the +/- annual variation for your patches ", em(span("K StDev", style = "color:#0072B2;"))), 
+                                value = 0),
+                   numericInput("N0", tagList("Enter the population number of your patches.", em(span("N0", style = "color:#0072B2;"))), 
+                                value = 0),
+                   selectInput("Natal_Grounds", tagList("Identify whether your patches are natal ground locations ", em(span("Natal Grounds", style = "color:#0072B2;"))),
+                               selected = 1,
+                               choices = c(0,1)
                    ),
-          bsTooltip(
-            "Natal_Grounds",
-            "Warning - If patches at all Natal Ground = 0 simulation will not run",
-            "right"
-          ),
-          actionButton("update_patches", "Apply changes")
+                   bsTooltip(
+                     "Natal_Grounds",
+                     "Warning - If patches at all Natal Ground = 0 simulation will not run",
+                     "right"
+                   ),
+                   actionButton("update_patches", "Apply changes")
           ),
           
           ########################################
@@ -132,26 +157,26 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                    helpText("Parameters entered here will define density-independent mortality applied to each patch and should range between 0 and 1 (0 = no mortality, 1 = 100% mortality)."),  
                    helpText("Warning! These parameters will interact with class specific values (ClassVars.csv) See user manual for how class and patch interact."),
                    
-                                
-          numericInput("mortality_out", tagList("Set the mortality rate for individuals during the rearing/overwintering/foraging stage ", em(span("Mortality Out", style = "color:#0072B2;"))), 
-                      value = 0,
-                      min = 0, max = 1, step = 0.05),
-          numericInput("mortality_out_stdev", tagList("Set the standard deviation for the mortality rate during the rearing/overwintering/foraging stage ", em(span("Mortality Out StDev", style = "color:#0072B2;"))), 
-                      value = 0,
-                      min = 0, max = 1, step = 0.05),
-          numericInput("mortality_back", tagList("Set the mortality rate for individuals during the spawning stage ", em(span("Mortality Back", style = "color:#0072B2;"))), 
-                      value = 0,
-                      min = 0, max = 1, step = 0.05),
-          numericInput("mortality_back_stdev", tagList("Set the standard deviation for the mortality rate during the spawning stage ", em(span("Mortality Back StDev", style = "color:#0072B2;"))), 
-                      value = 0,
-                      min = 0, max = 1, step = 0.05),
-          numericInput("mortality_eggs", tagList("Set the mortality rate for individuals during the egg/litter stage ", em(span("Mortality Eggs", style = "color:#0072B2;"))), 
-                      value = 0,
-                      min = 0, max = 1, step = 0.05),
-          numericInput("mortality_eggs_stdev", tagList("Set the standard deviation for the mortality rate during the egg/litter stage ", em(span("Mortality Eggs StDev", style = "color:#0072B2;"))), 
-                      value = 0,
-                      min = 0, max = 1, step = 0.05),
-          actionButton("update_demography", "Apply changes"),
+                   
+                   numericInput("mortality_out", tagList("Set the mortality rate for individuals during the rearing/overwintering/foraging stage ", em(span("Mortality Out", style = "color:#0072B2;"))), 
+                                value = 0,
+                                min = 0, max = 1, step = 0.05),
+                   numericInput("mortality_out_stdev", tagList("Set the standard deviation for the mortality rate during the rearing/overwintering/foraging stage ", em(span("Mortality Out StDev", style = "color:#0072B2;"))), 
+                                value = 0,
+                                min = 0, max = 1, step = 0.05),
+                   numericInput("mortality_back", tagList("Set the mortality rate for individuals during the spawning stage ", em(span("Mortality Back", style = "color:#0072B2;"))), 
+                                value = 0,
+                                min = 0, max = 1, step = 0.05),
+                   numericInput("mortality_back_stdev", tagList("Set the standard deviation for the mortality rate during the spawning stage ", em(span("Mortality Back StDev", style = "color:#0072B2;"))), 
+                                value = 0,
+                                min = 0, max = 1, step = 0.05),
+                   numericInput("mortality_eggs", tagList("Set the mortality rate for individuals during the egg/litter stage ", em(span("Mortality Eggs", style = "color:#0072B2;"))), 
+                                value = 0,
+                                min = 0, max = 1, step = 0.05),
+                   numericInput("mortality_eggs_stdev", tagList("Set the standard deviation for the mortality rate during the egg/litter stage ", em(span("Mortality Eggs StDev", style = "color:#0072B2;"))), 
+                                value = 0,
+                                min = 0, max = 1, step = 0.05),
+                   actionButton("update_demography", "Apply changes"),
           ),
           
           ########################################
@@ -159,41 +184,41 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
           ########################################
           
           tabPanel("Movement",
-          helpText("Parameters entered here will define movement, dispersal, and straying among patches."),
-          helpText("Warning! These parameters will be multiplied by class specific values (ClassVars.csv) See user manual for how class and patch interact."),
-          
-          radioButtons("apply_movement", "Apply Movement Parameters?",
-                       choices = c("No", "Yes"), 
-                       selected = "No", 
-                       inline = TRUE),
-          
-          # Show movement settings only if 'Yes' is selected
-          conditionalPanel(
-            condition = "input.apply_movement == 'Yes'",
-            numericInput("migration_out_prob", tagList("Emigration probability [0-1] applied before moving to rearing/overwinter grounds. If just age/size class migration is wanted, then set these values to 1. ", em(span("Migration Out Prob", style = "color:#0072B2;"))), 
-                         value = 0,
-                         min = 0, max = 1, step = 0.05),
-            radioButtons("set_migration_out", tagList("If an individual becomes a migrant, does it stay an annual migrant for life? ", em(span("Set Migration Out", style = "color:#0072B2;"))),
-                         choices = c("Y", "N"), 
-                         selected = "N", 
-                         inline = TRUE),
-            numericInput("migration_back_prob", tagList("Set return probability [0-1] (Default 1 means all migrants return) ", em(span("Migration Back Prob", style = "color:#0072B2;"))), 
-                         value = 1, # 
-                         min = 0, max = 1, step = 0.05),
-            numericInput("straying_prob", tagList("Set straying probability [0-1] ", em(span("Straying Prob", style = "color:#0072B2;"))),
-                         value = 0,
-                         min = 0, max = 1, step = 0.05),
-            numericInput("dispersal_prob", tagList("Set dispersal probability [0-1] ", em(span("Dispersal Prob", style = "color:#0072B2;"))), 
-                         value = 0,
-                         min = 0, max = 1, step = 0.05),
-            actionButton("update_movement", "Apply changes")
+                   helpText("Parameters entered here will define movement, dispersal, and straying among patches."),
+                   helpText("Warning! These parameters will be multiplied by class specific values (ClassVars.csv) See user manual for how class and patch interact."),
+                   
+                   radioButtons("apply_movement", "Apply Movement Parameters?",
+                                choices = c("No", "Yes"), 
+                                selected = "No", 
+                                inline = TRUE),
+                   
+                   # Show movement settings only if 'Yes' is selected
+                   conditionalPanel(
+                     condition = "input.apply_movement == 'Yes'",
+                     numericInput("migration_out_prob", tagList("Emigration probability [0-1] applied before moving to rearing/overwinter grounds. If just age/size class migration is wanted, then set these values to 1. ", em(span("Migration Out Prob", style = "color:#0072B2;"))), 
+                                  value = 0,
+                                  min = 0, max = 1, step = 0.05),
+                     radioButtons("set_migration_out", tagList("If an individual becomes a migrant, does it stay an annual migrant for life? ", em(span("Set Migration Out", style = "color:#0072B2;"))),
+                                  choices = c("Y", "N"), 
+                                  selected = "N", 
+                                  inline = TRUE),
+                     numericInput("migration_back_prob", tagList("Set return probability [0-1] (Default 1 means all migrants return) ", em(span("Migration Back Prob", style = "color:#0072B2;"))), 
+                                  value = 1, # 
+                                  min = 0, max = 1, step = 0.05),
+                     numericInput("straying_prob", tagList("Set straying probability [0-1] ", em(span("Straying Prob", style = "color:#0072B2;"))),
+                                  value = 0,
+                                  min = 0, max = 1, step = 0.05),
+                     numericInput("dispersal_prob", tagList("Set dispersal probability [0-1] ", em(span("Dispersal Prob", style = "color:#0072B2;"))), 
+                                  value = 0,
+                                  min = 0, max = 1, step = 0.05),
+                     actionButton("update_movement", "Apply changes")
+                   ),
           ),
-        ),
-
-
-        ########################################
-        # Growth tab
-        ########################################
+          
+          
+          ########################################
+          # Growth tab
+          ########################################
           tabPanel("Growth",
                    helpText("Parameters entered here will define temperature-dependent growth at each patch."),
                    
@@ -257,35 +282,35 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                      ),
                      numericInput("GrowDaysBackStDev", tagList("Define the standard deviation around the number of growing days for growth back: ", em(span("GrowDaysBackStDev", style = "color:#0072B2;"))), 
                                   value = 0),
-                            actionButton("update_growth", "Apply changes")
+                     actionButton("update_growth", "Apply changes")
                    ),
           ),
-
-        ########################################
-        # Fitness tab
-        ########################################
-        
+          
+          ########################################
+          # Fitness tab
+          ########################################
+          
           tabPanel("Fitness",
-        helpText("Warning: Selection parameters entered here are dependent on what is defined in the cdevolveans parameter of the PopVars.csv file."),
-        
-        radioButtons("apply_selection", "Do you want to apply selection?",
-                     choices = c("No", "Basic 1-locus", "Basic 2-locus Epistatic", "Growth-dependent selection", "Maturation-dependent selection"), 
-                     selected = "No", 
-                     inline = TRUE),
-
-        # Show differential settings only if 'No' is not selected
-        conditionalPanel(
-          condition = "input.apply_selection != 'No'",
-           helpText("Warning: If you want to apply selection, make sure to also update the cdevolveans parameter in the PopVars.csv file to match the type of selection you want to apply. See user manual for more details."),
-          uiOutput("implementSelectionUI"),
-          actionButton("update_selection", "Apply changes")
-        )
+                   helpText("Warning: Selection parameters entered here are dependent on what is defined in the cdevolveans parameter of the PopVars.csv file."),
+                   
+                   radioButtons("apply_selection", "Do you want to apply selection?",
+                                choices = c("No", "Basic 1-locus", "Basic 2-locus Epistatic", "Growth-dependent selection", "Maturation-dependent selection"), 
+                                selected = "No", 
+                                inline = TRUE),
+                   
+                   # Show differential settings only if 'No' is not selected
+                   conditionalPanel(
+                     condition = "input.apply_selection != 'No'",
+                     helpText("Warning: If you want to apply selection, make sure to also update the cdevolveans parameter in the PopVars.csv file to match the type of selection you want to apply. See user manual for more details."),
+                     uiOutput("implementSelectionUI"),
+                     actionButton("update_selection", "Apply changes")
+                   )
           ),
-        
-        ########################################
-        # Miscellaneous tab
-        ########################################
-        
+          
+          ########################################
+          # Miscellaneous tab
+          ########################################
+          
           tabPanel("Miscellaneous",
                    radioButtons("apply_capture", "Do you want to calculate capture probabilities?",
                                 choices = c("No", "Yes"), 
@@ -313,11 +338,11 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                        placement = "right",
                        trigger = "hover"
                      ),
-                         actionButton("update_capture", "Apply changes"),
+                     actionButton("update_capture", "Apply changes"),
                    ),
                    
-                 
-                  
+                   
+                   
                    
                    radioButtons("apply_habitat", "Do you want to apply habitat quality values for use with the plasticity module?",
                                 choices = c("No", "Yes"), 
@@ -344,7 +369,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                        placement = "right",
                        trigger = "hover"
                      ),
-                    actionButton("update_habitat", "Apply changes")
+                     actionButton("update_habitat", "Apply changes")
                    ),
                    
                    radioButtons("apply_competition", "Do you want to include interspecific competition?",
@@ -362,13 +387,13 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
                        "The competition coefficient represents the effect of one species on another. Higher values = greater competitive impact.",
                        placement = "right",
                        trigger = "hover"),                     
-                    actionButton("update_competition", "Apply changes")
+                     actionButton("update_competition", "Apply changes")
                    ),
           ),
-        
-        ########################################
-        # Preview tab
-        ########################################
+          
+          ########################################
+          # Preview tab
+          ########################################
           tabPanel("Preview Updated PatchVars",
                    tableOutput("preview_template")
           )
@@ -384,6 +409,32 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
   server <- function(input, output, session) {
     
     template_data <- reactiveVal(template)
+    
+    # Track whether the startup reminder has already been shown
+    startup_warning_shown <- reactiveVal(FALSE)
+    
+    # Helper function to show apply changes reminder 
+    show_tab_apply_changes <- function(tab_name) {
+      showModal(
+        modalDialog(
+          title = "If you change parameters on any tab, remember to click on 'Apply changes' buttons",
+          p("The 'Apply changes' buttons are necessary to update the values of the final input file."),
+          easyClose = TRUE,
+          footer = modalButton("Got it!")
+        )
+      )
+    }
+    
+    observeEvent(input$main_tabs, {
+      if (startup_warning_shown()) {
+        return()
+      }
+      
+      if (!is.null(input$main_tabs) && input$main_tabs == "Patches") {
+        startup_warning_shown(TRUE)
+        show_tab_apply_changes("Patches")
+      }
+    }, ignoreInit = FALSE)
     
     #####################################################
     # SIDE PANEL HELP
@@ -798,7 +849,7 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
       }
       template_data(temp)
     })
-     
+    
     
     ###################################################
     # update Preview tab
@@ -825,5 +876,3 @@ write_patchvars <- function(output_file = "my_new_patchvars.csv") {
   shinyApp(ui = ui, server = server)
 }
 
-# Call the function to run the app
-write_patchvars()

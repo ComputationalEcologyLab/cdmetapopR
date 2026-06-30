@@ -9,7 +9,7 @@
 #' @import shinyBS
 #' @export
 
-write_runvars <- function(output_file = "my_new_runvars.csv") {
+make_runvars <- function(output_file = "my_new_runvars.csv") {
   
   # Provide the template
   template <- data.frame(
@@ -32,6 +32,30 @@ write_runvars <- function(output_file = "my_new_runvars.csv") {
   ############################################
   
   ui <- fluidPage(
+    tags$head(
+      tags$style(HTML(" 
+    .upload-block {
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+    .upload-block h5 {
+      margin-top: 0;
+      font-weight: bold;
+      color: #333;
+    }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+  "))
+    ),
     titlePanel("Build a RunVars.csv File"),
     
     helpText(
@@ -75,7 +99,8 @@ write_runvars <- function(output_file = "my_new_runvars.csv") {
       
       mainPanel(
         tabsetPanel(
-         
+          id = "main_tabs",
+          
           tabPanel(
             "Parameter Options",
             selectInput("sizecontrol", tagList(
@@ -135,7 +160,7 @@ write_runvars <- function(output_file = "my_new_runvars.csv") {
             ), selected = "Back",
             choices = "Back"
             ),
-            actionButton("update_parameters", "Update Parameters")
+            actionButton("update_parameters", "Apply changes")
           ),
           tabPanel(
             "Preview Updated RunVars",
@@ -156,6 +181,32 @@ write_runvars <- function(output_file = "my_new_runvars.csv") {
     # Reactive template
     template_data <- reactiveVal(template)
     
+    # Track whether the startup reminder has already been shown
+    startup_warning_shown <- reactiveVal(FALSE)
+    
+    # Helper function to show apply changes reminder 
+    show_tab_apply_changes <- function(tab_name) {
+      showModal(
+        modalDialog(
+          title = "If you change parameters on any tab, remember to click on 'Apply changes' buttons",
+          p("The 'Apply changes' buttons are necessary to update the values of the final input file."),
+          easyClose = TRUE,
+          footer = modalButton("Got it!")
+        )
+      )
+    }
+    
+    observeEvent(input$main_tabs, {
+      if (startup_warning_shown()) {
+        return()
+      }
+      
+      if (!is.null(input$main_tabs) && input$main_tabs == "Parameter Options") {
+        startup_warning_shown(TRUE)
+        show_tab_apply_changes("Parameter Options")
+      }
+    }, ignoreInit = FALSE)
+    
     ##############################################
     # Directory Help Modal
     ##############################################
@@ -169,40 +220,40 @@ write_runvars <- function(output_file = "my_new_runvars.csv") {
             "1. Create a main folder named ", strong("data"), ".",
             "2. Inside the data folder, place the ", code("runVars.csv"), "file.",
             "3. Also inside the data folder, create the following subdirectories:",
-            br(), "   * ", code("popvars"), " - contains file ", code("popVars.csv"),
-            br(), "   * ", code("patchvars"), " - contains file ", code("patchVars.csv"),
-            br(), "   * ", code("classvars"), " - contains file ", code("classVars"),
-            br(), "   * ", code("genes"), " - contains files ", code("allele frequency files (.csv)"),
-            br(), "   * ", code("cdmats"), " - contains files for movement matrices",
-            br(), "   * ", code("otherfiles"), " - contains other files, e.g. correlation matrices",
+            br(), "   • ", code("popvars"), " — contains file ", code("popVars.csv"),
+            br(), "   • ", code("patchvars"), " — contains file ", code("patchVars.csv"),
+            br(), "   • ", code("classvars"), " — contains file ", code("classVars"),
+            br(), "   • ", code("genes"), " — contains files ", code("allele frequency files (.csv)"),
+            br(), "   • ", code("cdmats"), " — contains files for movement matrices",
+            br(), "   • ", code("otherfiles"), " — contains other files, e.g. correlation matrices",
             br(), br(),
             "The correct structure should look like this:"
           ),
           tags$pre(
             "data/
+│
+├── runVars.csv
+│
+├── popvars/
+│   └── popVars.csv
+│
+├── patchvars/
+│   └── patchVars.csv
+│
+└── classvars/
+│   └── classVars.csv
+│
+└── genes/
+│   └── allelefrequencies.csv
+│
+└── cdmats/
+|   ├── cdmat1.csv
+│   ├── cdmat2.csv
+│   └── cdmat3.csv
 |
-|-- runVars.csv
-|
-|-- popvars/
-|   |--popVars.csv
-|
-|-- patchvars/
-|   |--patchVars.csv
-|
-|--classvars/
-|   |--classVars.csv
-|
-|--genes/
-|   |--allelefrequencies.csv
-|
-|--cdmats/
-|   |-- cdmat1.csv
-|   |-- cdmat2.csv
-|   |--cdmat3.csv
-|
-|--otherfiles/
-|   |-- correlation_matrix1.csv
-|   |--correlation_matrix2.csv"
+└── otherfiles/
+│   ├── correlation_matrix1.csv
+│   └── correlation_matrix2.csv"
             
           ),
           easyClose = TRUE,
