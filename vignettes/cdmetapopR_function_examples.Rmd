@@ -1,0 +1,775 @@
+---
+title: "cdmetapopR Vignette"
+subtitle: "Reading, summarizing, customizing, and plotting CDMetaPOP outputs"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: flatly
+    self_contained: true
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 8,
+  fig.height = 5,
+  out.width = "100%"
+)
+
+pkg_root <- normalizePath(file.path(".."), winslash = "/", mustWork = TRUE)
+pkgload::load_all(pkg_root)
+library(tidyverse)
+```
+
+# Overview
+
+This vignette shows how to use `cdmetapopR` to read, reshape, summarize,
+and plot CDMetaPOP outputs. The goal is to show both quick plotting
+functions and the lower-level data-frame outputs that can be used for
+custom `ggplot2` figures.
+
+The examples use the package example output files in
+`inst/extdata/Example_dat`.
+
+The example data include:
+
+-   2 batches
+-   2 Monte Carlo replicates per batch
+-   `summary_popAllTime.csv`
+-   `summary_classAllTime.csv`
+-   `summary_popAllTime_DiseaseStates.csv`
+-   `ind0.csv` through `ind9.csv`
+
+```{r example-paths}
+ex_dir <- system.file("extdata", "Example_dat", package = "cdmetapopR")
+
+pop_file <- file.path(ex_dir, "run0batch0mc0species0", "summary_popAllTime.csv")
+class_file <- file.path(ex_dir, "run0batch0mc0species0", "summary_classAllTime.csv")
+ind_file <- file.path(ex_dir, "run0batch0mc0species0", "ind9.csv")
+
+ex_dir
+list.files(ex_dir)
+```
+
+## Choosing Runs, Batches, Monte Carlo Replicates, and Species
+
+Most summary functions use the same filtering arguments:
+
+-   `run = 0`
+-   `batch = 0`
+-   `mc = 0`
+-   `species = 0`
+
+These defaults intentionally select one output folder. Use `"all"` or a
+range of values `c(0,1)` for any of these arguments to combine multiple
+folders. The example directory includes two batches with two MCs each.
+Each of these files contains ten ind#.csvs, containing information from
+each year of the simulation. Additionally, each file has a
+summary_popAllTime.csv, summary_classAllTime.csv, and a
+summary_popAllTime_DiseaseStates.csv that summarizes information across
+the years of the simulation.
+
+```{r filter-examples}
+one_mc <- summary_dataframe(ex_dir, type = "ind", years = 9, mc = 0)
+both_mcs <- summary_dataframe(ex_dir, type = "ind", years = 9, mc = "all")
+all_batches_mcs <- summary_dataframe(ex_dir, type = "pop", batch = "all", mc = "all")
+
+c(
+  one_mc_rows = nrow(one_mc),
+  both_mcs_rows = nrow(both_mcs),
+  all_batches_mcs_rows = nrow(all_batches_mcs)
+)
+```
+
+For individual files, `years` narrows the selected `ind##.csv` files.
+For summary files, years are filtered after reading by using ordinary
+data-frame operations.
+
+# Conversion Helpers
+
+## `create_cdmat()`
+
+Use `create_cdmat()` to create a cost distance matrix from patch
+coordinates. The simplest options are Euclidean distance and equal
+distance.
+
+```{r create-cdmat}
+coords <- data.frame(
+  x = c(0, 1, 3, 6),
+  y = c(0, 2, 2, 5)
+)
+
+create_cdmat(coords, method = "euclidean")
+create_cdmat(coords, method = "equal")
+```
+
+## `cdmetapop_to_gene()`
+
+Use `cdmetapop_to_gene()` to convert an `ind##.csv` file to GENEPOP or
+GENALEX format. The function writes the converted file to the current
+working directory, so this example uses a temporary directory.
+
+```{r cdmetapop-to-gene}
+old_wd <- getwd()
+setwd(tempdir())
+
+cdmetapop_to_gene(ind_file, format = "genepop")
+list.files(pattern = "^my_genepop")
+
+setwd(old_wd)
+```
+
+# Output Data Frames
+
+`summary_dataframe()` returns CDMetaPOP output files as data frames for
+custom plotting or analysis. Use `type` to choose the file family and
+`run`, `batch`, `mc`, and `species` to choose which output folders to
+include. For `type = "pop"` and `type = "class"`, pipe-delimited summary
+columns are split into one row per patch or class (depending on type) by
+default while keeping metrics in separate columns.
+
+```{r summary-dataframe-pop}
+pop_df <- summary_dataframe(ex_dir, type = "pop", batch = 0, mc = 0)
+head(pop_df[, c("Year", ".batch", ".mc", "PatchID", "GrowthRate", "K", "N_Initial")])
+```
+
+In the default long format, metrics remain in separate columns, but each
+pipe-delimited value is split into its own row. `PatchID` gives the
+position of the value inside the original `|`-delimited cell. For many
+`summary_popAllTime` columns, `PatchID == 0` is the total across patches
+(such as N_initial) and later Patch IDs are actual patch-level values.
+
+```{r summary-dataframe-pop-total-plot}
+pop_totals <- pop_df %>%
+  filter(PatchID == 1)
+
+ggplot(pop_totals, aes(x = Year, y = N_Initial)) +
+  geom_line(linewidth = 0.8, color = "steelblue") +
+  labs(
+    title = "Initial Population Size from summary_dataframe()",
+    x = "Year",
+    y = "N initial"
+  ) +
+  theme_minimal()
+```
+
+```{r summary-dataframe-pop-patch-plot}
+patch_subset <- pop_df %>%
+  filter(PatchID %in% 2:9)
+
+ggplot(patch_subset, aes(x = Year, y = K, color = factor(PatchID))) +
+  geom_line(linewidth = 0.7) +
+  labs(
+    title = "Patch Carrying Capacity for Selected Patches",
+    x = "Year",
+    y = "K",
+    color = "PatchID"
+  ) +
+  theme_minimal()
+```
+
+The same workflow can compare Monte Carlo replicates or batches.
+
+```{r summary-dataframe-pop-multi-mc}
+pop_mc <- summary_dataframe(ex_dir, type = "pop", batch = 0, mc = "all") %>%
+  filter(PatchID == 1)
+
+ggplot(pop_mc, aes(x = Year, y = Births, color = factor(.mc), group = .mc)) +
+  geom_line(linewidth = 0.8) +
+  labs(
+    title = "Births by Monte Carlo Replicate",
+    x = "Year",
+    y = "Births",
+    color = "MC"
+  ) +
+  theme_minimal()
+```
+
+Use `summary_format = "wide"` if you need the original summary columns
+instead.
+
+```{r summary-dataframe-pop-wide}
+pop_wide_df <- summary_dataframe(ex_dir, type = "pop", batch = 0, mc = 0, summary_format = "wide")
+head(pop_wide_df[, c("Year", "GrowthRate", "N_Initial")])
+```
+
+```{r summary-dataframe-class}
+class_df <- summary_dataframe(ex_dir, type = "class", batch = 0, mc = 0)
+head(class_df[, c("Year", ".batch", ".mc", "ClassID", "Ages", "N_Initial_Age")])
+```
+
+Class summaries are useful when the class ID positions correspond to age
+or size classes.
+
+```{r summary-dataframe-class-age-plot}
+class_selected_years <- class_df %>%
+  filter(Year %in% c(0, 5, 9))
+
+ggplot(class_selected_years, aes(x = Ages, y = N_Initial_Age, fill = factor(Year))) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Age Structure Across Selected Years",
+    x = "Age",
+    y = "Individuals",
+    fill = "Year"
+  ) +
+  theme_minimal()
+```
+
+Disease-state files are returned in tidy long format by default, with
+one row per year, source, and disease state.
+
+```{r summary-dataframe-disease}
+disease_df <- summary_dataframe(
+  ex_dir,
+  type = "disease",
+  state_names = c("Susceptible", "Infected", "Recovered")
+)
+head(disease_df)
+```
+
+```{r summary-dataframe-disease-plot}
+disease_mc <- summary_dataframe(
+  ex_dir,
+  type = "disease",
+  state_names = c("Susceptible", "Infected", "Recovered"),
+  mc = "all"
+)
+
+ggplot(disease_mc, aes(x = Year, y = Count, color = factor(.mc), group = .mc)) +
+  geom_line(linewidth = 0.8) +
+  facet_wrap(~ State, scales = "free_y") +
+  labs(
+    title = "Disease State Counts by Monte Carlo Replicate",
+    x = "Year",
+    y = "Count",
+    color = "MC"
+  ) +
+  theme_minimal()
+```
+
+Individual files can be filtered by year and patch.
+
+```{r summary-dataframe-ind}
+ind_df <- summary_dataframe(ex_dir, type = "ind", years = 9, patches = c(1, 3))
+head(ind_df)
+```
+
+You may want to view the number of individuals in each disease state:
+
+```{r summary-dataframe-ind-custom-age}
+ind_year9 <- summary_dataframe(ex_dir, type = "ind", years = 9, mc = "all")
+
+ggplot(ind_year9, aes(x = age, fill = factor(.mc))) +
+  geom_histogram(binwidth = 1, position = "identity", alpha = 0.45) +
+  labs(
+    title = "Individual Age Distribution by Monte Carlo Replicate",
+    x = "Age",
+    y = "Individuals",
+    fill = "MC"
+  ) +
+  theme_minimal()
+```
+
+You may also examine sizes of individuals, however this does not vary in
+our example files:
+
+```{r summary-dataframe-ind-custom-patch-boxplot}
+top_patches <- ind_year9 %>%
+  count(PatchID, sort = TRUE) %>%
+  slice_head(n = 8) %>%
+  pull(PatchID)
+
+ind_top_patches <- ind_year9 %>%
+  filter(PatchID %in% top_patches)
+
+ggplot(ind_top_patches, aes(x = factor(PatchID), y = size, fill = factor(.mc))) +
+  geom_boxplot(outlier.alpha = 0.3) +
+  labs(
+    title = "Individual Size in the Most Populated Patches",
+    x = "Patch",
+    y = "Size",
+    fill = "MC"
+  ) +
+  theme_minimal()
+
+```
+
+Perhaps view the distribution of individuals spatially:
+
+```{r summary-dataframe-ind-custom-spatial}
+patch_counts <- ind_year9 %>%
+  group_by(.mc, PatchID, XCOORD, YCOORD) %>%
+  summarise(n = n(), .groups = "drop")
+
+ggplot(patch_counts, aes(x = XCOORD, y = YCOORD, size = n, color = factor(.mc))) +
+  geom_point(alpha = 0.7) +
+  coord_equal() +
+  labs(
+    title = "Patch Abundance",
+    x = "X coordinate",
+    y = "Y coordinate",
+    size = "Individuals",
+    color = "MC"
+  ) +
+  theme_minimal()
+```
+
+# Population Summary Plots
+
+If users prefer to view figures that can be made directly from CDMetaPOP
+outputs, they can use the following summary_pop() functions.
+
+`summary_pop()` works with `summary_popAllTime.csv` files. The input can
+be a single file, a vector of files, a data frame, or a directory
+containing CDMetaPOP output folders.
+
+When a directory is supplied, `summary_pop()` discovers the matching
+output folders. By default it uses `run = 0`, `batch = 0`, `mc = 0`, and
+`species = 0`; use `"all"` for any of those arguments to include
+multiple runs, batches, Monte Carlo replicates, or species.
+
+## Initial Population Size
+
+```{r summary-pop-n-initial}
+summary_pop(ex_dir, type = "N_initial")
+```
+
+Include multiple Monte Carlo replicates by setting `mc = "all"`. With
+multiple source files, the default behavior can show individual MC
+trajectories and a summary band.
+
+```{r summary-pop-n-initial-all-mc}
+summary_pop(ex_dir, type = "N_initial", mc = "all")
+```
+
+To show only the summarized pattern, set `show_mc = FALSE`.
+
+```{r summary-pop-n-initial-ci-only}
+summary_pop(ex_dir, type = "N_initial", mc = "all", show_mc = FALSE)
+```
+
+## Sex Counts
+
+By default, `type = "sex"` shows males and females only.
+
+```{r summary-pop-sex}
+summary_pop(ex_dir, type = "sex")
+```
+
+Use `include_yys = TRUE` to include YY males and YY females. This may be
+relevant for fisheries research.
+
+```{r summary-pop-sex-yys}
+summary_pop(ex_dir, type = "sex", include_yys = TRUE)
+```
+
+The same YY option works when comparing multiple batches or MCs.
+
+```{r summary-pop-sex-all-batches}
+summary_pop(
+  ex_dir,
+  type = "sex",
+  batch = "all",
+  mc = "all",
+  include_yys = TRUE,
+  show_mc = FALSE
+)
+```
+
+## Mature Counts
+
+By default, `type = "mature"` shows mature males and mature females
+only.
+
+```{r summary-pop-mature}
+summary_pop(ex_dir, type = "mature")
+```
+
+Use `include_yys = TRUE` to include mature YY males and mature YY
+females.
+
+```{r summary-pop-mature-yys}
+summary_pop(ex_dir, type = "mature", include_yys = TRUE)
+```
+
+## Births
+
+```{r summary-pop-births}
+summary_pop(ex_dir, type = "births")
+```
+
+```{r summary-pop-births-all-mc}
+summary_pop(ex_dir, type = "births", mc = "all")
+```
+
+## Myy Ratio
+
+```{r summary-pop-myy-ratio}
+summary_pop(ex_dir, type = "myy_ratio")
+```
+
+## Patch Abundance from `summary_popAllTime.csv`
+
+```{r summary-pop-patch}
+summary_pop(ex_dir, type = "patch", years = c(0, 5, 9))
+```
+
+## Allelic Richness and Heterozygosity from `summary_popAllTime.csv`
+
+These options summarize genetic metrics stored in the population summary
+file.
+
+```{r summary-pop-allelic-richness}
+summary_pop(ex_dir, type = "allelic_richness", mc = "all")
+```
+
+```{r summary-pop-het}
+summary_pop(ex_dir, type = "het", mc = "all")
+```
+
+# Class Summary Plots
+
+`summary_class()` works with `summary_classAllTime.csv` files.
+
+## Age Class Counts
+
+```{r summary-class-age-class}
+summary_class(ex_dir, type = "age_class", n = 10)
+```
+
+Use a smaller `n` to facet more years. This can be useful for short
+example runs or simulations with relatively few generations.
+
+```{r summary-class-age-class-n5}
+summary_class(ex_dir, type = "age_class", n = 5)
+```
+
+## Age Plus One
+
+```{r summary-class-age-plus-one}
+summary_class(ex_dir, type = "age_plus_one")
+```
+
+```{r summary-class-age-plus-one-all-mc}
+summary_class(ex_dir, type = "age_plus_one", mc = "all")
+```
+
+# Disease State Summaries
+
+`summary_disease()` works with `summary_popAllTime_DiseaseStates.csv`
+files. It summarizes disease-state counts across Monte Carlo replicates
+and compares batches.
+
+## Default State Names
+
+```{r summary-disease-default}
+summary_disease(ex_dir)
+```
+
+## Custom State and Scenario Names
+
+```{r summary-disease-custom}
+summary_disease(
+  ex_dir,
+  state_names = c("State 1", "State 2", "State 3"),
+  scenario_names = c("Batch 0", "Batch 1")
+)
+```
+
+## Cumulative State
+
+Use `cumulative_states` for a state that should be plotted as a running
+total within each Monte Carlo replicate.
+
+```{r summary-disease-cumulative}
+summary_disease(
+  ex_dir,
+  state_names = c("State 1", "State 2", "State 3"),
+  scenario_names = c("Batch 0", "Batch 1"),
+  cumulative_states = "State 3"
+)
+```
+
+# Individual File Summaries
+
+`summary_ind()` works with `ind##.csv` files. The input can be one file,
+multiple files, a run folder, a top-level output directory, or a data
+frame.
+
+For one-year plots, specify `year`. For movement over time, specify
+`years`.
+
+## Age Histogram
+
+```{r summary-ind-age}
+summary_ind(ex_dir, type = "age", year = 9, batch = 0, mc = 0)
+```
+
+```{r summary-ind-age-all-mc}
+summary_ind(ex_dir, type = "age", year = 9, batch = 0, mc = "all")
+```
+
+## Size Histogram
+
+```{r summary-ind-size}
+summary_ind(ex_dir, type = "size", year = 9, batch = 0, mc = 0)
+```
+
+## Size by Age
+
+```{r summary-ind-age-size}
+summary_ind(ex_dir, type = "age_size", year = 9, batch = 0, mc = 0)
+```
+
+Filter to a subset of patches with `patches`.
+
+```{r summary-ind-age-size-patches}
+summary_ind(ex_dir, type = "age_size", year = 9, batch = 0, mc = 0, patches = c(1, 3, 4, 5))
+```
+
+## Hindex Histogram
+
+```{r summary-ind-hindex}
+summary_ind(ex_dir, type = "hindex", year = 9, batch = 0, mc = 0)
+```
+
+## Movement Distance Histogram
+
+`CDist = -9999` is treated as no movement and is excluded from the
+histogram.
+
+```{r summary-ind-cdist}
+summary_ind(ex_dir, type = "cdist", year = 9, batch = 0, mc = 0)
+```
+
+## Movement Over Time
+
+```{r summary-ind-movement}
+summary_ind(ex_dir, type = "movement", years = 0:9, batch = 0, mc = 0)
+```
+
+```{r summary-ind-movement-all-mc}
+summary_ind(ex_dir, type = "movement", years = 0:9, batch = 0, mc = "all")
+```
+
+If CDMetaPOP output includes sampled individual files, use
+`file_type = "ind_Sample"` to read `ind##_Sample.csv` files instead of
+`ind##.csv` files. The bundled example data use `ind##.csv`, so this
+example is shown but not evaluated.
+
+```{r summary-ind-sample-example, eval=FALSE}
+summary_ind(ex_dir, type = "age", year = 9, file_type = "ind_Sample")
+```
+
+# Individual-Level Genetics
+
+The individual-level genetics functions use genotype columns named like
+`L0A0`, `L0A1`, `L1A0`, and so on.
+
+## Allele Frequencies by Patch
+
+```{r allele-frequencies-by-patch}
+allele_frequencies_ind(ex_dir, year = 9, batch = 0, mc = 0)
+```
+
+Focus on one locus with `loci`.
+
+```{r allele-frequencies-locus}
+allele_frequencies_ind(ex_dir, year = 9, batch = 0, mc = 0, loci = "L0")
+```
+
+Filter to selected patches when a figure would otherwise be too dense.
+
+```{r allele-frequencies-patches}
+allele_frequencies_ind(
+  ex_dir,
+  year = 9,
+  batch = 0,
+  mc = 0,
+  loci = "L0",
+  patches = c(1, 3, 4, 5, 7, 9)#, 
+  #jitter = FALSE
+)
+```
+
+Jittering of points on top of the boxplots can be turned off by adding
+the argument jitter = FALSE.
+
+## Heterozygosity by Patch
+
+```{r heterozygosity-by-patch}
+heterozygosity_ind(ex_dir, year = 9, batch = 0, mc = 0)
+```
+
+```{r heterozygosity-locus-patches}
+heterozygosity_ind(
+  ex_dir,
+  year = 9,
+  batch = 0,
+  mc = 0,
+  loci = "L0",
+  patches = c(1, 3, 4, 5, 7, 9)
+)
+```
+
+## Pairwise FST
+
+```{r pairwise-fst}
+pairwise_fst_ind(ex_dir, year = 9, batch = 0, mc = 0)
+```
+
+```{r pairwise-fst-locus}
+pairwise_fst_ind(ex_dir, year = 9, batch = 0, mc = 0, loci = "L0")
+```
+
+# Patch Maps from Individual Files
+
+`summary_patch_map()` maps patch locations from the individual files.
+Point size reflects the number of individuals in each patch.
+
+## All Individuals
+
+```{r summary-patch-map-all}
+summary_patch_map(
+  ex_dir,
+  years = c(0, 5, 9),
+  batch = 0,
+  mc = 0,
+  crs = 5070
+)
+```
+
+If patch counts vary widely, use `log_scale = TRUE` for abundance point
+sizes.
+
+```{r summary-patch-map-log}
+summary_patch_map(
+  ex_dir,
+  years = c(0, 5, 9),
+  batch = 0,
+  mc = 0,
+  log_scale = TRUE,
+  crs = 5070
+)
+```
+
+## One Disease State
+
+Use `states` to count only individuals in selected disease states.
+
+```{r summary-patch-map-state}
+summary_patch_map(
+  ex_dir,
+  years = c(0, 5, 9),
+  batch = 0,
+  mc = 0,
+  states = 1,
+  crs = 5070
+)
+```
+
+## Faceted by Disease State
+
+```{r summary-patch-map-state-facet, fig.height=7}
+summary_patch_map(
+  ex_dir,
+  years = c(0, 9),
+  batch = 0,
+  mc = 0,
+  states = c(0, 1),
+  facet_by_state = TRUE,
+  crs = 5070
+)
+```
+
+## Allele Frequency Map
+
+Patch maps can also show genetic summaries from individual files. For
+allele frequency maps, specify one `locus` and one `allele`.
+
+```{r summary-patch-map-allele-frequency}
+summary_patch_map(
+  ex_dir,
+  type = "allele_frequency",
+  years = 9,
+  batch = 0,
+  mc = 0,
+  locus = "L0",
+  allele = "A1",
+  crs = 5070
+)
+```
+
+## Heterozygosity Map
+
+```{r summary-patch-map-heterozygosity}
+summary_patch_map(
+  ex_dir,
+  type = "heterozygosity",
+  years = 9,
+  batch = 0,
+  mc = 0,
+  locus = "L0",
+  metric = "Ho",
+  crs = 5070
+)
+```
+
+# Older Summary Helpers
+
+## `age_structure_proportions()`
+
+```{r age-structure-proportions}
+age_structure_proportions(
+  path = paste0(ex_dir, "/"),
+  runs = 1,
+  gen = 9,
+  species = 0
+)
+```
+
+# Interactive and External-Run Functions
+
+The following functions are exported, but they launch external software
+or interactive Shiny apps. They are shown here as code examples but are
+not run while knitting this document.
+
+## `launch_cdmetapop()`
+
+```{r launch-cdmetapop, eval=FALSE}
+launch_cdmetapop(
+  pythonFilepath = "C:/path/to/python.exe",
+  CDMetaPOPFilepath = "C:/path/to/CDMetaPOP.py",
+  runvarsDirectory = "C:/path/to/example_files/",
+  runvarsFilename = "RunVars.csv",
+  outputDirectory = "test_output"
+)
+```
+
+## Template Editors
+
+```{r write-template-functions, eval=FALSE}
+write_runvars(output_file = "my_new_runvars.csv")
+write_popvars(output_file = "my_new_popvars.csv")
+write_patchvars(output_file = "my_new_patchvars.csv")
+write_classvars(output_file = "my_new_classvars.csv")
+```
+
+# Deprecated Internal Compatibility Function
+
+`locus()` is exported for compatibility with older `gstudio` workflows.
+It is included in the package because the original function is
+deprecated elsewhere.
+
+```{r locus-example}
+locus(c("0", "1"), type = "snp")
+```
