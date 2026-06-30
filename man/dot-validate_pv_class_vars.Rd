@@ -4,21 +4,33 @@
 \alias{.validate_pv_class_vars}
 \title{Validate and normalize the \code{class_vars} column}
 \usage{
-.validate_pv_class_vars(values, n)
+.validate_pv_class_vars(values, n, resolve = TRUE)
 }
 \arguments{
 \item{values}{A single value, or a list/vector of length \code{n}, each
-element a ClassVars object or a character path.}
+element one patch's worth of \code{class_vars} input (see above).}
 
 \item{n}{Expected length (the number of patches).}
+
+\item{resolve}{Forwarded to \code{.pv_normalize_class_vars_patch()}/
+\code{.pv_resolve_class_vars_segment()} -- \code{FALSE} disables \code{.GlobalEnv}
+name resolution entirely, treating every character entry as a literal
+path. Used by \code{.read_patchvars_csv()} when constructing a \code{PatchVars}
+object from an existing csv, where \verb{Class Vars} values are always
+paths, never live-object-name references.}
 }
 \value{
-A list of length \code{n}.
+A list of length \code{n}, each element itself a list of items.
 }
 \description{
-Each element may be either a \code{\link[=ClassVars]{ClassVars()}} object directly, or a
-character path (optionally multiple paths separated by \verb{;}, per the
-user manual). Stored as a list column (rather than an atomic vector)
-since R6 objects cannot be stored in a plain character/numeric vector.
+Each per-patch element may be a \code{\link[=ClassVars]{ClassVars()}} object directly, a
+character string (a literal path, the name of a \code{ClassVars} object in
+the global environment, or several of either joined with \code{|} for
+CDMetaPOP's temporal-change mechanism -- see \code{.pv_resolve_class_vars_segment()}),
+or a list/vector of multiple such items for the same patch. Stored as a
+list column (rather than an atomic vector) since R6 objects cannot be
+stored in a plain character/numeric vector; each element is itself a
+flat list of one or more items, normalized by
+\code{.pv_normalize_class_vars_patch()}.
 }
 \keyword{internal}

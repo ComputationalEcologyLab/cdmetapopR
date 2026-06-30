@@ -4,24 +4,27 @@
 \alias{read_cdmetapop}
 \title{Read an existing CDMetaPOP input file into an R6 object}
 \usage{
-read_cdmetapop(filepath, type = "ClassVars")
+read_cdmetapop(filepath, type = "RunVars")
 }
 \arguments{
 \item{filepath}{Path to an existing CDMetaPOP input csv.}
 
-\item{type}{Which input file type \code{filepath} is. Currently \code{"ClassVars"}
-and \code{"PatchVars"} are supported. Case-insensitive.}
+\item{type}{Which input file type \code{filepath} is. One of \code{"RunVars"}
+(the default), \code{"PopVars"}, \code{"PatchVars"}, or \code{"ClassVars"}.
+Case-insensitive.}
 }
 \value{
-An R6 object of the corresponding class (e.g. a \code{\link[=ClassVars]{ClassVars()}}
-object), with \code{location} set to \code{filepath}.
+An R6 object of the corresponding class (e.g. a \code{\link[=RunVars]{RunVars()}}
+object).
 }
 \description{
 Read an existing CDMetaPOP input file into an R6 object
 }
 \examples{
 \dontrun{
-myclassvars <- read_cdmetapop("classvars/ClassVars_AS1.csv", type = "ClassVars")
+myrunvars <- read_cdmetapop("RunVars.csv", type = "RunVars")
+mypopvars <- read_cdmetapop("popvars/PopVars.csv", type = "PopVars")
 mypatchvars <- read_cdmetapop("patchvars/PatchVarsS1.csv", type = "PatchVars")
+myclassvars <- read_cdmetapop("classvars/ClassVars_AS1.csv", type = "ClassVars")
 }
 }

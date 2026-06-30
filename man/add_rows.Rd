@@ -7,7 +7,8 @@
 add_rows(x, n = 1)
 }
 \arguments{
-\item{x}{A cdmetapopR input-file object, e.g. a \code{\link[=ClassVars]{ClassVars()}} object.}
+\item{x}{A cdmetapopR input-file object: a \code{\link[=ClassVars]{ClassVars()}}, \code{\link[=PatchVars]{PatchVars()}},
+\code{\link[=PopVars]{PopVars()}}, or \code{\link[=RunVars]{RunVars()}} object.}
 
 \item{n}{Number of rows to add. Defaults to \code{1}.}
 }
@@ -15,11 +16,13 @@ add_rows(x, n = 1)
 \code{x}, invisibly (modified in place, since \code{x} is an R6 object).
 }
 \description{
-Generic function dispatching on the class of \code{x} (e.g. \code{\link[=ClassVars]{ClassVars()}}).
-For a \code{\link[=ClassVars]{ClassVars()}} object, this adds \code{n} new age classes, each
-initialized as a copy of the current oldest (last) age class; edit the
-new row(s) afterward via the column active bindings (e.g.
-\code{myclassvars$maturation <- ...}).
+Generic function dispatching on the class of \code{x} -- a \code{\link[=ClassVars]{ClassVars()}},
+\code{\link[=PatchVars]{PatchVars()}}, \code{\link[=PopVars]{PopVars()}}, or \code{\link[=RunVars]{RunVars()}} object. Adds \code{n} new rows,
+each initialized as a copy of the current last row; edit the new row(s)
+afterward via the column active bindings (e.g.
+\code{myclassvars$maturation <- ...}). What a "row" represents depends on the
+class: an age class (\code{\link[=ClassVars]{ClassVars()}}), a patch (\code{\link[=PatchVars]{PatchVars()}}), a batch
+(\code{\link[=PopVars]{PopVars()}}), or a run (\code{\link[=RunVars]{RunVars()}}).
 }
 \examples{
 myclassvars <- ClassVars()

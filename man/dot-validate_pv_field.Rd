@@ -17,9 +17,8 @@ has length 1.}
 object).}
 }
 \value{
-A validated vector of length \code{n}: numeric for "numeric"/
-"binary01"/"free_numeric" columns whose rule forbids non-numeric
-literals, character otherwise.
+A validated vector of length \code{n}: numeric only for \code{x}/\code{y} (the
+sole \code{free_numeric}, non-pipe-allowed columns), character otherwise.
 }
 \description{
 Internal helper used by every PatchVars active binding except
@@ -27,5 +26,13 @@ Internal helper used by every PatchVars active binding except
 since it is the one column that can hold R6 objects rather than plain
 values, and so cannot be stored as a vector in \code{private$data} the way
 every other column is.
+}
+\details{
+If the column's rule has \code{allow_pipe = TRUE}, a value may be a single
+\code{|}-separated string representing multiple values over time (CDMetaPOP's
+cdclimate mechanism); each segment is validated independently via
+\code{.pv_check_segment()}, but the whole string is stored verbatim (since
+that is the literal text CDMetaPOP expects), which is why every
+pipe-allowed column is stored as character regardless of its base type.
 }
 \keyword{internal}

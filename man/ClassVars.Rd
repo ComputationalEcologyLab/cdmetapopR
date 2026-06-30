@@ -28,8 +28,7 @@ ClassVars(
   fecundity_leslie = c(0, 2.5, 10, 11.7, 11.743, 15),
   fecundity_leslie_stdev = rep(0, 6),
   capture_out_prob = rep("N", 6),
-  capture_back_prob = rep("N", 6),
-  location = NULL
+  capture_back_prob = rep("N", 6)
 )
 }
 \arguments{
@@ -75,9 +74,6 @@ deviation of Leslie-matrix fecundity per age class.}
 
 \item{capture_out_prob, capture_back_prob}{Capture/detection probability
 \verb{[0, 1]}, \code{"N"}, or \code{"~"}-separated per-sex values.}
-
-\item{location}{Optional file path where this object should be written
-by default when \code{\link[=write_cdmetapop]{write_cdmetapop()}} is called without a \code{path}.}
 }
 \value{
 An R6 \code{ClassVars} object.

@@ -26,7 +26,7 @@
 	"PatchID", "X", "Y", "SubpatchNO", "K", "K StDev", "N0", "Natal Grounds",
 	"Migration Grounds", "Genes Initialize", "Class Vars", "Mortality Out %",
 	"Mortality Out StDev", "Mortality Back", "Mortality Back StDev",
-	"Mortality Eggs", "Mortality Eggs StDev", "Migration", "Set Migration",
+	"Mortality Eggs", "Mortality Eggs StDev", "Migration Out Prob", "Set Migration",
 	"Migration Back Prob", "Straying Prob", "Dispersal Prob",
 	"GrowthTemperatureOut", "GrowthTemperatureOutStDev", "GrowDaysOut",
 	"GrowDaysOutStDev", "GrowthTemperatureBack", "GrowthTemperatureBackStDev",
@@ -46,7 +46,7 @@
 	"x", "y", "subpatch_no", "k", "k_stdev", "n0", "natal_grounds",
 	"migration_grounds", "genes_initialize", "class_vars", "mortality_out",
 	"mortality_out_stdev", "mortality_back", "mortality_back_stdev",
-	"mortality_eggs", "mortality_eggs_stdev", "migration", "set_migration",
+	"mortality_eggs", "mortality_eggs_stdev", "migration_out_prob", "set_migration",
 	"migration_back_prob", "straying_prob", "dispersal_prob",
 	"growth_temp_out", "growth_temp_out_stdev", "grow_days_out",
 	"grow_days_out_stdev", "growth_temp_back", "growth_temp_back_stdev",
@@ -65,8 +65,8 @@
 # is element 1, patch 2 is element 2, etc.). Used by .pv_default_for() to
 # fill in any column a user does not specify at construction.
 .pv_s1_defaults <- list(
-	x = c(2540470.832, 2536859.926, 2532969.44, 2539041.489, 2535011.582, 2545325.475, 2527429.642),
-	y = c(712452.2021, 708059.4624, 705413.5711, 728416.6747, 720257.8531, 726552.0418, 708511.8011),
+	x = c(2540470.8, 2536859.9, 2532969.4, 2539041.4, 2535011.5, 2545325.4, 2527429.6),
+	y = c(712452.2, 708059.4, 705413.5, 728416.6, 720257.8, 726552.0, 708511.8),
 	subpatch_no = c("1", "1", "2", "2", "3", "3", "3"),
 	k = rep(300, 7),
 	k_stdev = rep(0, 7),
@@ -81,7 +81,7 @@
 	mortality_back_stdev = rep(0, 7),
 	mortality_eggs = rep(0, 7),
 	mortality_eggs_stdev = rep(0, 7),
-	migration = rep(1, 7),
+	migration_out_prob = rep(1, 7),
 	set_migration = rep("Y", 7),
 	migration_back_prob = rep(1, 7),
 	straying_prob = rep(1, 7),
@@ -132,47 +132,149 @@
 #   - "class_vars": either a ClassVars object (see class_classvars.R) or a
 #     character path string (or ';'-separated multiple paths), per plan.md
 #     Key Design Decision 2's object-or-path generalization.
+#
+# `allow_pipe`: CDMetaPOP lets most PatchVars columns specify a value that
+# changes over time, by giving multiple '|'-separated values in one cell
+# (e.g. "0.5|0.2|0" -- different mortality at different points in the run,
+# driven by the cdclimate module). This is the patch-level analogue of
+# ClassVars' '~' (per-sex) mechanism: each '|'-separated segment is
+# validated independently against the column's normal rule, but the whole
+# (possibly multi-segment) string is stored verbatim as character, since
+# that is the literal text CDMetaPOP itself expects in the csv. Per the
+# user's confirmation, every column allows this EXCEPT `x`, `y`, `PatchID`
+# (handled separately, immutable), and `subpatch_no` (a one-time identifier,
+# not a value that changes over a run).
 .pv_rules <- list(
-	x                          = list(type = "free_numeric"),
-	y                          = list(type = "free_numeric"),
-	subpatch_no                = list(type = "free_char"),
-	k                          = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE),
-	k_stdev                    = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE),
-	n0                         = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE),
-	natal_grounds              = list(type = "binary01"),
-	migration_grounds          = list(type = "binary01"),
-	genes_initialize           = list(type = "genes_initialize"),
+	x                          = list(type = "free_numeric", allow_pipe = FALSE),
+	y                          = list(type = "free_numeric", allow_pipe = FALSE),
+	subpatch_no                = list(type = "free_char", allow_pipe = FALSE),
+	k                          = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	k_stdev                    = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	n0                         = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	natal_grounds              = list(type = "binary01", allow_pipe = TRUE),
+	migration_grounds          = list(type = "binary01", allow_pipe = TRUE),
+	genes_initialize           = list(type = "genes_initialize", allow_pipe = TRUE),
 	class_vars                 = list(type = "class_vars"),
-	mortality_out              = list(type = "numeric", lower = 0, upper = 1,   allow_N = TRUE,  allow_E = TRUE),
-	mortality_out_stdev        = list(type = "numeric", lower = 0, upper = Inf, allow_N = TRUE,  allow_E = TRUE),
-	mortality_back             = list(type = "numeric", lower = 0, upper = 1,   allow_N = TRUE,  allow_E = TRUE),
-	mortality_back_stdev       = list(type = "numeric", lower = 0, upper = Inf, allow_N = TRUE,  allow_E = TRUE),
-	mortality_eggs             = list(type = "numeric", lower = 0, upper = 1,   allow_N = TRUE,  allow_E = TRUE),
-	mortality_eggs_stdev       = list(type = "numeric", lower = 0, upper = Inf, allow_N = TRUE,  allow_E = TRUE),
-	migration                  = list(type = "numeric", lower = 0, upper = 1,   allow_N = FALSE, allow_E = FALSE),
-	set_migration              = list(type = "YN"),
-	migration_back_prob        = list(type = "numeric", lower = 0, upper = 1,   allow_N = FALSE, allow_E = FALSE),
-	straying_prob               = list(type = "numeric", lower = 0, upper = 1,   allow_N = FALSE, allow_E = FALSE),
-	dispersal_prob             = list(type = "numeric", lower = 0, upper = 1,   allow_N = FALSE, allow_E = FALSE),
-	growth_temp_out            = list(type = "numeric", lower = -Inf, upper = Inf, allow_N = TRUE,  allow_E = FALSE),
-	growth_temp_out_stdev      = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE),
-	grow_days_out              = list(type = "numeric", lower = 0, upper = 365, allow_N = TRUE,  allow_E = FALSE),
-	grow_days_out_stdev        = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE),
-	growth_temp_back           = list(type = "numeric", lower = -Inf, upper = Inf, allow_N = TRUE,  allow_E = FALSE),
-	growth_temp_back_stdev     = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE),
-	grow_days_back             = list(type = "numeric", lower = 0, upper = 365, allow_N = TRUE,  allow_E = FALSE),
-	grow_days_back_stdev       = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE),
-	capture_prob_out           = list(type = "numeric", lower = 0, upper = 1,   allow_N = TRUE,  allow_E = FALSE),
-	capture_prob_back          = list(type = "numeric", lower = 0, upper = 1,   allow_N = TRUE,  allow_E = FALSE),
-	habitat_out                = list(type = "free_numeric"),
-	habitat_back               = list(type = "free_numeric"),
-	fitness_AA = list(type = "free_char"), fitness_Aa = list(type = "free_char"), fitness_aa = list(type = "free_char"),
-	fitness_BB = list(type = "free_char"), fitness_Bb = list(type = "free_char"), fitness_bb = list(type = "free_char"),
-	fitness_AABB = list(type = "free_char"), fitness_AaBB = list(type = "free_char"), fitness_aaBB = list(type = "free_char"),
-	fitness_AABb = list(type = "free_char"), fitness_AaBb = list(type = "free_char"), fitness_aaBb = list(type = "free_char"),
-	fitness_AAbb = list(type = "free_char"), fitness_Aabb = list(type = "free_char"), fitness_aabb = list(type = "free_char"),
-	comp_coef = list(type = "free_char")
+	mortality_out              = list(type = "numeric", lower = 0, upper = 1,   allow_N = TRUE,  allow_E = TRUE, allow_pipe = TRUE),
+	mortality_out_stdev        = list(type = "numeric", lower = 0, upper = Inf, allow_N = TRUE,  allow_E = TRUE, allow_pipe = TRUE),
+	mortality_back             = list(type = "numeric", lower = 0, upper = 1,   allow_N = TRUE,  allow_E = TRUE, allow_pipe = TRUE),
+	mortality_back_stdev       = list(type = "numeric", lower = 0, upper = Inf, allow_N = TRUE,  allow_E = TRUE, allow_pipe = TRUE),
+	mortality_eggs             = list(type = "numeric", lower = 0, upper = 1,   allow_N = TRUE,  allow_E = TRUE, allow_pipe = TRUE),
+	mortality_eggs_stdev       = list(type = "numeric", lower = 0, upper = Inf, allow_N = TRUE,  allow_E = TRUE, allow_pipe = TRUE),
+	migration_out_prob         = list(type = "numeric", lower = 0, upper = 1,   allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	set_migration              = list(type = "YN", allow_pipe = TRUE),
+	migration_back_prob        = list(type = "numeric", lower = 0, upper = 1,   allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	straying_prob               = list(type = "numeric", lower = 0, upper = 1,   allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	dispersal_prob             = list(type = "numeric", lower = 0, upper = 1,   allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	growth_temp_out            = list(type = "numeric", lower = -Inf, upper = Inf, allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
+	growth_temp_out_stdev      = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	grow_days_out              = list(type = "numeric", lower = 0, upper = 365, allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
+	grow_days_out_stdev        = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	growth_temp_back           = list(type = "numeric", lower = -Inf, upper = Inf, allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
+	growth_temp_back_stdev     = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	grow_days_back             = list(type = "numeric", lower = 0, upper = 365, allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
+	grow_days_back_stdev       = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	capture_prob_out           = list(type = "numeric", lower = 0, upper = 1,   allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
+	capture_prob_back          = list(type = "numeric", lower = 0, upper = 1,   allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
+	habitat_out                = list(type = "free_numeric", allow_pipe = TRUE),
+	habitat_back               = list(type = "free_numeric", allow_pipe = TRUE),
+	fitness_AA = list(type = "free_char", allow_pipe = TRUE), fitness_Aa = list(type = "free_char", allow_pipe = TRUE), fitness_aa = list(type = "free_char", allow_pipe = TRUE),
+	fitness_BB = list(type = "free_char", allow_pipe = TRUE), fitness_Bb = list(type = "free_char", allow_pipe = TRUE), fitness_bb = list(type = "free_char", allow_pipe = TRUE),
+	fitness_AABB = list(type = "free_char", allow_pipe = TRUE), fitness_AaBB = list(type = "free_char", allow_pipe = TRUE), fitness_aaBB = list(type = "free_char", allow_pipe = TRUE),
+	fitness_AABb = list(type = "free_char", allow_pipe = TRUE), fitness_AaBb = list(type = "free_char", allow_pipe = TRUE), fitness_aaBb = list(type = "free_char", allow_pipe = TRUE),
+	fitness_AAbb = list(type = "free_char", allow_pipe = TRUE), fitness_Aabb = list(type = "free_char", allow_pipe = TRUE), fitness_aabb = list(type = "free_char", allow_pipe = TRUE),
+	comp_coef = list(type = "free_char", allow_pipe = TRUE)
 )
+
+#' Validate a single (post-'|'-split) PatchVars value against its column's
+#' base type rule
+#'
+#' Internal helper called once per '|'-separated segment by
+#' `.validate_pv_field()` -- so each segment of e.g. `"0.5|N|0.2"` is
+#' checked independently against the column's normal bounds/"N"/"E" rule,
+#' the same as if it were the column's only value for that patch.
+#'
+#' @param rule One element of `.pv_rules`.
+#' @param seg A single character segment (already split on `|` if
+#'   applicable).
+#' @param field,i Column name and patch row index, for error messages only.
+#' @return `invisible(NULL)`; throws on invalid input.
+#' @keywords internal
+.pv_check_segment <- function(rule, seg, field, i) {
+	type <- rule$type
+
+	if (type == "free_char") {
+		if (is.na(seg) || !nzchar(seg)) {
+			stop(sprintf("`%s`[%d] cannot be an empty/NA value.", field, i))
+		}
+		return(invisible(NULL))
+	}
+
+	if (type == "genes_initialize") {
+		# `seg` is one `|`-group (the outer `|` temporal split is already
+		# done by .validate_pv_field). Within a group, a value is either a
+		# single token -- the keyword "random" / "random_var", or a filepath
+		# -- or several `;`-separated filepaths (one per species/file). The
+		# keywords may ONLY appear alone: they cannot be `;`-joined with
+		# anything (per the user, 2026-06-28).
+		parts <- strsplit(seg, ";", fixed = TRUE)[[1]]
+		if (length(parts) == 0 || any(is.na(parts)) || any(!nzchar(parts))) {
+			stop(sprintf("`%s`[%d] = \"%s\" has an empty `;`-separated entry.", field, i, seg))
+		}
+		if (length(parts) > 1) {
+			bad_kw <- parts[parts %in% c("random", "random_var")]
+			if (length(bad_kw) > 0) {
+				stop(sprintf(
+					"`%s`[%d]: \"%s\" cannot be combined with `;`; the `random`/`random_var` keywords must appear alone in a `|` group (use filepaths for `;`-joined multiple entries).",
+					field, i, bad_kw[1]
+				))
+			}
+		}
+		return(invisible(NULL))
+	}
+
+	if (type == "free_numeric") {
+		if (is.na(suppressWarnings(as.numeric(seg)))) {
+			stop(sprintf("`%s`[%d] = \"%s\" is not a valid number.", field, i, seg))
+		}
+		return(invisible(NULL))
+	}
+
+	if (type == "binary01") {
+		num <- suppressWarnings(as.numeric(seg))
+		if (is.na(num) || !(num %in% c(0, 1))) {
+			stop(sprintf("`%s`[%d] = \"%s\" must be 0 or 1.", field, i, seg))
+		}
+		return(invisible(NULL))
+	}
+
+	if (type == "YN") {
+		if (!seg %in% c("Y", "N")) {
+			stop(sprintf("`%s`[%d] = \"%s\" must be \"Y\" or \"N\".", field, i, seg))
+		}
+		return(invisible(NULL))
+	}
+
+	# type == "numeric" from here on.
+	if (rule$allow_N && identical(seg, "N")) return(invisible(NULL))
+	if (rule$allow_E && identical(seg, "E")) return(invisible(NULL))
+	num <- suppressWarnings(as.numeric(seg))
+	if (is.na(num)) {
+		stop(sprintf(
+			"`%s`[%d] = \"%s\" is not a valid value (expected a number%s%s).",
+			field, i, seg,
+			if (rule$allow_N) ", \"N\"" else "",
+			if (rule$allow_E) ", \"E\"" else ""
+		))
+	}
+	if (num < rule$lower || num > rule$upper) {
+		stop(sprintf(
+			"`%s`[%d] = %s is outside the allowed range [%s, %s].",
+			field, i, num, rule$lower, rule$upper
+		))
+	}
+	invisible(NULL)
+}
 
 #' Validate and normalize one PatchVars column
 #'
@@ -182,15 +284,21 @@
 #' values, and so cannot be stored as a vector in `private$data` the way
 #' every other column is.
 #'
+#' If the column's rule has `allow_pipe = TRUE`, a value may be a single
+#' `|`-separated string representing multiple values over time (CDMetaPOP's
+#' cdclimate mechanism); each segment is validated independently via
+#' `.pv_check_segment()`, but the whole string is stored verbatim (since
+#' that is the literal text CDMetaPOP expects), which is why every
+#' pipe-allowed column is stored as character regardless of its base type.
+#'
 #' @param field snake_case column name (must be in `.pv_fields`, excluding
 #'   `"class_vars"`).
 #' @param values Vector of values to validate; recycled to length `n` if it
 #'   has length 1.
 #' @param n Expected length (the number of patches already defined on the
 #'   object).
-#' @return A validated vector of length `n`: numeric for "numeric"/
-#'   "binary01"/"free_numeric" columns whose rule forbids non-numeric
-#'   literals, character otherwise.
+#' @return A validated vector of length `n`: numeric only for `x`/`y` (the
+#'   sole `free_numeric`, non-pipe-allowed columns), character otherwise.
 #' @keywords internal
 .validate_pv_field <- function(field, values, n) {
 	rule <- .pv_rules[[field]]
@@ -202,99 +310,133 @@
 		))
 	}
 
-	if (rule$type == "free_char") {
-		if (anyNA(values)) stop(sprintf("`%s` cannot contain NA.", field))
-		return(as.character(values))
-	}
-
-	if (rule$type == "free_numeric") {
-		out <- suppressWarnings(as.numeric(values))
-		if (anyNA(out)) {
-			stop(sprintf("`%s` must contain only numbers.", field))
-		}
-		return(out)
-	}
-
-	if (rule$type == "binary01") {
-		out <- suppressWarnings(as.numeric(values))
-		if (anyNA(out) || any(!out %in% c(0, 1))) {
-			stop(sprintf("`%s` must be 0 or 1 for every patch.", field))
-		}
-		return(out)
-	}
-
-	if (rule$type == "YN") {
-		out <- as.character(values)
-		if (any(!out %in% c("Y", "N"))) {
-			stop(sprintf("`%s` must be \"Y\" or \"N\" for every patch.", field))
-		}
-		return(out)
-	}
-
-	if (rule$type == "genes_initialize") {
-		out <- as.character(values)
-		if (anyNA(out)) stop(sprintf("`%s` cannot contain NA.", field))
-		return(out)
-	}
-
-	# rule$type == "numeric" from here on.
-	as_character_storage <- rule$allow_N || rule$allow_E
-	out <- vector(if (as_character_storage) "character" else "numeric", n)
+	out <- character(n)
 	for (i in seq_len(n)) {
-		val <- values[i]
-		if (rule$allow_N && identical(as.character(val), "N")) {
-			out[i] <- "N"
-			next
+		raw_chr <- as.character(values[i])
+		if (is.na(raw_chr)) stop(sprintf("`%s`[%d] cannot be NA.", field, i))
+
+		segments <- if (isTRUE(rule$allow_pipe) && grepl("|", raw_chr, fixed = TRUE)) {
+			strsplit(raw_chr, "|", fixed = TRUE)[[1]]
+		} else {
+			raw_chr
 		}
-		if (rule$allow_E && identical(as.character(val), "E")) {
-			out[i] <- "E"
-			next
-		}
-		num <- suppressWarnings(as.numeric(val))
-		if (is.na(num)) {
-			stop(sprintf(
-				"`%s`[%d] = \"%s\" is not a valid value (expected a number%s%s).",
-				field, i, val,
-				if (rule$allow_N) ", \"N\"" else "",
-				if (rule$allow_E) ", \"E\"" else ""
-			))
-		}
-		if (num < rule$lower || num > rule$upper) {
-			stop(sprintf(
-				"`%s`[%d] = %s is outside the allowed range [%s, %s].",
-				field, i, num, rule$lower, rule$upper
-			))
-		}
-		out[i] <- if (as_character_storage) as.character(num) else num
+		for (seg in segments) .pv_check_segment(rule, seg, field, i)
+		out[i] <- raw_chr
+	}
+
+	if (identical(rule$type, "free_numeric") && !isTRUE(rule$allow_pipe)) {
+		return(as.numeric(out))
 	}
 	out
 }
 
+#' Resolve one `class_vars` `|`-segment to a live object or a literal path
+#'
+#' If `seg` is the name of a `ClassVars` object that exists in the global
+#' environment, that object is returned (a live reference -- later edits to
+#' it are still reflected when this `PatchVars` object is eventually
+#' written). Otherwise `seg` is returned unchanged, to be treated as a
+#' literal file path (the same fallback `genes_initialize` already uses).
+#'
+#' Deliberately searches `.GlobalEnv` specifically, not the caller's
+#' environment via `parent.frame()`: R6 active binding assignment does not
+#' reliably preserve the original call site's environment once the
+#' assignment happens from inside a user-defined function (confirmed
+#' empirically -- see chat history), so a call-stack-based lookup would
+#' silently fail for very plausible usage patterns (e.g. building a
+#' PatchVars graph inside a setup function). Searching `.GlobalEnv` only is
+#' less magic but predictable: works for the common top-level/interactive
+#' workflow this package targets, and the documented limitation (build at
+#' the top level, or pass objects directly instead of by name) is the
+#' tradeoff. Revisit if testers hit this often.
+#'
+#' @param seg A single character segment.
+#' @param resolve If `FALSE`, skip the lookup entirely and return `seg`
+#'   unchanged -- used when reading an existing PatchVars.csv from disk
+#'   (see `read_cdmetapop()`/`.read_patchvars_csv()`), where every
+#'   `Class Vars` cell is necessarily a literal path (the file format has
+#'   no notion of "an R6 object currently sitting in someone's R session"),
+#'   so attempting to resolve it against `.GlobalEnv` is never correct and
+#'   could even accidentally pick up an unrelated object that happens to
+#'   share a name with a path-like string already on disk.
+#' @return Either a `ClassVars` object, or `seg` unchanged.
+#' @keywords internal
+.pv_resolve_class_vars_segment <- function(seg, resolve = TRUE) {
+	if (resolve && is.character(seg) && length(seg) == 1 && !is.na(seg) && nzchar(seg) &&
+			exists(seg, envir = .GlobalEnv, inherits = FALSE)) {
+		candidate <- get(seg, envir = .GlobalEnv, inherits = FALSE)
+		if (inherits(candidate, "ClassVars")) return(candidate)
+	}
+	seg
+}
+
+#' Normalize one patch's `class_vars` entry into a flat list of items
+#'
+#' A "item" is either a `ClassVars` object or a literal character path.
+#' Handles every shape `class_vars`/its per-patch elements can arrive in: a
+#' bare `ClassVars` object; a bare (possibly `|`-joined) character string,
+#' whose segments are each resolved via `.pv_resolve_class_vars_segment()`;
+#' or a list/vector of multiple such items (multiple timepoints for this
+#' one patch, to be re-joined with `|` at write time) -- recursing so
+#' arbitrarily nested combinations flatten correctly. Uses `c()` to
+#' concatenate (not `unlist()`), since `unlist()` would try to simplify
+#' away the R6 objects living in the list.
+#'
+#' @param x One patch's worth of `class_vars` input.
+#' @param resolve Forwarded to `.pv_resolve_class_vars_segment()` -- see
+#'   its `resolve` argument.
+#' @return A flat list, each element a `ClassVars` object or character path.
+#' @keywords internal
+.pv_normalize_class_vars_patch <- function(x, resolve = TRUE) {
+	if (inherits(x, "ClassVars")) return(list(x))
+	if (is.character(x) && length(x) == 1) {
+		segs <- strsplit(x, "|", fixed = TRUE)[[1]]
+		return(lapply(segs, .pv_resolve_class_vars_segment, resolve = resolve))
+	}
+	if (is.list(x) || is.character(x)) {
+		items <- if (is.list(x)) x else as.list(x)
+		return(Reduce(c, lapply(items, .pv_normalize_class_vars_patch, resolve = resolve), list()))
+	}
+	stop("`class_vars` items must each be a ClassVars object or a single character string.")
+}
+
 #' Validate and normalize the `class_vars` column
 #'
-#' Each element may be either a [ClassVars()] object directly, or a
-#' character path (optionally multiple paths separated by `;`, per the
-#' user manual). Stored as a list column (rather than an atomic vector)
-#' since R6 objects cannot be stored in a plain character/numeric vector.
+#' Each per-patch element may be a [ClassVars()] object directly, a
+#' character string (a literal path, the name of a `ClassVars` object in
+#' the global environment, or several of either joined with `|` for
+#' CDMetaPOP's temporal-change mechanism -- see `.pv_resolve_class_vars_segment()`),
+#' or a list/vector of multiple such items for the same patch. Stored as a
+#' list column (rather than an atomic vector) since R6 objects cannot be
+#' stored in a plain character/numeric vector; each element is itself a
+#' flat list of one or more items, normalized by
+#' `.pv_normalize_class_vars_patch()`.
 #'
 #' @param values A single value, or a list/vector of length `n`, each
-#'   element a ClassVars object or a character path.
+#'   element one patch's worth of `class_vars` input (see above).
 #' @param n Expected length (the number of patches).
-#' @return A list of length `n`.
+#' @param resolve Forwarded to `.pv_normalize_class_vars_patch()`/
+#'   `.pv_resolve_class_vars_segment()` -- `FALSE` disables `.GlobalEnv`
+#'   name resolution entirely, treating every character entry as a literal
+#'   path. Used by `.read_patchvars_csv()` when constructing a `PatchVars`
+#'   object from an existing csv, where `Class Vars` values are always
+#'   paths, never live-object-name references.
+#' @return A list of length `n`, each element itself a list of items.
 #' @keywords internal
-.validate_pv_class_vars <- function(values, n) {
+.validate_pv_class_vars <- function(values, n, resolve = TRUE) {
 	# A single ClassVars object is itself an R6 environment, not a list of
 	# per-patch values -- as.list() on it would wrongly unroll its internal
 	# fields/methods into separate list elements. Detect and recycle it (or
-	# a single bare character path) as one scalar value before falling
+	# a single bare character string) as one scalar value before falling
 	# back to as.list() for genuine vectors/lists of per-patch values.
 	is_scalar_value <- inherits(values, "ClassVars") ||
 		(is.character(values) && length(values) == 1)
 	if (is_scalar_value) {
-		values <- rep(list(values), n)
-	} else if (!is.list(values)) {
-		values <- as.list(values)
+		one_patch <- .pv_normalize_class_vars_patch(values, resolve = resolve)
+		return(rep(list(one_patch), n))
 	}
+
+	if (!is.list(values)) values <- as.list(values)
 	if (length(values) == 1 && n != 1) values <- rep(values, n)
 	if (length(values) != n) {
 		stop(sprintf(
@@ -302,16 +444,7 @@
 			n, length(values)
 		))
 	}
-	for (i in seq_len(n)) {
-		val <- values[[i]]
-		if (!inherits(val, "ClassVars") && !(is.character(val) && length(val) == 1 && !is.na(val))) {
-			stop(sprintf(
-				"`class_vars`[%d] must be a ClassVars object or a single character path, not %s.",
-				i, class(val)[1]
-			))
-		}
-	}
-	values
+	lapply(values, .pv_normalize_class_vars_patch, resolve = resolve)
 }
 
 # Default values for one PatchVars column, for a given set of patch ids.
@@ -342,7 +475,7 @@
 			genes_initialize = NULL, class_vars = NULL, mortality_out = NULL,
 			mortality_out_stdev = NULL, mortality_back = NULL,
 			mortality_back_stdev = NULL, mortality_eggs = NULL,
-			mortality_eggs_stdev = NULL, migration = NULL, set_migration = NULL,
+			mortality_eggs_stdev = NULL, migration_out_prob = NULL, set_migration = NULL,
 			migration_back_prob = NULL, straying_prob = NULL,
 			dispersal_prob = NULL, growth_temp_out = NULL,
 			growth_temp_out_stdev = NULL, grow_days_out = NULL,
@@ -356,7 +489,7 @@
 			fitness_AABb = NULL, fitness_AaBb = NULL, fitness_aaBb = NULL,
 			fitness_AAbb = NULL, fitness_Aabb = NULL, fitness_aabb = NULL,
 			comp_coef = NULL,
-			location = NULL
+			resolve_class_vars = TRUE
 		) {
 			# `patch_id` must be sequential integers starting at 1 (per the
 			# user manual: "Begin label 1 through n in consecutive order").
@@ -381,7 +514,7 @@
 				mortality_out = mortality_out, mortality_out_stdev = mortality_out_stdev,
 				mortality_back = mortality_back, mortality_back_stdev = mortality_back_stdev,
 				mortality_eggs = mortality_eggs, mortality_eggs_stdev = mortality_eggs_stdev,
-				migration = migration, set_migration = set_migration,
+				migration_out_prob = migration_out_prob, set_migration = set_migration,
 				migration_back_prob = migration_back_prob, straying_prob = straying_prob,
 				dispersal_prob = dispersal_prob, growth_temp_out = growth_temp_out,
 				growth_temp_out_stdev = growth_temp_out_stdev, grow_days_out = grow_days_out,
@@ -422,13 +555,11 @@
 				if (is.null(raw)) raw <- .pv_default_for(field, patch_id)
 				header <- .pv_headers[match(field, .pv_fields) + 1]
 				if (field == "class_vars") {
-					private$data[["Class Vars"]] <- private$validate_class_vars(raw)
+					private$data[["Class Vars"]] <- private$validate_class_vars(raw, resolve = resolve_class_vars)
 				} else {
 					private$data[[header]] <- private$validate(field, raw)
 				}
 			}
-
-			private$location_path <- location
 		},
 
 		# Add one or more patches, copying the current last row. All new
@@ -450,39 +581,14 @@
 			invisible(self)
 		},
 
-		# Write this PatchVars object to a csv file. `path` defaults to this
-		# object's `location` field if not supplied. The `Class Vars`
-		# column is resolved from a list column (objects or paths) to plain
-		# path strings at write time: any ClassVars object must itself have
-		# a `location` set (this does NOT recursively write the nested
-		# ClassVars file -- that orchestration belongs to the "write object
-		# graph to disk" routine in plan.md's Proposed Task Order, not here).
-		write_cdmetapop = function(path = NULL) {
-			if (is.null(path)) path <- private$location_path
-			if (is.null(path)) {
-				stop("No `path` supplied and no `location` set on this PatchVars object.")
-			}
-			out <- private$data
-			out[["Class Vars"]] <- vapply(private$data[["Class Vars"]], function(val) {
-				if (inherits(val, "ClassVars")) {
-					loc <- val$location
-					if (is.null(loc)) {
-						stop("A `class_vars` entry holds a ClassVars object with no `location` set; set one (or write it manually) before writing this PatchVars object.")
-					}
-					loc
-				} else {
-					val
-				}
-			}, character(1))
-			utils::write.csv(out, path, row.names = FALSE, quote = FALSE)
-			invisible(path)
-		},
 
 		print = function(...) {
 			cat("<PatchVars>", nrow(private$data), "patches\n")
 			out <- private$data
-			out[["Class Vars"]] <- vapply(out[["Class Vars"]], function(val) {
-				if (inherits(val, "ClassVars")) "<ClassVars object>" else val
+			out[["Class Vars"]] <- vapply(out[["Class Vars"]], function(items) {
+				paste(vapply(items, function(val) {
+					if (inherits(val, "ClassVars")) "<ClassVars object>" else val
+				}, character(1)), collapse = "|")
 			}, character(1))
 			print(out)
 			invisible(self)
@@ -498,13 +604,12 @@
 
 	private = list(
 		data = NULL,
-		location_path = NULL,
 
 		validate = function(field, values) {
 			.validate_pv_field(field, values, nrow(private$data))
 		},
-		validate_class_vars = function(values) {
-			.validate_pv_class_vars(values, nrow(private$data))
+		validate_class_vars = function(values, resolve = TRUE) {
+			.validate_pv_class_vars(values, nrow(private$data), resolve = resolve)
 		}
 	),
 
@@ -577,9 +682,9 @@
 			if (missing(value)) return(private$data[["Mortality Eggs StDev"]])
 			private$data[["Mortality Eggs StDev"]] <- private$validate("mortality_eggs_stdev", value)
 		},
-		migration = function(value) {
-			if (missing(value)) return(private$data[["Migration"]])
-			private$data[["Migration"]] <- private$validate("migration", value)
+		migration_out_prob = function(value) {
+			if (missing(value)) return(private$data[["Migration Out Prob"]])
+			private$data[["Migration Out Prob"]] <- private$validate("migration_out_prob", value)
 		},
 		set_migration = function(value) {
 			if (missing(value)) return(private$data[["Set Migration"]])
@@ -708,13 +813,6 @@
 		comp_coef = function(value) {
 			if (missing(value)) return(private$data[["comp_coef"]])
 			private$data[["comp_coef"]] <- private$validate("comp_coef", value)
-		},
-		location = function(value) {
-			if (missing(value)) return(private$location_path)
-			if (!is.null(value) && (!is.character(value) || length(value) != 1)) {
-				stop("`location` must be a single character path, or NULL.")
-			}
-			private$location_path <- value
 		}
 	)
 ))
@@ -732,29 +830,80 @@
 #' patch (recycling the patch-7 default, with a warning, for patches beyond
 #' what that file defines).
 #'
+#' @details
+#' **Temporal changes via `|`:** CDMetaPOP lets most PatchVars columns
+#' specify a value that changes partway through a run (its `cdclimate`
+#' mechanism), by giving multiple values separated by `|` in one cell, e.g.
+#' `mypatchvars$mortality_out <- "0|0.2|0.5"` (mortality is `0` at first,
+#' then `0.2`, then `0.5`, switching at the timesteps configured elsewhere).
+#' This applies to every column **except** `x`, `y`, `patch_id`, and
+#' `subpatch_no`. Because this is a single delimited *string*, not a
+#' vector, it must always be entered as one quoted character value (e.g.
+#' `"0|0.2|0.5"`), even for columns that are otherwise numeric -- assigning
+#' a plain numeric vector like `c(0, 0.2, 0.5)` would instead be interpreted
+#' as three different patches' worth of values, not one patch's value over
+#' time. Each `|`-separated segment is validated independently against the
+#' column's usual rule (numeric bounds, `"N"`/`"E"`, etc.).
+#'
+#' **`class_vars` and `genes_initialize` are also entered as strings,**
+#' for consistency with every other column's `|` mechanism above, even
+#' though they conceptually reference other R objects/files rather than
+#' plain values. For `class_vars` specifically: each `|`-separated segment
+#' of the string is checked against the name of every `ClassVars` object
+#' that exists in the global environment; if one matches, that *object* is
+#' used (and kept as a live reference internally, so later edits to it are
+#' still reflected when this `PatchVars` object is eventually written) --
+#' otherwise the segment is treated as a literal file path, same as
+#' `genes_initialize` always is. For example, `mypatchvars$class_vars <-
+#' "cv_year0|cv_year5"` will use the actual `cv_year0`/`cv_year5` objects
+#' if they exist as that-named variables in your global environment, or
+#' otherwise treat those strings as paths to existing ClassVars csv files.
+#' Building your `ClassVars` objects inside a function rather than at the
+#' top level of your script will NOT be found this way (only the global
+#' environment is searched, deliberately -- see
+#' `.pv_resolve_class_vars_segment()`); in that case, assign the actual
+#' object(s) directly instead (e.g. `mypatchvars$class_vars <- cv_year0`,
+#' or `list(cv_year0, cv_year5)` for multiple), without quoting.
+#'
+#' A literal path string could, in principle, coincidentally match the name
+#' of an unrelated `ClassVars` object in your global environment and get
+#' resolved to that object instead of being treated as text. As a
+#' precaution, it's good practice to keep `ClassVars`/allele-frequency csv
+#' files in their own subdirectories (e.g. `classvars/`, `genes/`)
+#' regardless of how you plan to reference them -- this keeps the two
+#' namespaces (file paths vs. object names) from ever plausibly colliding.
+#'
 #' @param patch_id Integer vector of sequential patches starting at 1 (e.g.
 #'   `1:7`). Determines the number of rows; cannot be changed after
 #'   construction (use `add_row()` or [add_rows()] instead).
-#' @param x,y Coordinate locations for each patch.
+#' @param x,y Coordinate locations for each patch. The only columns besides
+#'   `patch_id`/`subpatch_no` that do NOT support the `|` temporal-change
+#'   mechanism described in Details.
 #' @param subpatch_no Identifier (numeric or character) tagging individuals
-#'   to a particular region; reported in output files.
+#'   to a particular region; reported in output files. Does not support
+#'   `|` (a one-time identifier, not a value that changes over a run).
 #' @param k,k_stdev Carrying capacity and its annual standard deviation. `0`
 #'   means individuals cannot move into the patch.
 #' @param n0 Number of individuals to initialize the patch at year 0.
 #' @param natal_grounds,migration_grounds `0`/`1` flags for whether
 #'   individuals may occupy the patch at natal grounds ("back") or
 #'   migration/overwintering grounds ("out") respectively.
-#' @param genes_initialize Genotype initialization: `"random"`,
-#'   `"random_var"`, or an allele-frequency file path (`;`-separated for
-#'   multiple).
-#' @param class_vars A [ClassVars()] object, or a character path to a
-#'   ClassVars csv (`;`-separated for multiple), governing this patch.
+#' @param genes_initialize Genotype initialization. Per patch, a value is
+#'   `"random"`, `"random_var"`, or an allele-frequency file path. The `|`
+#'   temporal-change mechanism applies (see Details); within each `|` group,
+#'   multiple allele-frequency files may be `;`-separated, but the
+#'   `"random"`/`"random_var"` keywords must each appear alone in a group
+#'   (never `;`-joined). E.g. `"f1.csv;f2.csv|random"` is valid;
+#'   `"random;f1.csv"` is not.
+#' @param class_vars A [ClassVars()] object, a character path/object-name
+#'   string (`;`-separated for multiple), or a list of either for multiple
+#'   timepoints -- see Details for the full `|`/object-resolution behavior.
 #' @param mortality_out,mortality_back,mortality_eggs Density-independent
 #'   mortality `[0, 1]`, `"N"` (no patch-level mortality), or `"E"`
 #'   (eradication override).
 #' @param mortality_out_stdev,mortality_back_stdev,mortality_eggs_stdev
 #'   Standard deviation for the above; numeric, `"N"`, or `"E"`.
-#' @param migration Emigration probability `[0, 1]`.
+#' @param migration_out_prob Emigration probability `[0, 1]`.
 #' @param set_migration `"Y"` or `"N"`: whether a migrant individual stays a
 #'   migrant with probability 1.
 #' @param migration_back_prob,straying_prob,dispersal_prob Movement
@@ -778,8 +927,13 @@
 #'   (not yet implemented), so validation here is permissive.
 #' @param comp_coef Lotka-Volterra competition coefficient(s) for
 #'   multispecies applications, `;`-separated if more than 2 species.
-#' @param location Optional file path where this object should be written
-#'   by default when [write_cdmetapop()] is called without a `path`.
+#' @param resolve_class_vars Whether `class_vars` character entries should
+#'   be resolved against `ClassVars` objects in `.GlobalEnv` by name (see
+#'   Details). Defaults to `TRUE`. Set to `FALSE` when every `class_vars`
+#'   value is known to already be a literal path -- e.g.
+#'   `read_cdmetapop(..., type = "PatchVars")` does this automatically,
+#'   since a value read from an existing csv is necessarily a path, never
+#'   a reference to an object in the current R session.
 #'
 #' @return An R6 `PatchVars` object.
 #' @export
@@ -791,6 +945,9 @@
 #' # 3 patches, defaults taken from PatchVarsS1.csv's first 3 rows:
 #' mypatchvars <- PatchVars(patch_id = 1:3)
 #'
+#'# 3 patches with one column defined and other columns as defaults:
+#' mypatchvars <- PatchVars(patch_id = 1:3, natal_grounds = c(1,1,0))
+#' 
 #' # Edit a column in place:
 #' mypatchvars$k <- c(300, 300, 500)
 #'
@@ -816,7 +973,7 @@ PatchVars <- function(
 	mortality_back_stdev = rep(0, 7),
 	mortality_eggs = rep(0, 7),
 	mortality_eggs_stdev = rep(0, 7),
-	migration = rep(1, 7),
+	migration_out_prob = rep(1, 7),
 	set_migration = rep("Y", 7),
 	migration_back_prob = rep(1, 7),
 	straying_prob = rep(1, 7),
@@ -839,7 +996,7 @@ PatchVars <- function(
 	fitness_AABb = rep(0, 7), fitness_AaBb = rep(0, 7), fitness_aaBb = rep(0, 7),
 	fitness_AAbb = rep(0, 7), fitness_Aabb = rep(0, 7), fitness_aabb = rep(0, 7),
 	comp_coef = rep("0.5;0.1", 7),
-	location = NULL
+	resolve_class_vars = TRUE
 ) {
 	# See ClassVars()'s wrapper function for why these literal defaults are
 	# forwarded as NULL to .PatchVarsR6$new() when not actually supplied by
@@ -854,5 +1011,8 @@ PatchVars <- function(
 	column_args <- mget(.pv_fields, envir = environment())
 	column_args[!supplied] <- list(NULL)
 
-	do.call(.PatchVarsR6$new, c(list(patch_id = patch_id, location = location), column_args))
+	do.call(.PatchVarsR6$new, c(
+		list(patch_id = patch_id, resolve_class_vars = resolve_class_vars),
+		column_args
+	))
 }

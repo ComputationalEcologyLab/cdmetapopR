@@ -7,7 +7,8 @@
 \method{as.data.frame}{ClassVars}(x, ...)
 }
 \arguments{
-\item{x}{A cdmetapopR input-file object, e.g. a \code{\link[=ClassVars]{ClassVars()}} object.}
+\item{x}{A cdmetapopR input-file object: a \code{\link[=ClassVars]{ClassVars()}}, \code{\link[=PatchVars]{PatchVars()}},
+\code{\link[=PopVars]{PopVars()}}, or \code{\link[=RunVars]{RunVars()}} object.}
 
 \item{...}{Currently unused; present for S3 consistency with
 \code{\link[base:as.data.frame]{base::as.data.frame()}}.}

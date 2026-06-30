@@ -12,6 +12,12 @@
 # verbatim (including a spelling inconsistency) from
 # example_files/classvars/ClassVars_AS1.csv, the package's canonical
 # example.
+#
+# Good practice: keep ClassVars csv files in their own subdirectory (e.g.
+# classvars/), separate from other file types -- this is just good
+# organizational hygiene, and also avoids a file's path ever coincidentally
+# matching the name of a ClassVars object in your R session (see
+# PatchVars()'s Details on `class_vars` name resolution).
 
 # Canonical column headers, in CDMetaPOP's expected order. "Age class" is
 # handled separately from the other columns (see `ages` active binding
@@ -55,7 +61,7 @@
 	body_size_std             = c(0, 5, 0, 10, 10, 10),
 	distribution              = c(0.5, 0.25, 0.125, 0.0625, 0.03, 0.015),
 	sex_ratio                 = rep(".50~.50", 6),
-	age_mortality_out         = rep(0, 6),
+	age_mortality_out         = rep("N", 6),
 	age_mortality_out_stdev   = rep(0, 6),
 	age_mortality_back        = c(0, 0, 0, 0, 0, 1),
 	age_mortality_back_stdev  = rep(0, 6),
@@ -245,8 +251,7 @@
 			straying_prob = NULL, dispersal_prob = NULL, maturation = NULL,
 			fecundity_ind = NULL, fecundity_ind_stdev = NULL,
 			fecundity_leslie = NULL, fecundity_leslie_stdev = NULL,
-			capture_out_prob = NULL, capture_back_prob = NULL,
-			location = NULL
+			capture_out_prob = NULL, capture_back_prob = NULL
 		) {
 			# `ages` must be sequential integers starting at 0, e.g. 0:5 or
 			# c(0, 1, 2). This is the only field validated once and then
@@ -301,8 +306,6 @@
 				header <- .cv_headers[match(field, .cv_fields) + 1]
 				private$data[[header]] <- private$validate(field, raw)
 			}
-
-			private$location_path <- location
 		},
 
 		# Add one or more age classes, copying the current last row. All
@@ -327,16 +330,6 @@
 			invisible(self)
 		},
 
-		# Write this ClassVars object to a csv file. `path` defaults to
-		# this object's `location` field if not supplied.
-		write_cdmetapop = function(path = NULL) {
-			if (is.null(path)) path <- private$location_path
-			if (is.null(path)) {
-				stop("No `path` supplied and no `location` set on this ClassVars object.")
-			}
-			utils::write.csv(private$data, path, row.names = FALSE, quote = FALSE)
-			invisible(path)
-		},
 
 		print = function(...) {
 			cat("<ClassVars>", nrow(private$data), "age classes\n")
@@ -355,7 +348,6 @@
 
 	private = list(
 		data = NULL,
-		location_path = NULL,
 
 		# Shared by every column active binding: validates `values` against
 		# `field`'s rule and the current number of age classes.
@@ -460,13 +452,6 @@
 		capture_back_prob = function(value) {
 			if (missing(value)) return(private$data[["Capture Back Probability"]])
 			private$data[["Capture Back Probability"]] <- private$validate("capture_back_prob", value)
-		},
-		location = function(value) {
-			if (missing(value)) return(private$location_path)
-			if (!is.null(value) && (!is.character(value) || length(value) != 1)) {
-				stop("`location` must be a single character path, or NULL.")
-			}
-			private$location_path <- value
 		}
 	)
 ))
@@ -515,8 +500,6 @@
 #'   deviation of Leslie-matrix fecundity per age class.
 #' @param capture_out_prob,capture_back_prob Capture/detection probability
 #'   `[0, 1]`, `"N"`, or `"~"`-separated per-sex values.
-#' @param location Optional file path where this object should be written
-#'   by default when [write_cdmetapop()] is called without a `path`.
 #'
 #' @return An R6 `ClassVars` object.
 #' @export
@@ -559,8 +542,7 @@ ClassVars <- function(
 	fecundity_leslie = c(0, 2.5, 10, 11.7, 11.743, 15),
 	fecundity_leslie_stdev = rep(0, 6),
 	capture_out_prob = rep("N", 6),
-	capture_back_prob = rep("N", 6),
-	location = NULL
+	capture_back_prob = rep("N", 6)
 ) {
 	# The defaults above are shown literally (rather than NULL) purely so
 	# that `?ClassVars` and IDE argument tooltips display the actual
@@ -579,5 +561,5 @@ ClassVars <- function(
 	column_args <- mget(.cv_fields, envir = environment())
 	column_args[!supplied] <- list(NULL)
 
-	do.call(.ClassVarsR6$new, c(list(ages = ages, location = location), column_args))
+	do.call(.ClassVarsR6$new, c(list(ages = ages), column_args))
 }
