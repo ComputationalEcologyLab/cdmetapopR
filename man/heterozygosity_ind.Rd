@@ -62,7 +62,7 @@ Calculates observed and expected heterozygosity from \code{L#A#} genotype column
 in CDMetaPOP \code{ind##.csv} files.
 }
 \examples{
-ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+ex_dir <- system.file("extdata", "Example_dat", package = "cdmetapopR")
 heterozygosity_ind(ex_dir, year = 9)
 heterozygosity_ind(ex_dir, year = 9, jitter = FALSE)
 }

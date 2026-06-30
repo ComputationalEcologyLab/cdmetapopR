@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 - Removed deprecated functions `alleles_by_year()`, `dispersal()`,
   `hets_plot()`, `read.cdmetapop()`, `separate_column()`,
   `size_age_class()`, and `unite_column()`.
+- Renamed `summarize_states()` to `summary_disease()`.
+- Moved the function examples vignette from `docs/` to `vignettes/`.
+- Renamed example data from `Adaptive_Run_08` to `Example_dat` and
+  removed unused `package_ex_out_example` files.
 ## [0.0.1-dev] - 2024-11-20
 
 ## [0.0.1-dev] - 2024-11-19
