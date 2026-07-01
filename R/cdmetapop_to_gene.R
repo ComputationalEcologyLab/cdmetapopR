@@ -7,19 +7,12 @@
 #'
 #' @return The function writes the GENEPOP or GENALEX formatted data into the working directory.
 #' @examples
-#' \dontrun{
+#' path <- system.file("extdata", "Example_dat", "run0batch0mc0species0", "ind9.csv", package = "cdmetapopR")
 #' # Convert a CDMetaPOP file to GENEPOP format
-#' cdmetapop_to_gene(
-#'   path = "your_path/ind1.csv",
-#'   format = "genepop"
-#' )
+#' cdmetapop_to_gene(path = path, format = "genepop")
 #'
 #' # Convert a CDMetaPOP file to GENALEX format
-#' cdmetapop_to_gene(
-#'   path = "your_path/ind1.csv",
-#'   format = "genalex"
-#' )
-#' }
+#' cdmetapop_to_gene(path = path, format = "genalex")
 #' @import adegenet
 #' @import graph4lg
 #' @import poppr
