@@ -30,7 +30,7 @@ functions and the lower-level data-frame outputs that can be used for
 custom `ggplot2` figures.
 
 The examples use the package example output files in
-`inst/extdata/Adaptive_Run_08`.
+`inst/extdata/Example_dat`.
 
 The example data include:
 
@@ -42,7 +42,7 @@ The example data include:
 -   `ind0.csv` through `ind9.csv`
 
 ```{r example-paths}
-ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+ex_dir <- system.file("extdata", "Example_dat", package = "cdmetapopR")
 
 pop_file <- file.path(ex_dir, "run0batch0mc0species0", "summary_popAllTime.csv")
 class_file <- file.path(ex_dir, "run0batch0mc0species0", "summary_classAllTime.csv")
@@ -458,20 +458,20 @@ summary_class(ex_dir, type = "age_plus_one", mc = "all")
 
 # Disease State Summaries
 
-`summarize_states()` works with `summary_popAllTime_DiseaseStates.csv`
+`summary_disease()` works with `summary_popAllTime_DiseaseStates.csv`
 files. It summarizes disease-state counts across Monte Carlo replicates
 and compares batches.
 
 ## Default State Names
 
 ```{r summarize-states-default}
-summarize_states(ex_dir)
+summary_disease(ex_dir)
 ```
 
 ## Custom State and Scenario Names
 
 ```{r summarize-states-custom}
-summarize_states(
+summary_disease(
   ex_dir,
   state_names = c("State 1", "State 2", "State 3"),
   scenario_names = c("Batch 0", "Batch 1")
@@ -484,7 +484,7 @@ Use `cumulative_states` for a state that should be plotted as a running
 total within each Monte Carlo replicate.
 
 ```{r summarize-states-cumulative}
-summarize_states(
+summary_disease(
   ex_dir,
   state_names = c("State 1", "State 2", "State 3"),
   scenario_names = c("Batch 0", "Batch 1"),
