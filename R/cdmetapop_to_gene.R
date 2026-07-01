@@ -8,10 +8,10 @@
 #' @return The function writes the GENEPOP or GENALEX formatted data into the working directory.
 #' @examples
 #' path <- system.file("extdata", "Example_dat", "run0batch0mc0species0", "ind9.csv", package = "cdmetapopR")
-#' # Convert a CDMetaPOP file to GENEPOP format
+#' tmp_dir <- tempdir()
+#' old_dir <- setwd(tmp_dir)
+#' on.exit(setwd(old_dir))
 #' cdmetapop_to_gene(path = path, format = "genepop")
-#'
-#' # Convert a CDMetaPOP file to GENALEX format
 #' cdmetapop_to_gene(path = path, format = "genalex")
 #' @import adegenet
 #' @import graph4lg
@@ -60,9 +60,7 @@ tmp<-adegenet::df2genind(new, sep = ":", pop = pop)
   }
   # Handle GENALEX output
   if (format == "genalex") {
-    poppr::genind2genalex(tmp, filename = paste0("my_genalex_", tools::file_path_sans_ext(basename(path)), ".csv", sep = ""))
+    poppr::genind2genalex(tmp, filename = paste0("my_genalex_", tools::file_path_sans_ext(basename(path)), ".csv"), overwrite = TRUE)
     message("GENALEX file written")
   }
 }
-
-
