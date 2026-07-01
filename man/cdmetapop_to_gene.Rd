@@ -19,9 +19,9 @@ This function reads a \code{CDMetaPOP} CSV file, processes the genetic loci, and
 }
 \examples{
 path <- system.file("extdata", "Example_dat", "run0batch0mc0species0", "ind9.csv", package = "cdmetapopR")
-# Convert a CDMetaPOP file to GENEPOP format
+tmp_dir <- tempdir()
+old_dir <- setwd(tmp_dir)
+on.exit(setwd(old_dir))
 cdmetapop_to_gene(path = path, format = "genepop")
-
-# Convert a CDMetaPOP file to GENALEX format
 cdmetapop_to_gene(path = path, format = "genalex")
 }
