@@ -756,13 +756,3 @@ write_popvars(output_file = "my_new_popvars.csv")
 write_patchvars(output_file = "my_new_patchvars.csv")
 write_classvars(output_file = "my_new_classvars.csv")
 ```
-
-# Deprecated Internal Compatibility Function
-
-`locus()` is exported for compatibility with older `gstudio` workflows.
-It is included in the package because the original function is
-deprecated elsewhere.
-
-```{r locus-example}
-locus(c("0", "1"), type = "snp")
-```

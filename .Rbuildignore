@@ -10,3 +10,4 @@
 ^\.github$
 ^CONTRIBUTING\.md$
 ^manual\.pdf$
+^cran-comments\.md$
