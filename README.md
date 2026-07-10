@@ -1,3 +1,5 @@
+[![CRAN status](https://www.r-pkg.org/badges/version/cdmetapopR)](https://CRAN.R-project.org/package=cdmetapopR)
+
 **Overview**: 
   Helper functions for CDmetaPOP input, launch & output postprocessing
 
