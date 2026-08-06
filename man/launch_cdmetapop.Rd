@@ -23,6 +23,9 @@ launch_cdmetapop(
 
 \item{outputDirectory}{Name of output directory to be stored in the same location as runvarsDirectory}
 }
+\value{
+No return value. This function is called for its side effect of launching a CDMetaPOP simulation in a terminal window.
+}
 \description{
 Function to run CDMetaPOP from R
 }
@@ -30,7 +33,7 @@ Function to run CDMetaPOP from R
 This function will launch a command prompt (Windows) or terminal (Linux/Mac) that will call Python and supply the 5 arguments needed to launch CDMetaPOP simulations
 }
 \examples{
-\dontrun{ 
+\donttest{ 
 # Example: This function launches a system command to initiate CDMetaPOP.
 pythonFilepath="C:/Users/User1/anaconda3/python.exe" 
 CDMetaPOPFilepath="C:/Users/User1/CDMetaPOP_v3.03/src/CDMetaPOP.py"

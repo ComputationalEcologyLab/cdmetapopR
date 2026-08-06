@@ -211,24 +211,24 @@
 #' @examples
 #' ex_dir <- system.file(
 #'   "extdata",
-#'   "Adaptive_Run_08",
+#'   "Example_dat",
 #'   package = "cdmetapopR"
 #' )
 #'
-#' summarize_states(ex_dir)
+#' summary_disease(ex_dir)
 #'
-#' summarize_states(
+#' summary_disease(
 #'   ex_dir,
 #'   state_names = c("Susceptible", "Infected", "Recovered"),
 #'   scenario_names = c("Batch 0", "Batch 1"),
 #'   cumulative_states = "Recovered"
 #' )
 #' @export
-summarize_states <- function(base_path,
-                             state_names = NULL,
-                             scenario_names = NULL,
-                             cumulative_states = NULL,
-                             state_column = "States_SecondUpdate") {
+summary_disease <- function(base_path,
+                            state_names = NULL,
+                            scenario_names = NULL,
+                            cumulative_states = NULL,
+                            state_column = "States_SecondUpdate") {
   disease_files <- .discover_disease_state_files(base_path)
   detected_count <- .detect_disease_state_count(disease_files[1], state_column)
 

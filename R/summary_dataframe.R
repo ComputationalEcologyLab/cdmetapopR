@@ -46,7 +46,7 @@
 #'   `type = "disease"`, the default long format includes `State` and `Count`
 #'   columns.
 #' @examples
-#' ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+#' ex_dir <- system.file("extdata", "Example_dat", package = "cdmetapopR")
 #'
 #' pop_df <- summary_dataframe(ex_dir, type = "pop")
 #' class_df <- summary_dataframe(ex_dir, type = "class")

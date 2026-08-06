@@ -1,5 +1,5 @@
 ind_example_dir <- function() {
-  system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+  system.file("extdata", "Example_dat", package = "cdmetapopR")
 }
 
 ind_sample_example_dir <- function() {

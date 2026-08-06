@@ -1,5 +1,5 @@
 summary_dataframe_example_dir <- function() {
-  system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+  system.file("extdata", "Example_dat", package = "cdmetapopR")
 }
 
 test_that("summary_dataframe returns pop and class data with metadata", {

@@ -1,19 +1,27 @@
-**Overview**: 
-  Helper functions for CDmetaPOP input, launch & output postprocessing
+[![CRAN status](https://www.r-pkg.org/badges/version/cdmetapopR)](https://CRAN.R-project.org/package=cdmetapopR)
 
-**Installation**: 
-To install the package locally from the source file:
-install.packages("yourpath/cdmetapopR.tar.gz", repos = NULL, type = "source")
+**Overview**: Helper functions for CDmetaPOP input, launch & output postprocessing
 
-To load the package directly from your development path
-devtools::load_all("yourpath/cdmetapopR")
+**Installation**: Install the released version from CRAN:
 
-**Documentation**:
-A full tutorial is available in the vignette:  
-👉 https://computationalecologylab.github.io/cdmetapop_web/
+``` r
+install.packages("cdmetapopR")
+```
 
-**Help and Support**: 
-If you encounter any issues or bugs, please report them on the GitHub Issues page:
+Or install the development version from GitHub:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("computationalecologylab/cdmetapopR")
+```
+
+**Documentation**: A full tutorial is available in the vignette:\
+👉 <https://computationalecologylab.github.io/cdmetapop_web/>
+
+**Shiny App to create Input files**: Shiny Apps to create CDMetaPOP input files are also available on this server:\
+👉 <https://kratos-shiny.umontana.net/cel-apps/cdmetapopR/>
+
+**Help and Support**: If you encounter any issues or bugs, please report them on the GitHub Issues page:
 
 [Report an Issue](https://github.com/ComputationalEcologyLab/cdmetapopR/issues)
 

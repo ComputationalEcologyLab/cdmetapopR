@@ -59,6 +59,6 @@ genotype columns in CDMetaPOP \code{ind##.csv} files. FST is calculated per locu
 and then averaged across loci for each pair.
 }
 \examples{
-ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+ex_dir <- system.file("extdata", "Example_dat", package = "cdmetapopR")
 pairwise_fst_ind(ex_dir, year = 9)
 }

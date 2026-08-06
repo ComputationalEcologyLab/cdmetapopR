@@ -3,3 +3,12 @@
 ^Rplots\.pdf$
 ^cdmetapopR_manual\.pdf$
 ^docs$
+^doc$
+^Meta$
+^\.positai$
+^\.claude$
+^\.github$
+^CONTRIBUTING\.md$
+^manual\.pdf$
+^cran-comments\.md$
+^CRAN-SUBMISSION$

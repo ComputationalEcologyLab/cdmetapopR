@@ -5,7 +5,7 @@
 \title{Determine the proportions of the age structure of the population}
 \usage{
 age_structure_proportions(
-  path = system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR"),
+  path = system.file("extdata", "Example_dat", package = "cdmetapopR"),
   runs = 1,
   gen = 49,
   species = 0
@@ -27,6 +27,6 @@ a dataframe with a  column for each montecarlo run (MC) with the proportion of t
 This function summarizes the proportions of the age structure in the simulated population. It is calculated counting the values in the column 'age' of the chosen 'ind' generation.
 }
 \examples{
-mypath <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+mypath <- system.file("extdata", "Example_dat", package = "cdmetapopR")
 age_structure_proportions(path = paste0(mypath, "/"), runs = 1, gen = 9)
 }

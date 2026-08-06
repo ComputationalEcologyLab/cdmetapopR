@@ -37,7 +37,7 @@ functions and the lower-level data-frame outputs that can be used for
 custom `ggplot2` figures.
 
 The examples use the package example output files in
-`inst/extdata/Adaptive_Run_08`.
+`inst/extdata/Example_dat`.
 
 The example data include:
 
@@ -49,7 +49,7 @@ The example data include:
 -   `ind0.csv` through `ind9.csv`
 
 ```{r example-paths}
-ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+ex_dir <- system.file("extdata", "Example_dat", package = "cdmetapopR")
 
 pop_file <- file.path(ex_dir, "run0batch0mc0species0", "summary_popAllTime.csv")
 class_file <- file.path(ex_dir, "run0batch0mc0species0", "summary_classAllTime.csv")
@@ -93,52 +93,7 @@ For individual files, `years` narrows the selected `ind##.csv` files.
 For summary files, years are filtered after reading by using ordinary
 data-frame operations.
 
-# Reading and Conversion Helpers
-
-## `read.cdmetapop()`
-
-Use `read.cdmetapop()` to read a CDMetaPOP CSV file into R while keeping
-the CDMetaPOP-delimited columns as character columns.
-
-```{r read-cdmetapop}
-pop_data_chr <- read.cdmetapop(pop_file)
-
-dim(pop_data_chr)
-str(pop_data_chr[, 1:6])
-```
-
-## `separate_column()`
-
-Use `separate_column()` when a CDMetaPOP column stores multiple values
-inside one delimited cell. The example below splits the fourth column,
-`N_Initial`, using `|`.
-
-```{r separate-column}
-n_initial_by_patch <- separate_column(pop_file, column_name = 4, sep = "|")
-
-dim(n_initial_by_patch)
-str(n_initial_by_patch[, 1:8])
-```
-
-## `unite_column()`
-
-Use `unite_column()` to combine several columns into one delimited
-column.
-
-```{r unite-column}
-small_df <- data.frame(
-  Patch = c("A", "B", "C"),
-  N_1 = c(25, 30, 35),
-  N_2 = c(34, 44, 34)
-)
-
-unite_column(
-  dataframe = small_df,
-  column_name = "N_combined",
-  sep = "|",
-  cols = c("N_1", "N_2")
-)
-```
+# Conversion Helpers
 
 ## `create_cdmat()`
 
@@ -510,20 +465,20 @@ summary_class(ex_dir, type = "age_plus_one", mc = "all")
 
 # Disease State Summaries
 
-`summarize_states()` works with `summary_popAllTime_DiseaseStates.csv`
+`summary_disease()` works with `summary_popAllTime_DiseaseStates.csv`
 files. It summarizes disease-state counts across Monte Carlo replicates
 and compares batches.
 
 ## Default State Names
 
-```{r summarize-states-default}
-summarize_states(ex_dir)
+```{r summary-disease-default}
+summary_disease(ex_dir)
 ```
 
 ## Custom State and Scenario Names
 
-```{r summarize-states-custom}
-summarize_states(
+```{r summary-disease-custom}
+summary_disease(
   ex_dir,
   state_names = c("State 1", "State 2", "State 3"),
   scenario_names = c("Batch 0", "Batch 1")
@@ -535,8 +490,8 @@ summarize_states(
 Use `cumulative_states` for a state that should be plotted as a running
 total within each Monte Carlo replicate.
 
-```{r summarize-states-cumulative}
-summarize_states(
+```{r summary-disease-cumulative}
+summary_disease(
   ex_dir,
   state_names = c("State 1", "State 2", "State 3"),
   scenario_names = c("Batch 0", "Batch 1"),
@@ -771,9 +726,6 @@ summary_patch_map(
 
 # Older Summary Helpers
 
-These functions are still exported and can be useful for specific legacy
-workflows.
-
 ## `age_structure_proportions()`
 
 ```{r age-structure-proportions}
@@ -783,57 +735,6 @@ age_structure_proportions(
   gen = 9,
   species = 0
 )
-```
-
-## `dispersal()`
-
-With `plot = FALSE`, `dispersal()` returns a data frame of movement
-proportions.
-
-```{r dispersal-table}
-dispersal(
-  path = paste0(ex_dir, "/"),
-  run = 0,
-  batch = 0,
-  mc = 1,
-  gen = 9,
-  species = 0,
-  plot = FALSE
-)
-```
-
-With `plot = TRUE`, it draws a base R barplot and returns the same kind
-of summary.
-
-```{r dispersal-plot}
-dispersal(
-  path = paste0(ex_dir, "/"),
-  run = 0,
-  batch = 0,
-  mc = 0,
-  gen = 9,
-  species = 0,
-  plot = TRUE
-)
-```
-
-## `hets_plot()`
-
-```{r hets-plot}
-summary_pop_single <- read.csv(pop_file)
-hets_plot(summary_pop_single)
-```
-
-## `alleles_by_year()`
-
-```{r alleles-by-year}
-alleles_by_year(summary_pop_single, n = 10)
-```
-
-## `size_age_class()`
-
-```{r size-age-class}
-size_age_class(class_file)
 ```
 
 # Interactive and External-Run Functions

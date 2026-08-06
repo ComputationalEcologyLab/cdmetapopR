@@ -1,5 +1,5 @@
 example_output_dir <- function() {
-  system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+  system.file("extdata", "Example_dat", package = "cdmetapopR")
 }
 
 multi_species_example_dir <- function() {
@@ -54,7 +54,7 @@ test_that("summary_class age classes are ordered numerically", {
 test_that("summary functions accept custom facet labels and summary options", {
   example_dir <- example_output_dir()
 
-  batch_labels <- c("Adaptive_Run_08" = "Adaptive Run 08")
+  batch_labels <- c("Example_dat" = "Example Data")
 
   n_initial_plot <- summary_pop(
     example_dir,

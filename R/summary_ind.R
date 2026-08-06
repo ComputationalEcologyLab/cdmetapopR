@@ -250,7 +250,7 @@
 #'
 #' @return A ggplot object.
 #' @examples
-#' ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+#' ex_dir <- system.file("extdata", "Example_dat", package = "cdmetapopR")
 #'
 #' summary_ind(ex_dir, type = "age", year = 9)
 #' summary_ind(ex_dir, type = "age_size", year = 9)
