@@ -225,7 +225,7 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
       ),
       
       ###################################
-      # MAIN PANEL 
+      ####        MAIN PANEL         ####
       ###################################
       mainPanel(
         tabsetPanel(
@@ -242,9 +242,9 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
             uiOutput("Popmodel_par1"),
             actionButton("update_population_growth", "Apply changes")
           ),
-          #################
-          # Growth Tab #
-          #################
+          #####################
+          #### Growth Tab ####
+          #####################
           tabPanel(
             "Growth",
             HTML("<b style='color:red;'>(!) Warning: If in RunVars.csv, the value for cdevolveans points to fitness-based growth, CDMetaPOP will use the growth parameters from the PatchVars.csv. Therefore, the growth parameters from the PopVars.csv will be ignored.</b>"),
@@ -263,7 +263,7 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
             actionButton("update_growth", "Apply changes")
           ),
           ####################################
-          # Reproduction Tab
+          ####      Reproduction Tab      ####
           ####################################
           tabPanel(
             "Reproduction",
@@ -303,9 +303,9 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
             actionButton("update_reproduction", "Apply changes")
           ),
           
-          ####################################
-          # Offspring Tab
-          ####################################
+          #####################################
+          ####        Offspring Tab        ####
+          #####################################
           tabPanel(
             "Offspring",
             uiOutput("offno"),
@@ -396,7 +396,7 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
           
           
           ####################################
-          # Genetics Tab 
+          ####        Genetics Tab        ####
           ####################################
           tabPanel(
             "Genetics",
@@ -447,7 +447,7 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
           
           
           ######################################
-          # Selection Tab  
+          ####        Selection Tab         ####
           ######################################
           tabPanel(
             "Selection",
@@ -558,9 +558,9 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
           ),
           
           
-          # ####################################
-          # # Movement Tab 
-          # ####################################
+          #####################################
+          ####         Movement Tab       ####
+          #####################################
           tabPanel(
             "Movement",
             # MATE section
@@ -697,9 +697,9 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
               )
             ),
           ),
-          ),
+  
           ####################################
-          # Plasticity tab
+          ####      Plasticity tab       ####
           ####################################
           tabPanel(
             "Plasticity",
@@ -780,7 +780,7 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
           ),
 
           ####################################
-          # Disease tab                   ####
+          ####         Disease tab        ####
           ####################################
           tabPanel(
             "Disease",
@@ -817,10 +817,10 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
             "Preview Updated PopVars",
             tableOutput("preview_template")
           )
-        )
+          ) #tabsetPanel
+        ) #mainPanel
       )
     )
-  )
   
   ######################################################
   # SERVER 
