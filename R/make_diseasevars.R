@@ -168,7 +168,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
                            min = 0, step = 1),
               bsTooltip(
                 "Start_Disease",
-                "The time step to initiate disease spread and 'start' the individual state transitions.",
+                "Enter an integer for the time step to initiate disease spread.",
                 placement = "right",
                 trigger = "hover"),          
               
