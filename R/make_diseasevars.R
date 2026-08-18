@@ -1,9 +1,9 @@
-#' Build PatchVars File from Template
+#' Build DiseaseVars File from Template
 #'
-#' This function loads a provided PatchVars template, allows the user to edit selected areas,
+#' This function loads a provided DiseaseVars template, allows the user to edit selected areas,
 #' and saves the modified version as a new file.
 #'
-#' @param output_file The name of the output file. Defaults to 'my_new_patchvars.csv'.
+#' @param output_file The name of the output file. Defaults to 'my_new_diseasevars.csv'.
 #' @return A Shiny app instance.
 #' @import shiny
 #' @import shinyBS
@@ -102,7 +102,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
                            min = 0, step = 1),
               bsTooltip(
                 "Number_of_States",
-                "E.g. an SIRD model with states succeptible, infected, recovered and dead states should set Number of States = 4.",
+                "E.g. an SIRD model with states susceptible, infected, recovered and dead states should set Number of States = 4.",
                 placement = "right",
                 trigger = "hover"), 
               
@@ -168,7 +168,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
                            min = 0, step = 1),
               bsTooltip(
                 "Start_Disease",
-                "The time step to initiate disease spread and ‘start’ the individual state transitions.",
+                "The time step to initiate disease spread and 'start' the individual state transitions.",
                 placement = "right",
                 trigger = "hover"),          
               
@@ -181,7 +181,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
                 "Transmission_Mode",
                 "Direct: Transmission from individual to individual
                 Indirect: Transmission from patch environmental contaminants to individuals. 
-                Note ‘Direct’ is also included here but can be excluded via the Transition Matrix file.",
+                Note 'Direct' is also included here but can be excluded via the Transition Matrix file.",
                 placement = "right",
                 trigger = "hover"), 
               
@@ -196,7 +196,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
                 textInput("Disease_Resistant", "Define the transition rate(s) modified by the resistance genotype.")),
               bsTooltip(
                 "Disease_Resistant",
-                "Define the transition rate(s) modified by genotype ‘RR’. E.g. '0_1;3_1' indicates that the transition rate from state 0 to state 1 will be affected as well as the transition rate from state three to state 1.",
+                "Define the transition rate(s) modified by genotype 'RR'. E.g. '0_1;3_1' indicates that the transition rate from state 0 to state 1 will be affected as well as the transition rate from state three to state 1.",
                 placement = "right",
                 trigger = "hover"), 
               
@@ -210,7 +210,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
                 textInput("Disease_Tolerant", "Define the transition rate(s) modified by the tolerance genotype."),
                 bsTooltip(
                   "Disease_Tolerant",
-                  "Define the transition rate(s) modified by genotype ‘TT’. E.g. '0_1;3_1' indicates that the transition rate from state 0 to state 1 will be affected as well as the transition rate from state three to state 1.",
+                  "Define the transition rate(s) modified by genotype 'TT. E.g. '0_1;3_1' indicates that the transition rate from state 0 to state 1 will be affected as well as the transition rate from state three to state 1.",
                   placement = "right",
                   trigger = "hover")
               ),
@@ -329,13 +329,13 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
       title = "Instructions for Transition Matrix",
       p("The disease matrix requires an additional Transition Matrix to define the mean probabilistic rates of moving from one state to another"),
       p("The matrix must be square (Number of states x Number of states)."),
-      p("For a simple SIR model where individuals move from Susceptible (S, state 0) to Infected (I, state 1) at rate β, and from Infected (I, state 1) to Recovered (R, state 2) at rate γ, the file would look like this:"),
+      p("For a simple SIR model where individuals move from Susceptible (S, state 0) to Infected (I, state 1) at rate beta, and from Infected (I, state 1) to Recovered (R, state 2) at rate gamma, the file would look like this:"),
       p("# TO (rows) FROM (cols)"),
       p("# S, I, R"),
       p("0.0, 0.0, 0.0"),
-      p("0.5, 0.0, 0.0  # This is β, the S -> I transition rate"),
-      p("0.0, 0.2, 0.0  # This is γ, the I -> R transition rate"),
-      p("Note: The S -> I transition rate (β) is treated as the transmission rate and is multiplied by the proportion of infected individuals (I/N) in the patch to determine the final probability of infection for a susceptible individual."),
+      p("0.5, 0.0, 0.0  # This is beta, the S -> I transition rate"),
+      p("0.0, 0.2, 0.0  # This is gamma, the I -> R transition rate"),
+      p("Note: The S -> I transition rate (beta) is treated as the transmission rate and is multiplied by the proportion of infected individuals (I/N) in the patch to determine the final probability of infection for a susceptible individual."),
       p("See CDmetaPOP user manual for more detailed information about the disease module"),
       easyClose = TRUE,
       footer = modalButton("Close")

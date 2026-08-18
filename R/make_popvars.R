@@ -800,7 +800,7 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
               conditionalPanel(
               condition = "input.apply_disease == 'Yes'",
               
-              selectInput("implement_disease", tagList("This option turns disease processes on and determines where in CDMetaPOP’s life cycle they are applied", em(span("implement_disease", style = "color:#0072B2;"))),
+              selectInput("implement_disease", tagList("This option turns disease processes on and determines where in CDMetaPOPs life cycle they are applied", em(span("implement_disease", style = "color:#0072B2;"))),
                           selected = "Y",
                           choices = c("N", "Back", "Out", "Both")
               )
