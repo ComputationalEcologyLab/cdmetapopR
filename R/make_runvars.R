@@ -24,7 +24,8 @@ make_runvars <- function(output_file = "my_new_runvars.csv") {
     summaryOutput     = "N",
     cdclimgentime     = 0,
     startcomp         = 0,
-    implementcomp     = "Back"
+    implementcomp     = "Back",
+    ncores            = 1
   )
   
   ############################################
@@ -294,6 +295,7 @@ anadromy: packing for anadromous species.",
       temp$cdclimgentime <- input$cdclimgentime
       temp$startcomp <- input$startcomp
       temp$implementcomp <- input$implementcomp
+      temp$ncores <- input$ncores
       
       # Update the reactive object
       template_data(temp)

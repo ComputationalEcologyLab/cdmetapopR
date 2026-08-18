@@ -12,7 +12,7 @@ make_patchvars <- function(output_file = "my_new_patchvars.csv") {
   # Template
   template <- data.frame(
     PatchID = 0, X = NA, Y = NA,
-    SubpatchNO = 0, K = 0, `K StDev` = 0, N0 = 0,
+    SubpatchNO = 0, K = 100, `K StDev` = 0, N0 = 100,
     `Natal Grounds` = 1, `Migration Out Grounds` = 0, 
     `Genes.Initialize` = NA, 
     `ClassVars` = NA,
@@ -32,8 +32,12 @@ make_patchvars <- function(output_file = "my_new_patchvars.csv") {
     Fitness_bb = 0, Fitness_AABB = 0, Fitness_AaBB = 0,
     Fitness_aaBB = 0, Fitness_AABb = 0, Fitness_AaBb = 0, 
     Fitness_aaBb = 0, Fitness_AAbb = 0, Fitness_Aabb = 0,
-    Fitness_aabb = 0, comp_coef = 0.5,  
+    Fitness_aabb = 0, comp_coef = 0.5,
+    disease_file = NA, `Env Res` = 0, 
+    dd1_AA = 0, dd1_AB = 0, dd1_BB = 0,
+    dd2_AA = 0, dd2_AB = 0, dd2_BB = 0,
     check.names = FALSE)
+
   ############################################
   ################## UI ######################
   ############################################
@@ -390,10 +394,53 @@ make_patchvars <- function(output_file = "my_new_patchvars.csv") {
                      actionButton("update_competition", "Apply changes")
                    ),
           ),
-          
-          ########################################
-          # Preview tab
-          ########################################
+        
+        ########################################
+        # Disease tab ####
+        ########################################
+        
+        tabPanel("Disease",
+                 radioButtons("apply_disease", "Do you want to apply disease?",
+                              choices = c("No", "Yes"), 
+                              selected = "No", 
+                              inline = TRUE),
+                 
+                 # Show disease settings only if 'Yes' is selected
+                 conditionalPanel(
+                   condition = "input.apply_disease == 'Yes'",
+                   textInput("disease_file", "Type the file name of the disease file"),
+                   
+                  numericInput("Env_Res", tagList("Define the initial concentration/load of the pathogen in the patch's environmental reservoir", em(span("Env Res", style = "color:#0072B2;"))), 
+                                value = 0,
+                                min = 0, step = 1),
+                  bsTooltip(
+                    "Env_Res",
+                    "This column is only used when 'Indirect' transmission is specified in the DiseaseVars.csv file. Values are purely relative",
+                    placement = "right",
+                    trigger = "hover"), 
+                  
+        # disease defense alleles
+                  wellPanel(
+                    helpText("Type the the transition rate(s) for individuals with each genotype at the first disease defense locus. 
+                    For multiple affected transition rates, values should be separated by commas. 
+                    The number of transition rates need to match the number of transitions specified in 'Transition 1' in the DiseaseVars file."),
+                    
+                    textInput("dd1_AA", "Disease defense locus 1 genotype AA:"),
+                    textInput("dd1_AB", "Disease defense locus 1 genotype AB:"),
+                    textInput("dd1_BB", "Disease defense locus 1 genotype BB:"),
+                    textInput("dd2_AA", "Disease defense locus 2 genotype AA:"),
+                    textInput("dd2_AB", "Disease defense locus 1 genotype AB:"),
+                    textInput("dd2_BB", "Disease defense locus 1 genotype BB:"),
+                  ),
+                    
+        actionButton("update_disease", "Update Disease Parameters"),
+                 )
+        ),
+                 
+        ########################################
+        # Preview tab
+        ########################################
+
           tabPanel("Preview Updated PatchVars",
                    tableOutput("preview_template")
           )
@@ -809,6 +856,35 @@ make_patchvars <- function(output_file = "my_new_patchvars.csv") {
       
       template_data(temp)
       showNotification("Fitness parameters updated successfully!", type = "message")
+    })
+    
+    ###################################################
+    # update Disease tab ####
+    ###################################################
+    observeEvent(input$update_disease, {
+      temp <- template_data()
+      
+      if (input$apply_disease == "Yes") {
+        temp$disease_file <- input$disease_file
+        temp$`Env Res` <- input$Env_Res
+        temp$dd1_AA <- input$dd1_AA
+        temp$dd1_AB <- input$dd1_AB
+        temp$dd1_BB <- input$dd1_BB
+        temp$dd2_AA <- input$dd2_AA
+        temp$dd2_AB <- input$dd2_AB
+        temp$dd2_BB <- input$dd2_BB
+      } else {
+        temp$disease_file <- NA
+        temp$`Env Res` <- 0
+        temp$dd1_AA <- 0
+        temp$dd1_AB <- 0
+        temp$dd1_BB <- 0
+        temp$dd2_AA <- 0
+        temp$dd2_AB <- 0
+        temp$dd2_BB <- 0
+      }
+      
+      template_data(temp)
     })
     ###################################################
     # update Miscellaneous tab
