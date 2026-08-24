@@ -943,7 +943,7 @@ make_patchvars <- function(output_file = "my_new_patchvars.csv") {
         "PatchVars.csv"
       },
       content = function(file) {
-        write.csv(template_data(), file, row.names = FALSE)
+        write.csv(template_data(), file, row.names = FALSE, quote = FALSE)
       }
     )
     

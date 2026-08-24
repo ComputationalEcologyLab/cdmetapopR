@@ -2000,7 +2000,7 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
         paste0("PopVars_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv")
       },
       content = function(file) {
-        write.csv(template_data(), file, row.names = FALSE)
+        write.csv(template_data(), file, row.names = FALSE,  quote = FALSE)
       }
     )
   }

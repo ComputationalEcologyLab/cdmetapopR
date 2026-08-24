@@ -327,7 +327,7 @@ anadromy: packing for anadromous species.",
         "runVars.csv"
       },
       content = function(file) {
-        write.csv(template_data(), file, row.names = FALSE)
+        write.csv(template_data(), file, row.names = FALSE, quote = FALSE)
       }
     )
     
