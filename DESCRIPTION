@@ -1,6 +1,6 @@
 Package: cdmetapopR
-Title: Utility functions for CDMetaPOP outputs
-Version: 0.0.1
+Title: Utility Functions for 'CDMetaPOP'
+Version: 1.1.0
 Authors@R: 
     c(person(given = "Dominique", 
     family = "Alò", 
@@ -9,11 +9,14 @@ Authors@R:
     comment = c(ORCID = "0000-0003-0579-4156")),
     person(given = "Casey", 
     family = "Day", 
-    role = c("aut")),
+    role = "aut"),
     person(given = "Allison", 
     family = "Williams", 
-    role = c("aut")))
-Description: This package provides a set of helper functions to launch, analyze, and visualize the output files of CDMetaPOP.
+    role = "aut"),
+    person(given = "Marissa",
+    family = "Roseman",
+    role = "aut"))
+Description: Provides a set of helper functions to launch, analyze, and visualize the output files of 'CDMetaPOP' <https://computationalecologylab.github.io/cdmetapop_web/>.
 Imports: ggplot2,
   R6,
   tidyr,
@@ -30,9 +33,12 @@ License: GPL (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Suggests: 
-    knitr,
-    rmarkdown,
-    testthat (>= 3.0.0)
+  knitr,
+  pkgload,
+  rmarkdown,
+  tidyverse,
+  testthat (>= 3.0.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.0.0
+Language: en-US

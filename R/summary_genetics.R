@@ -157,7 +157,7 @@
 #'
 #' @return A ggplot object with frequency data in `plot$data`.
 #' @examples
-#' ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+#' ex_dir <- system.file("extdata", "Example_dat", package = "cdmetapopR")
 #' allele_frequencies_ind(ex_dir, year = 9)
 #' allele_frequencies_ind(ex_dir, year = 9, jitter = FALSE)
 #' @export
@@ -201,7 +201,7 @@ allele_frequencies_ind <- function(path,
 #'
 #' @return A ggplot object with heterozygosity data in `plot$data`.
 #' @examples
-#' ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+#' ex_dir <- system.file("extdata", "Example_dat", package = "cdmetapopR")
 #' heterozygosity_ind(ex_dir, year = 9)
 #' heterozygosity_ind(ex_dir, year = 9, jitter = FALSE)
 #' @export
@@ -251,7 +251,7 @@ heterozygosity_ind <- function(path,
 #'
 #' @return A ggplot heatmap with pairwise FST data in `plot$data`.
 #' @examples
-#' ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+#' ex_dir <- system.file("extdata", "Example_dat", package = "cdmetapopR")
 #' pairwise_fst_ind(ex_dir, year = 9)
 #' @export
 pairwise_fst_ind <- function(path,

@@ -1,11 +1,17 @@
 ---
 title: "cdmetapopR Vignette"
 subtitle: "Reading, summarizing, customizing, and plotting CDMetaPOP outputs"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Reading, summarizing, customizing, and plotting CDMetaPOP outputs}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: flatly
+    self_contained: true
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
@@ -18,7 +24,8 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 
-library(cdmetapopR)
+pkg_root <- normalizePath(file.path(".."), winslash = "/", mustWork = TRUE)
+pkgload::load_all(pkg_root)
 library(tidyverse)
 ```
 
@@ -464,13 +471,13 @@ and compares batches.
 
 ## Default State Names
 
-```{r summarize-states-default}
+```{r summary-disease-default}
 summary_disease(ex_dir)
 ```
 
 ## Custom State and Scenario Names
 
-```{r summarize-states-custom}
+```{r summary-disease-custom}
 summary_disease(
   ex_dir,
   state_names = c("State 1", "State 2", "State 3"),
@@ -483,7 +490,7 @@ summary_disease(
 Use `cumulative_states` for a state that should be plotted as a running
 total within each Monte Carlo replicate.
 
-```{r summarize-states-cumulative}
+```{r summary-disease-cumulative}
 summary_disease(
   ex_dir,
   state_names = c("State 1", "State 2", "State 3"),
@@ -755,4 +762,14 @@ write_runvars(output_file = "my_new_runvars.csv")
 write_popvars(output_file = "my_new_popvars.csv")
 write_patchvars(output_file = "my_new_patchvars.csv")
 write_classvars(output_file = "my_new_classvars.csv")
+```
+
+# Deprecated Internal Compatibility Function
+
+`locus()` is exported for compatibility with older `gstudio` workflows.
+It is included in the package because the original function is
+deprecated elsewhere.
+
+```{r locus-example}
+locus(c("0", "1"), type = "snp")
 ```

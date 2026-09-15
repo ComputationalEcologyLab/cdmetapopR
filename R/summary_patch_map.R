@@ -43,7 +43,7 @@
 #'
 #' @return A ggplot object with patch-level summary data in `plot$data`.
 #' @examples
-#' ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+#' ex_dir <- system.file("extdata", "Example_dat", package = "cdmetapopR")
 #'
 #' summary_patch_map(ex_dir, years = c(0, 5, 9), crs = 5070)
 #' summary_patch_map(ex_dir, years = c(0, 5, 9), states = 1, crs = 5070)

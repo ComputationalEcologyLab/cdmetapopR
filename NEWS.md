@@ -1,19 +1,10 @@
-# Changelog
+# cdmetapopR 1.1.0 (2026-08-18)
 
-All notable changes to this project will be documented in this file.
+* Added `make_diseasevars()` to generate a DiseaseVars.csv template via a Shiny app, for configuring the new CDMetaPOP disease module.
+* `make_patchvars()`: added disease-related columns (`disease_file`, `Env Res`, and disease-defense-allele transition columns `dd1_*`/`dd2_*`) and a new "Disease" tab in the Shiny UI. Changed default values of `K` and `N0` from 0 to 100.
+* `make_popvars()`: added a "Disease" tab and `implement_disease` control, determining where in CDMetaPOP's life cycle the disease module is applied.
+* `make_runvars()`: added `ncores` option to the Shiny UI and output template.
 
-## [Unreleased]
-- Removed deprecated functions `alleles_by_year()`, `dispersal()`,
-  `hets_plot()`, `read.cdmetapop()`, `separate_column()`,
-  `size_age_class()`, and `unite_column()`.
-## [0.0.1-dev] - 2024-11-20
+# cdmetapopR 1.0.0
 
-## [0.0.1-dev] - 2024-11-19
-### Added
-- Added a new function `age_structure_proportions()` to calculate the proportions of age structure from a given ind file
-
-## [0.0.1-dev] - 2024-11-19
-### Changed name versioning to -dev and to a more conventional numbering system of 3 numbers. 
-### 1. Major change: major redesign; 
-### 2. Minor change: new features (such added function); 
-### 3. Patch: bug fixes or small changes
+* Initial CRAN submission.

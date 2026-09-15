@@ -4,31 +4,29 @@
 \alias{cdmetapop_to_gene}
 \title{Convert CDMetaPOP data to GENEPOP or GENALEX format}
 \usage{
-cdmetapop_to_gene(path, format = "genepop")
+cdmetapop_to_gene(path, format = "genepop", output_dir = tempdir())
 }
 \arguments{
 \item{path}{Character string; the file path to the \code{CDMetaPOP} CSV file.}
 
-\item{format}{A character string indicating the desired output format: "genepop" or "genalex". Genepop is default.}
+\item{format}{A character string indicating the desired output format:
+"genepop" or "genalex". Genepop is default.}
+
+\item{output_dir}{Character string; the directory where output files
+will be written. Defaults to tempdir().}
 }
 \value{
-The function writes the GENEPOP or GENALEX formatted data into the working directory.
+The function writes the GENEPOP or GENALEX formatted data to the
+specified output directory.
 }
 \description{
-This function reads a \code{CDMetaPOP} CSV file, processes the genetic loci, and converts the data into \code{GENEPOP} or \code{GENALEX} formats.
+This function reads a \code{CDMetaPOP} CSV file, processes the genetic loci,
+and converts the data into \code{GENEPOP} or \code{GENALEX} formats.
 }
 \examples{
-\dontrun{
-# Convert a CDMetaPOP file to GENEPOP format
-cdmetapop_to_gene(
-  path = "your_path/ind1.csv",
-  format = "genepop"
-)
-
-# Convert a CDMetaPOP file to GENALEX format
-cdmetapop_to_gene(
-  path = "your_path/ind1.csv",
-  format = "genalex"
-)
-}
+path <- system.file("extdata", "Example_dat",
+  "run0batch0mc0species0", "ind9.csv",
+  package = "cdmetapopR")
+cdmetapop_to_gene(path = path, format = "genepop")
+cdmetapop_to_gene(path = path, format = "genalex")
 }

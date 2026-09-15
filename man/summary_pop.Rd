@@ -61,7 +61,7 @@ a data frame, one file path, multiple file paths, or a CDMetaPOP output
 directory containing \code{summary_popAllTime.csv} files.
 }
 \examples{
-ex_dir <- system.file("extdata", "Adaptive_Run_08", package = "cdmetapopR")
+ex_dir <- system.file("extdata", "Example_dat", package = "cdmetapopR")
 
 summary_pop(ex_dir, type = "N_initial")
 summary_pop(ex_dir, type = "sex")
