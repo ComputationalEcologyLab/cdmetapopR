@@ -919,9 +919,7 @@
 #'   `[0, 1]`, or `"N"` (ignore).
 #' @param habitat_out,habitat_back Habitat quality values for the
 #'   plasticity module.
-#' @param fitness_AA,fitness_Aa,fitness_aa,fitness_BB,fitness_Bb,fitness_bb,
-#'   fitness_AABB,fitness_AaBB,fitness_aaBB,fitness_AABb,fitness_AaBb,
-#'   fitness_aaBb,fitness_AAbb,fitness_Aabb,fitness_aabb Genotype-specific
+#' @param fitness_AA,fitness_Aa,fitness_aa,fitness_BB,fitness_Bb,fitness_bb,fitness_AABB,fitness_AaBB,fitness_aaBB,fitness_AABb,fitness_AaBb,fitness_aaBb,fitness_AAbb,fitness_Aabb,fitness_aabb Genotype-specific
 #'   fitness/selection values; format depends on `PopVars$cdevolveans`
 #'   (not yet implemented), so validation here is permissive.
 #' @param comp_coef Lotka-Volterra competition coefficient(s) for
