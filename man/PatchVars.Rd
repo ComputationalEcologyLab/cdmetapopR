@@ -57,7 +57,8 @@ PatchVars(
   fitness_Aabb = rep(0, 7),
   fitness_aabb = rep(0, 7),
   comp_coef = rep("0.5;0.1", 7),
-  resolve_class_vars = TRUE
+  resolve_class_vars = TRUE,
+  path = NULL
 )
 }
 \arguments{
@@ -74,7 +75,7 @@ to a particular region; reported in output files. Does not support
 \code{|} (a one-time identifier, not a value that changes over a run).}
 
 \item{k, k_stdev}{Carrying capacity and its annual standard deviation. \code{0}
-means individuals cannot move into the patch.}
+means individuals cannot move into the patch. A new value with SD is drawn each year of the simulation.}
 
 \item{n0}{Number of individuals to initialize the patch at year 0.}
 
@@ -90,9 +91,9 @@ multiple allele-frequency files may be \verb{;}-separated, but the
 (never \verb{;}-joined). E.g. \code{"f1.csv;f2.csv|random"} is valid;
 \code{"random;f1.csv"} is not.}
 
-\item{class_vars}{A \code{\link[=ClassVars]{ClassVars()}} object, a character path/object-name
-string (\verb{;}-separated for multiple), or a list of either for multiple
-timepoints -- see Details for the full \code{|}/object-resolution behavior.}
+\item{class_vars}{A \code{\link[=ClassVars]{ClassVars()}} object, filepath, or object-name
+string (\verb{;}-separated for multiple and '"|"' -separated for temporal variation).
+See Details for more information.}
 
 \item{mortality_out, mortality_back, mortality_eggs}{Density-independent
 mortality \verb{[0, 1]}, \code{"N"} (no patch-level mortality), or \code{"E"}
@@ -100,13 +101,13 @@ mortality \verb{[0, 1]}, \code{"N"} (no patch-level mortality), or \code{"E"}
 
 \item{mortality_out_stdev, mortality_back_stdev, mortality_eggs_stdev}{Standard deviation for the above; numeric, \code{"N"}, or \code{"E"}.}
 
-\item{migration_out_prob}{Emigration probability \verb{[0, 1]}.}
+\item{migration_out_prob}{Emigration probability \verb{[0, 1]}, multiplied by the corresponding value in ClassVars.}
 
 \item{set_migration}{\code{"Y"} or \code{"N"}: whether a migrant individual stays a
 migrant with probability 1.}
 
 \item{migration_back_prob, straying_prob, dispersal_prob}{Movement
-probabilities \verb{[0, 1]}.}
+probabilities \verb{[0, 1]}, multiplied by the corresponding values in ClassVars.}
 
 \item{growth_temp_out, growth_temp_back}{Temperature values influencing
 body size growth; numeric or \code{"N"} (turn off).}
@@ -134,13 +135,20 @@ fitness/selection values; format depends on \code{PopVars$cdevolveans}
 \item{comp_coef}{Lotka-Volterra competition coefficient(s) for
 multispecies applications, \verb{;}-separated if more than 2 species.}
 
-\item{resolve_class_vars}{Whether \code{class_vars} character entries should
-be resolved against \code{ClassVars} objects in \code{.GlobalEnv} by name (see
-Details). Defaults to \code{TRUE}. Set to \code{FALSE} when every \code{class_vars}
-value is known to already be a literal path -- e.g.
-\code{read_cdmetapop(..., type = "PatchVars")} does this automatically,
-since a value read from an existing csv is necessarily a path, never
-a reference to an object in the current R session.}
+\item{resolve_class_vars}{If TRUE, strings entered for class_vars will be
+checked against the global environment for ClassVars objects of the same
+name (primarily helpful for temporal changes e.g.,
+"classvars1|classvars2"). If FALSE, class_vars entries must be ClassVars
+objects or they will be treated as filepaths.}
+
+\item{path}{Optional path to an existing PatchVars csv file. If supplied,
+the object is built from that file, with the patches taken from its rows
+(so \code{patch_id} cannot also be given). Any column arguments supplied
+alongside \code{path} override the file's values, validated exactly as a
+later \code{$} assignment would be. Values read from the file are always
+treated as literal file paths, so \code{resolve_class_vars} applies only when
+\code{path} is \code{NULL}. With no overrides, this is equivalent to
+\code{read_cdmetapop(path, type = "PatchVars")}.}
 }
 \value{
 An R6 \code{PatchVars} object.
@@ -150,7 +158,8 @@ Constructs an R6 object representing a CDMetaPOP \code{PatchVars.csv} input
 file: one row per patch, with one column per patch-level parameter
 (carrying capacity, mortality, migration, growth, fitness, etc.). Columns
 are edited as a whole after construction via \code{$}, e.g.
-\code{mypatchvars$k <- c(300, 300, 500)}.
+\code{mypatchvars$k <- c(300, 300, 500)}. **To build the PatchVars object from an
+existing PatchVars csv file, use the 'path' argument or the read_cdmetapop() function.
 }
 \details{
 Any column argument left as \code{NULL} defaults to the corresponding values
@@ -158,12 +167,12 @@ in \code{example_files/patchvars/PatchVarsS1.csv}, matched to each requested
 patch (recycling the patch-7 default, with a warning, for patches beyond
 what that file defines).
 
-\strong{Temporal changes via \code{|}:} CDMetaPOP lets most PatchVars columns
-specify a value that changes partway through a run (its \code{cdclimate}
-mechanism), by giving multiple values separated by \code{|} in one cell, e.g.
+Temporal changes via \code{"|"}: CDMetaPOP lets most PatchVars columns
+specify a value that changes based on values in the RunVars object (\code{cdclimate}
+module), by giving multiple values separated by \code{|} in one cell, e.g.
 \code{mypatchvars$mortality_out <- "0|0.2|0.5"} (mortality is \code{0} at first,
-then \code{0.2}, then \code{0.5}, switching at the timesteps configured elsewhere).
-This applies to every column \strong{except} \code{x}, \code{y}, \code{patch_id}, and
+then \code{0.2}, then \code{0.5}, switching at the timesteps configured in RunVars).
+This applies to every column except \code{x}, \code{y}, \code{patch_id}, and
 \code{subpatch_no}. Because this is a single delimited \emph{string}, not a
 vector, it must always be entered as one quoted character value (e.g.
 \code{"0|0.2|0.5"}), even for columns that are otherwise numeric -- assigning
@@ -172,20 +181,18 @@ as three different patches' worth of values, not one patch's value over
 time. Each \code{|}-separated segment is validated independently against the
 column's usual rule (numeric bounds, \code{"N"}/\code{"E"}, etc.).
 
-\strong{\code{class_vars} and \code{genes_initialize} are also entered as strings,}
-for consistency with every other column's \code{|} mechanism above, even
+\code{class_vars} and \code{genes_initialize} may also be entered as strings,
+for consistency with every other column's \code{"|"} mechanism above, even
 though they conceptually reference other R objects/files rather than
 plain values. For \code{class_vars} specifically: each \code{|}-separated segment
 of the string is checked against the name of every \code{ClassVars} object
 that exists in the global environment; if one matches, that \emph{object} is
-used (and kept as a live reference internally, so later edits to it are
-still reflected when this \code{PatchVars} object is eventually written) --
-otherwise the segment is treated as a literal file path, same as
+used, otherwise the segment is treated as a literal file path, same as
 \code{genes_initialize} always is. For example, \code{mypatchvars$class_vars <- "cv_year0|cv_year5"} will use the actual \code{cv_year0}/\code{cv_year5} objects
 if they exist as that-named variables in your global environment, or
 otherwise treat those strings as paths to existing ClassVars csv files.
 Building your \code{ClassVars} objects inside a function rather than at the
-top level of your script will NOT be found this way (only the global
+global level will not be found this way (only the global
 environment is searched, deliberately -- see
 \code{.pv_resolve_class_vars_segment()}); in that case, assign the actual
 object(s) directly instead (e.g. \code{mypatchvars$class_vars <- cv_year0},
@@ -216,4 +223,9 @@ mypatchvars$k <- c(300, 300, 500)
 mypatchvars$add_row()
 # or equivalently:
 add_rows(mypatchvars)
+
+# Build from an existing PatchVars csv, overriding one column:
+\dontrun{
+mypatchvars <- PatchVars(path = "patchvars/PatchVarsS1.csv", k = 500)
+}
 }

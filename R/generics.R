@@ -15,7 +15,7 @@
 
 #' Add one or more rows to a cdmetapopR input-file object
 #'
-#' Generic function dispatching on the class of `x` -- a [ClassVars()],
+#' Generic function used to add rows to a [ClassVars()],
 #' [PatchVars()], [PopVars()], or [RunVars()] object. Adds `n` new rows,
 #' each initialized as a copy of the current last row; edit the new row(s)
 #' afterward via the column active bindings (e.g.

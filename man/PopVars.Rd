@@ -100,20 +100,20 @@ PopVars(
   egg_delay = c("0", "0", "0", "0"),
   egg_add = c("mating", "mating", "mating", "mating"),
   implement_disease = c("N", "N", "N", "N"),
-  resolve_xyfilename = TRUE
+  resolve_xyfilename = TRUE,
+  path = NULL
 )
 }
 \arguments{
 \item{n_batches}{Number of independent batches. Defaults to 4,
-matching \code{PopVars.csv}. Cannot be changed after construction (use
-\code{add_row()} or \code{\link[=add_rows]{add_rows()}} instead).}
+matching \code{PopVars.csv}. Can be changed after construction using
+\code{add_row()} or \code{\link[=add_rows]{add_rows()}}.}
 
-\item{xyfilename}{A \code{\link[=PatchVars]{PatchVars()}} object, object-name/path string, for
+\item{xyfilename}{A \code{\link[=PatchVars]{PatchVars()}} object, object name, or path string, for
 each batch.}
 
-\item{mate_cdmat, migrateout_cdmat, migrateback_cdmat, stray_cdmat, disperseLocal_cdmat}{A cost-distance/probability \code{matrix} (single value only) or a file path
-(\code{|}/\code{~}-delimited for temporal/per-sex), or \code{"N"} for
-\code{migrateout_cdmat} (skip the emigration module). See Details.}
+\item{mate_cdmat, migrateout_cdmat, migrateback_cdmat, stray_cdmat, disperseLocal_cdmat}{A cost-distance/probability \code{matrix} object (single variable only) or a file path
+(\code{|}/\code{~}-delimited for temporal/per-sex). See Details.}
 
 \item{matemoveno, migratemoveOutno, migratemoveBackno, StrayBackno, disperseLocalno}{Movement function code, \code{1}-\code{11} (see manual for the function each code
 selects).}
@@ -172,7 +172,9 @@ or \code{"pow"}.}
 
 \item{startGenes}{Time unit genetic exchange begins.}
 
-\item{loci, alleles}{Number of loci (>= 2); number of starting alleles per
+\item{loci}{Number of loci (>= 2)}
+
+\item{alleles}{number of starting alleles per
 locus (>= 2), or \code{:}-separated per-locus counts (e.g. \code{"2:5:3"}).}
 
 \item{muterate}{Allele mutation rate, \verb{[0, 1]}.}
@@ -187,8 +189,7 @@ the full grammar, e.g. \code{"N"}, \code{"1"}, \code{"M"}, \code{"Hindex_Gauss_.
 
 \item{startSelection}{Time unit selection begins.}
 
-\item{implementSelection}{\code{:}-joined timing keyword(s), e.g.
-\code{"Out:Back"}.}
+\item{implementSelection}{Timing of selection e.g., 'Out', 'Back', 'Eggs', 'Out:Back:Eggs', etc.}
 
 \item{betaFile_selection}{Polygenic-selection beta-value file path, or
 \code{"N"}.}
@@ -201,8 +202,7 @@ trigger value and behavioral response threshold.}
 
 \item{startPlasticgene}{Time unit the plastic process begins.}
 
-\item{implementPlasticgene}{\code{:}-joined timing keyword(s), e.g.
-\code{"Back"}.}
+\item{implementPlasticgene}{Timing of plastic gene implementation ('Out', 'Back', or 'Out:Back')}
 
 \item{growth_option}{Growth function: \code{"N"}, \code{"known"}, \code{"vonB"},
 \code{"temperature"}, \code{"temperature_hindex"}, or \code{"bioenergetics"}.}
@@ -213,10 +213,10 @@ genotype-linked values (\code{"Loo_1;Loo_2"}).}
 \item{growth_R0, growth_temp_max, growth_temp_CV, growth_temp_t0}{Remaining
 growth function parameters.}
 
-\item{popmodel}{Population growth model: \code{"N"}, \code{"logistic_out"},
-\code{"logistic_back"}, \code{"packing"}, \code{"packing_1"}, or \code{"anadromy"}.}
+\item{popmodel}{Population growth model: \code{"N"}(exponential), \code{"logistic_out"},
+\code{"logistic_back"}, \code{"packing"}, or \code{"anadromy"}.}
 
-\item{popmodel_par1}{Parameter for the \code{"packing"}/\code{"packing_1"} models.}
+\item{popmodel_par1}{Parameter for the \code{"packing"} models.}
 
 \item{correlation_matrix}{Patch-level correlation matrix: a \code{matrix}
 (single value), a file path, or \code{"N"}. A matrix field -- see Details.}
@@ -233,11 +233,20 @@ gestation/emergence.}
 \item{implement_disease}{Disease module timing: \code{"N"}, \code{"Back"},
 \code{"Out"}, or \code{"Both"}.}
 
-\item{resolve_xyfilename}{Whether \code{xyfilename} character entries should
-be resolved against \code{PatchVars} objects in \code{.GlobalEnv} by name (see
-Details). Defaults to \code{TRUE}; set to \code{FALSE} when every \code{xyfilename}
-value is known to already be a literal path (e.g.
-\code{read_cdmetapop(..., type = "PopVars")} does this automatically).}
+\item{resolve_xyfilename}{If TRUE, strings entered for xyfilename will be
+checked against the global environment for PatchVars objects of the same
+name (primarily helpful for temporal changes e.g.,
+"patchvars1|patchvars2"). If FALSE, xyfilename entries must be PatchVars
+objects or they will be treated as filepaths.}
+
+\item{path}{Optional path to an existing PopVars csv file. If supplied, the
+object is built from that file, with the number of batches taken from its
+row count (so \code{n_batches} cannot also be given). Any column arguments
+supplied alongside \code{path} override the file's values, validated exactly
+as a later \code{$} assignment would be. Values read from the file are always
+treated as literal file paths, so \code{resolve_xyfilename} applies only when
+\code{path} is \code{NULL}. With no overrides, this is equivalent to
+\code{read_cdmetapop(path, type = "PopVars")}.}
 }
 \value{
 An R6 \code{PopVars} object.
@@ -245,12 +254,12 @@ An R6 \code{PopVars} object.
 \description{
 Constructs an R6 object representing a CDMetaPOP \code{PopVars.csv} input
 file. Unlike \code{\link[=ClassVars]{ClassVars()}} (rows = age classes) and \code{\link[=PatchVars]{PatchVars()}} (rows =
-patches), each row of a \code{PopVars} object is its own independent "batch"
--- CDMetaPOP runs each \code{RunVars} row (a "run") x each \code{PopVars} row (a
+patches), each row of a \code{PopVars} object is its own independent "batch" simulation set.
+CDMetaPOP runs each \code{RunVars} row (a "run") x each \code{PopVars} row (a
 "batch") as a separate simulation (see the user manual's run-parameters
-section). Despite that, columns are still edited as a whole via \code{$}, e.g.
-\code{mypopvars$matemoveno <- c(6, 6, 4, 6)}, for consistency with
-\code{ClassVars}/\code{PatchVars}.
+section). Columns may be edited as a whole via \code{$}, e.g.
+\code{mypopvars$matemoveno <- c(6, 6, 4, 6)}. **To build the PopVars object from an
+existing PopVars csv file, use the 'path' argument or the read_cdmetapop() function.
 }
 \details{
 Any column argument left unsupplied defaults to the corresponding values
@@ -258,19 +267,11 @@ in \code{example_files/popvars/PopVars.csv}, matched to each requested
 batch (recycling the row-4 default, with a warning, for rows
 beyond what that file defines).
 
-\strong{CDMetaPOP reads \code{PopVars.csv} headers as dictionary keys}, unlike
-\code{ClassVars.csv}/\code{PatchVars.csv} (column \emph{order} only) -- so every column
+CDMetaPOP reads \code{PopVars.csv} headers as dictionary keys, so every column
 name below is used verbatim as both the data frame's column name and this
-function's argument/active-binding name, with no separate human-readable
-header text. All manual-documented columns are included, even the
-disease-related ones (\code{egg_add}, \code{implement_disease}). \code{cdinfect}/
-\code{transmissionprob} were present in the canonical example file but are
-deliberately excluded -- confirmed stale leftovers; CDMetaPOP runs fine
-without them.
+function's argument name.
 
-\strong{Delimiters:} most columns support CDMetaPOP's \code{|} (temporal change,
-see \code{\link[=PatchVars]{PatchVars()}}'s Details) and/or \code{~} (per-sex, see \code{\link[=ClassVars]{ClassVars()}}'s
-Details) mechanisms, per the user manual's \verb{†}/\verb{**} markers respectively.
+Delimiters: most columns support CDMetaPOP's \code{|} (temporal change) and/or \code{~} (per-sex) mechanisms.
 A few fields use other manual-documented delimiters for a specific
 purpose: \code{alleles} and \code{implementSelection}/\code{implementPlasticgene} use
 \code{:} (per-locus allele counts; ':'-joined timing keywords, respectively),
@@ -278,26 +279,22 @@ and \code{growth_Loo} uses \verb{;} for its two genotype-linked values
 (\verb{Loo_1;Loo_2}) -- see \code{.popv_rules}' doc comment in class_popvars.R for
 the full per-field delimiter design and known open questions.
 
-\strong{\code{xyfilename} (nested PatchVars reference)} accepts a \code{\link[=PatchVars]{PatchVars()}}
+\code{xyfilename} (PatchVars.csv file pointer) accepts a \code{\link[=PatchVars]{PatchVars()}}
 object directly, a character path, or the name of a \code{PatchVars} object in
 \code{.GlobalEnv} (see \code{\link[=PatchVars]{PatchVars()}}'s Details for the identical \code{class_vars}
 name-resolution mechanism and its caveats).
 
-\strong{Matrix fields} (\code{mate_cdmat}, \code{migrateout_cdmat}, \code{migrateback_cdmat},
+Matrix fields (\code{mate_cdmat}, \code{migrateout_cdmat}, \code{migrateback_cdmat},
 \code{stray_cdmat}, \code{disperseLocal_cdmat}, \code{correlation_matrix},
 \code{subpopmort_file}) each accept, per batch, ONE of: a single raw R
-\code{matrix}; a file path; or (for \code{migrateout_cdmat}, \code{correlation_matrix},
-\code{subpopmort_file}) the literal \code{"N"}. \strong{A raw matrix may only be a single
-value} -- to vary a matrix over time (the \code{|} cdclimate mechanism) or by
+\code{matrix}; a file path; or sometimes \code{"N"}. When providin a matrix as an R variable, the cdclimate and per-sex options are not available.
+To vary a matrix over time (the \code{|} cdclimate mechanism) or by
 sex (\code{~}), you must supply file \emph{paths}, not matrices (e.g.
-\code{pv$mate_cdmat <- "surface0.csv|surface5.csv"}). Supplying a matrix is an
-opt-in convenience for the common single-surface case; the field defaults
-remain the canonical csv paths, so a no-argument \code{PopVars()} is valid.
-When a matrix is supplied, it is serialized to a csv by
-\code{\link[=launch_cdmetapop]{launch_cdmetapop()}} (named after your R variable; see the package's file
-organization documentation), not by you. If you want control over a
-matrix file's location/format, supply a path and write that file
-yourself.
+\code{pv$mate_cdmat <- "surface0.csv|surface5.csv"}).
+When a matrix is supplied, it is written to a csv by
+\code{\link[=launch_cdmetapop]{launch_cdmetapop()}} (named after the R variable; see the package's file
+organization documentation). If you want control over a
+matrix file's location/format, supply a path and provide the file separately.
 }
 \examples{
 # Default 4-batch object, matching PopVars.csv:
@@ -313,4 +310,9 @@ mypopvars$matemoveno <- c(6, 6, 4, 6)
 mypopvars$add_row()
 # or equivalently:
 add_rows(mypopvars)
+
+# Build from an existing PopVars csv, overriding one column:
+\dontrun{
+mypopvars <- PopVars(path = "popvars/PopVars.csv", matemoveno = 6)
+}
 }

@@ -15,7 +15,7 @@
 # Env Res, DiseaseDefense1_CC/Cc/cc, DiseaseDefense1_DD/Dd/dd) appended after
 # comp_coef. These are intentionally NOT included here, since they are
 # absent from PatchVarsS1.csv (the basic, non-disease canonical example this
-# package's other defaults are drawn from); add them as a follow-up task if
+# package's other defaults are drawn from); will add them as a follow-up task as
 # disease-model support is needed.
 
 # Canonical column headers, in CDMetaPOP's expected order. "PatchID" is
@@ -823,7 +823,8 @@
 #' file: one row per patch, with one column per patch-level parameter
 #' (carrying capacity, mortality, migration, growth, fitness, etc.). Columns
 #' are edited as a whole after construction via `$`, e.g.
-#' `mypatchvars$k <- c(300, 300, 500)`.
+#' `mypatchvars$k <- c(300, 300, 500)`. **To build the PatchVars object from an
+#' existing PatchVars csv file, use the 'path' argument or the read_cdmetapop() function.
 #'
 #' Any column argument left as `NULL` defaults to the corresponding values
 #' in `example_files/patchvars/PatchVarsS1.csv`, matched to each requested
@@ -831,12 +832,12 @@
 #' what that file defines).
 #'
 #' @details
-#' **Temporal changes via `|`:** CDMetaPOP lets most PatchVars columns
-#' specify a value that changes partway through a run (its `cdclimate`
-#' mechanism), by giving multiple values separated by `|` in one cell, e.g.
+#' Temporal changes via `"|"`: CDMetaPOP lets most PatchVars columns
+#' specify a value that changes based on values in the RunVars object (`cdclimate`
+#' module), by giving multiple values separated by `|` in one cell, e.g.
 #' `mypatchvars$mortality_out <- "0|0.2|0.5"` (mortality is `0` at first,
-#' then `0.2`, then `0.5`, switching at the timesteps configured elsewhere).
-#' This applies to every column **except** `x`, `y`, `patch_id`, and
+#' then `0.2`, then `0.5`, switching at the timesteps configured in RunVars).
+#' This applies to every column except `x`, `y`, `patch_id`, and
 #' `subpatch_no`. Because this is a single delimited *string*, not a
 #' vector, it must always be entered as one quoted character value (e.g.
 #' `"0|0.2|0.5"`), even for columns that are otherwise numeric -- assigning
@@ -845,21 +846,19 @@
 #' time. Each `|`-separated segment is validated independently against the
 #' column's usual rule (numeric bounds, `"N"`/`"E"`, etc.).
 #'
-#' **`class_vars` and `genes_initialize` are also entered as strings,**
-#' for consistency with every other column's `|` mechanism above, even
+#' `class_vars` and `genes_initialize` may also be entered as strings,
+#' for consistency with every other column's `"|"` mechanism above, even
 #' though they conceptually reference other R objects/files rather than
 #' plain values. For `class_vars` specifically: each `|`-separated segment
 #' of the string is checked against the name of every `ClassVars` object
 #' that exists in the global environment; if one matches, that *object* is
-#' used (and kept as a live reference internally, so later edits to it are
-#' still reflected when this `PatchVars` object is eventually written) --
-#' otherwise the segment is treated as a literal file path, same as
+#' used, otherwise the segment is treated as a literal file path, same as
 #' `genes_initialize` always is. For example, `mypatchvars$class_vars <-
 #' "cv_year0|cv_year5"` will use the actual `cv_year0`/`cv_year5` objects
 #' if they exist as that-named variables in your global environment, or
 #' otherwise treat those strings as paths to existing ClassVars csv files.
 #' Building your `ClassVars` objects inside a function rather than at the
-#' top level of your script will NOT be found this way (only the global
+#' global level will not be found this way (only the global
 #' environment is searched, deliberately -- see
 #' `.pv_resolve_class_vars_segment()`); in that case, assign the actual
 #' object(s) directly instead (e.g. `mypatchvars$class_vars <- cv_year0`,
@@ -883,7 +882,7 @@
 #'   to a particular region; reported in output files. Does not support
 #'   `|` (a one-time identifier, not a value that changes over a run).
 #' @param k,k_stdev Carrying capacity and its annual standard deviation. `0`
-#'   means individuals cannot move into the patch.
+#'   means individuals cannot move into the patch. A new value with SD is drawn each year of the simulation.
 #' @param n0 Number of individuals to initialize the patch at year 0.
 #' @param natal_grounds,migration_grounds `0`/`1` flags for whether
 #'   individuals may occupy the patch at natal grounds ("back") or
@@ -895,19 +894,19 @@
 #'   `"random"`/`"random_var"` keywords must each appear alone in a group
 #'   (never `;`-joined). E.g. `"f1.csv;f2.csv|random"` is valid;
 #'   `"random;f1.csv"` is not.
-#' @param class_vars A [ClassVars()] object, a character path/object-name
-#'   string (`;`-separated for multiple), or a list of either for multiple
-#'   timepoints -- see Details for the full `|`/object-resolution behavior.
+#' @param class_vars A [ClassVars()] object, filepath, or object-name
+#'   string (`;`-separated for multiple and '"|"' -separated for temporal variation).
+#'   See Details for more information.
 #' @param mortality_out,mortality_back,mortality_eggs Density-independent
 #'   mortality `[0, 1]`, `"N"` (no patch-level mortality), or `"E"`
 #'   (eradication override).
 #' @param mortality_out_stdev,mortality_back_stdev,mortality_eggs_stdev
 #'   Standard deviation for the above; numeric, `"N"`, or `"E"`.
-#' @param migration_out_prob Emigration probability `[0, 1]`.
+#' @param migration_out_prob Emigration probability `[0, 1]`, multiplied by the corresponding value in ClassVars.
 #' @param set_migration `"Y"` or `"N"`: whether a migrant individual stays a
 #'   migrant with probability 1.
 #' @param migration_back_prob,straying_prob,dispersal_prob Movement
-#'   probabilities `[0, 1]`.
+#'   probabilities `[0, 1]`, multiplied by the corresponding values in ClassVars.
 #' @param growth_temp_out,growth_temp_back Temperature values influencing
 #'   body size growth; numeric or `"N"` (turn off).
 #' @param growth_temp_out_stdev,growth_temp_back_stdev Standard deviation
@@ -927,13 +926,19 @@
 #'   (not yet implemented), so validation here is permissive.
 #' @param comp_coef Lotka-Volterra competition coefficient(s) for
 #'   multispecies applications, `;`-separated if more than 2 species.
-#' @param resolve_class_vars Whether `class_vars` character entries should
-#'   be resolved against `ClassVars` objects in `.GlobalEnv` by name (see
-#'   Details). Defaults to `TRUE`. Set to `FALSE` when every `class_vars`
-#'   value is known to already be a literal path -- e.g.
-#'   `read_cdmetapop(..., type = "PatchVars")` does this automatically,
-#'   since a value read from an existing csv is necessarily a path, never
-#'   a reference to an object in the current R session.
+#' @param resolve_class_vars If TRUE, strings entered for class_vars will be
+#'   checked against the global environment for ClassVars objects of the same
+#'   name (primarily helpful for temporal changes e.g.,
+#'   "classvars1|classvars2"). If FALSE, class_vars entries must be ClassVars
+#'   objects or they will be treated as filepaths.
+#' @param path Optional path to an existing PatchVars csv file. If supplied,
+#'   the object is built from that file, with the patches taken from its rows
+#'   (so `patch_id` cannot also be given). Any column arguments supplied
+#'   alongside `path` override the file's values, validated exactly as a
+#'   later `$` assignment would be. Values read from the file are always
+#'   treated as literal file paths, so `resolve_class_vars` applies only when
+#'   `path` is `NULL`. With no overrides, this is equivalent to
+#'   `read_cdmetapop(path, type = "PatchVars")`.
 #'
 #' @return An R6 `PatchVars` object.
 #' @export
@@ -955,6 +960,11 @@
 #' mypatchvars$add_row()
 #' # or equivalently:
 #' add_rows(mypatchvars)
+#'
+#' # Build from an existing PatchVars csv, overriding one column:
+#' \dontrun{
+#' mypatchvars <- PatchVars(path = "patchvars/PatchVarsS1.csv", k = 500)
+#' }
 PatchVars <- function(
 	patch_id = 1:7,
 	x = c(2540470.832, 2536859.926, 2532969.44, 2539041.489, 2535011.582, 2545325.475, 2527429.642),
@@ -996,7 +1006,8 @@ PatchVars <- function(
 	fitness_AABb = rep(0, 7), fitness_AaBb = rep(0, 7), fitness_aaBb = rep(0, 7),
 	fitness_AAbb = rep(0, 7), fitness_Aabb = rep(0, 7), fitness_aabb = rep(0, 7),
 	comp_coef = rep("0.5;0.1", 7),
-	resolve_class_vars = TRUE
+	resolve_class_vars = TRUE,
+	path = NULL
 ) {
 	# See ClassVars()'s wrapper function for why these literal defaults are
 	# forwarded as NULL to .PatchVarsR6$new() when not actually supplied by
@@ -1007,6 +1018,30 @@ PatchVars <- function(
 		!eval(substitute(missing(x), list(x = as.name(field))), envir = this_env)
 	}, logical(1))
 	names(supplied) <- .pv_fields
+
+	# Build from an existing csv: read it (patches taken from the file; values
+	# read from disk are never name-resolved -- see .read_patchvars_csv()),
+	# then apply any explicitly supplied columns as overrides. Overrides go
+	# through the active bindings, so they are validated and recycled exactly
+	# like a later `$` assignment, and quoted object names in them DO resolve.
+	if (!is.null(path)) {
+		if (!missing(patch_id)) {
+			stop("`patch_id` cannot be combined with `path`; the patches are taken from the file.", call. = FALSE)
+		}
+		if (!is.character(path) || length(path) != 1 || is.na(path) || !file.exists(path)) {
+			stop("`path` must be the path to an existing PatchVars csv file.", call. = FALSE)
+		}
+		obj <- .read_patchvars_csv(path)
+		for (field in .pv_fields[supplied]) {
+			obj[[field]] <- get(field, envir = this_env, inherits = FALSE)
+		}
+		return(obj)
+	}
+
+	# A file path passed positionally lands in `patch_id`; point to `path =`.
+	if (is.character(patch_id)) {
+		stop("`patch_id` must be sequential integers starting at 1 (e.g. 1:7). To build a PatchVars object from an existing csv, use `PatchVars(path = ...)`.", call. = FALSE)
+	}
 
 	column_args <- mget(.pv_fields, envir = environment())
 	column_args[!supplied] <- list(NULL)

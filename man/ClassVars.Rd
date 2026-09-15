@@ -28,7 +28,8 @@ ClassVars(
   fecundity_leslie = c(0, 2.5, 10, 11.7, 11.743, 15),
   fecundity_leslie_stdev = rep(0, 6),
   capture_out_prob = rep("N", 6),
-  capture_back_prob = rep("N", 6)
+  capture_back_prob = rep("N", 6),
+  path = NULL
 )
 }
 \arguments{
@@ -61,19 +62,26 @@ probability \verb{[0, 1]}, \code{"N"}, or \code{"~"}-separated per-sex values.}
 deviation for the above; numeric, \code{"N"}, or \code{"~"}-separated.}
 
 \item{migration_out_prob, migration_back_prob, straying_prob, dispersal_prob}{Movement probabilities \verb{[0, 1]}, \code{"N"}, or \code{"~"}-separated per-sex
-values.}
+values, multiplied by the corresponding values in PatchVars.}
 
 \item{maturation}{Probability \verb{[0, 1]} of being/becoming reproductively
-mature; or \code{"N"}; or \code{"~"}-separated per-sex values.}
+mature if sizeans from 'RunVars' = '"N"'; or \code{"N"}; or \code{"~"}-separated per-sex values.}
 
 \item{fecundity_ind, fecundity_ind_stdev}{Mean and standard deviation of
-individual-based fecundity (litter/egg count) per age class.}
+individual-based fecundity (litter/egg count) per age class if sizeans from 'RunVars' = '"N"'.}
 
 \item{fecundity_leslie, fecundity_leslie_stdev}{Mean and standard
 deviation of Leslie-matrix fecundity per age class.}
 
 \item{capture_out_prob, capture_back_prob}{Capture/detection probability
 \verb{[0, 1]}, \code{"N"}, or \code{"~"}-separated per-sex values.}
+
+\item{path}{Optional path to an existing ClassVars csv file. If supplied,
+the object is built from that file, with the age classes taken from its
+rows (so \code{ages} cannot also be given). Any column arguments supplied
+alongside \code{path} override the file's values, validated exactly as a
+later \code{$} assignment would be. With no overrides, this is equivalent to
+\code{read_cdmetapop(path, type = "ClassVars")}.}
 }
 \value{
 An R6 \code{ClassVars} object.
@@ -83,7 +91,8 @@ Constructs an R6 object representing a CDMetaPOP \code{ClassVars.csv} input
 file: one row per age/size class, with one column per class-level
 parameter (mortality, migration, fecundity, etc.). Columns are edited as
 a whole after construction via \code{$}, e.g.
-\code{myclassvars$age_mortality_out <- c(0, 0, 0.5)}.
+\code{myclassvars$age_mortality_out <- c(0, 0, 0.5)}. **To build the ClassVars object from an
+existing ClassVars csv file, use the 'path' argument or the read_cdmetapop() function.
 }
 \details{
 Any column argument left as \code{NULL} defaults to the corresponding values
@@ -105,4 +114,9 @@ myclassvars$age_mortality_out <- c(0, 0, 0.5)
 myclassvars$add_row()
 # or equivalently:
 add_rows(myclassvars)
+
+# Build from an existing ClassVars csv, overriding one column:
+\dontrun{
+myclassvars <- ClassVars(path = "classvars/ClassVars_AS1.csv", maturation = 1)
+}
 }

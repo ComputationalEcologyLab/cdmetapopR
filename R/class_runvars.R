@@ -418,39 +418,34 @@
 #' Create a RunVars object
 #'
 #' Constructs an R6 object representing a CDMetaPOP `RunVars.csv` input file
-#' -- the top of CDMetaPOP's input-file hierarchy. Each row is a separate
+#' -- the top of CDMetaPOP's input-file hierarchy. Each row is a separate simulation
 #' "run", and its `Popvars` field references one or more [PopVars()]
-#' objects/files (one per species). CDMetaPOP executes every run x every
+#' objects/files. CDMetaPOP executes every run x every
 #' `PopVars` batch x every Monte Carlo replicate (`mcruns`) as a separate
-#' simulation. Columns are edited as a whole after construction via `$`,
-#' e.g. `myrunvars$runtime <- c(5, 5, 10)`.
+#' simulation. Columns may be edited as a whole after construction,
+#' e.g. `myrunvars$runtime <- c(5, 5, 10)`.  **To build the PopVars object from an existing PopVars file, 
+#' use the 'path' argument or the read_cdmetapop() function.
 #'
 #' Any column argument left unsupplied defaults to the corresponding values
-#' in `example_files/RunVars.csv`, matched to each requested run (recycling
-#' the row-4 default, with a warning, for runs beyond what that file
-#' defines).
+#' in `example_files/RunVars.csv`, matched to the last row in the example file.
 #'
 #' @details
 #' **CDMetaPOP reads `RunVars.csv` headers as dictionary keys** (like
 #' `PopVars.csv`, unlike `ClassVars.csv`/`PatchVars.csv`), so every column
-#' name below is used verbatim as both the data frame column name and this
-#' function's argument/active-binding name.
+#' name is used verbatim as both the data frame column name and this
+#' function's argument.
 #'
-#' **Delimiters:** `output_years` and `cdclimgentime` support CDMetaPOP's
-#' `|` (multiple values; see [PatchVars()]'s Details for the analogous
-#' temporal-change mechanism). No RunVars field uses `~` or `:`.
+#' **Delimiters:** `output_years` and `cdclimgentime` support temporal variation over time with
+#' `|` (see user manual for more details). 
 #'
 #' **`Popvars` is an object-or-path field:** it accepts a [PopVars()] object
-#' directly, a character path, the name of a `PopVars` object in
-#' `.GlobalEnv` (see [PatchVars()]'s Details for the identical `class_vars`
-#' name-resolution mechanism and its caveats), or -- for a multispecies run
-#' -- several of any of these joined with `;` (e.g.
-#' `"popvars/PopVarsS1.csv;popvars/PopVarsS2.csv"`), or a list of them. Note
-#' `;`, not `|`, is `Popvars`' multi-value separator.
+#' directly, a file path to an existing PopVars.csv file, the name of a `PopVars` object in
+#' `.GlobalEnv`, or, for a multispecies run,
+#'  several of any of these joined with `;` (e.g.
+#' `"popvars/PopVarsS1.csv;popvars/PopVarsS2.csv"`), or a list of them. 
 #'
 #' @param n_runs Number of runs (rows). Defaults to 4, matching
-#'   `RunVars.csv`. Cannot be changed after construction (use `add_row()` or
-#'   [add_rows()] instead).
+#'   `RunVars.csv`. Use add_row() to add runs after construction.
 #' @param Popvars A [PopVars()] object, object-name/path string, or
 #'   `;`-joined/list of several (one per species), for each run.
 #' @param sizecontrol `"Y"` (body size drives size-linked processes) or
@@ -460,8 +455,8 @@
 #' @param mcruns Number of Monte Carlo replicates (positive integer).
 #' @param runtime Simulation run time in generations/years (positive
 #'   integer).
-#' @param output_years Time steps to write output: a single integer (a
-#'   stride, e.g. `2` -> years 0, 2, 4, ...), or exact years `|`-joined
+#' @param output_years Time steps to write output: a single integer 
+#'   (e.g. `2` -> years 0, 2, 4, ...), or exact years joined by '|'
 #'   (e.g. `"0|3|4"`).
 #' @param gridformat Genotype output format: `"cdpop"`, `"general"`,
 #'   `"genalex"`, `"structure"`, or `"genepop"`.
@@ -469,18 +464,25 @@
 #'   output when away from natal grounds).
 #' @param summaryOutput `"Y"`/`"N"`: produce per-patch summary metrics.
 #' @param cdclimgentime CDClimate module switch times: `"0"` (one surface
-#'   throughout), or years `|`-joined (e.g. `"0|5|10"`).
+#'   throughout), or years, delimited with '|' (e.g. `"0|5|10"`).
 #' @param startcomp Year Lotka-Volterra competition begins (non-negative
-#'   integer).
+#'   integer, multispecies runs only).
 #' @param implementcomp When to implement competition: `"Back"`, `"Out"`, or
 #'   `"N"`.
 #' @param ncores Number of cores for parallel Monte Carlo processing
 #'   (positive integer).
-#' @param resolve_popvars Whether `Popvars` character entries should be
-#'   resolved against `PopVars` objects in `.GlobalEnv` by name (see
-#'   Details). Defaults to `TRUE`; set to `FALSE` when every `Popvars` value
-#'   is known to already be a literal path (e.g.
-#'   `read_cdmetapop(..., type = "RunVars")` does this automatically).
+#' @param resolve_popvars If TRUE, strings entered for PopVars will be checked against
+#' the global environment for PopVars objects of the same name (primarily helpful for multispecies structure e.g., 
+#' "popvars1;popvars2"). If FALSE, PopVars entries must be PopVars objects or they will be
+#' treated as filepaths.
+#' @param path Optional path to an existing RunVars csv file. If supplied, the
+#'   object is built from that file, with the number of runs taken from its
+#'   row count (so `n_runs` cannot also be given). Any column arguments
+#'   supplied alongside `path` override the file's values, validated exactly
+#'   as a later `$` assignment would be. Values read from the file are always
+#'   treated as literal file paths, so `resolve_popvars` applies only when
+#'   `path` is `NULL`. With no overrides, this is equivalent to
+#'   `read_cdmetapop(path, type = "RunVars")`.
 #'
 #' @return An R6 `RunVars` object.
 #' @export
@@ -499,6 +501,11 @@
 #' myrunvars$add_row()
 #' # or equivalently:
 #' add_rows(myrunvars)
+#'
+#' # Build from an existing RunVars csv, overriding one column:
+#' \dontrun{
+#' myrunvars <- RunVars(path = "RunVars.csv", runtime = 10)
+#' }
 RunVars <- function(
 	n_runs = 4,
 	Popvars = c("popvars/PopVars.csv", "popvars/PopVars.csv", "popvars/PopVars_IntroducePopulation.csv", "popvars/PopVars_Climate.csv"),
@@ -514,7 +521,8 @@ RunVars <- function(
 	startcomp = c("0", "0", "0", "0"),
 	implementcomp = c("Back", "Back", "Back", "Back"),
 	ncores = c("1", "1", "1", "2"),
-	resolve_popvars = TRUE
+	resolve_popvars = TRUE,
+	path = NULL
 ) {
 	# See ClassVars()'s wrapper function for why these literal defaults are
 	# forwarded as NULL to .RunVarsR6$new() when not actually supplied by
@@ -525,6 +533,31 @@ RunVars <- function(
 		!eval(substitute(missing(x), list(x = as.name(field))), envir = this_env)
 	}, logical(1))
 	names(supplied) <- .rv_fields
+
+	# Build from an existing csv: read it (row count taken from the file;
+	# values read from disk are never name-resolved -- see
+	# .read_runvars_csv()), then apply any explicitly supplied columns as
+	# overrides. Overrides go through the active bindings, so they are
+	# validated and recycled exactly like a later `$` assignment, and quoted
+	# object names in them DO resolve.
+	if (!is.null(path)) {
+		if (!missing(n_runs)) {
+			stop("`n_runs` cannot be combined with `path`; the number of runs is taken from the file.", call. = FALSE)
+		}
+		if (!is.character(path) || length(path) != 1 || is.na(path) || !file.exists(path)) {
+			stop("`path` must be the path to an existing RunVars csv file.", call. = FALSE)
+		}
+		obj <- .read_runvars_csv(path)
+		for (field in .rv_fields[supplied]) {
+			obj[[field]] <- get(field, envir = this_env, inherits = FALSE)
+		}
+		return(obj)
+	}
+
+	# A file path passed positionally lands in `n_runs`; point to `path =`.
+	if (is.character(n_runs)) {
+		stop("`n_runs` must be a single positive integer. To build a RunVars object from an existing csv, use `RunVars(path = ...)`.", call. = FALSE)
+	}
 
 	column_args <- mget(.rv_fields, envir = environment())
 	column_args[!supplied] <- list(NULL)

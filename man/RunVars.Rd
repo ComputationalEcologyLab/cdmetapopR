@@ -20,13 +20,13 @@ RunVars(
   startcomp = c("0", "0", "0", "0"),
   implementcomp = c("Back", "Back", "Back", "Back"),
   ncores = c("1", "1", "1", "2"),
-  resolve_popvars = TRUE
+  resolve_popvars = TRUE,
+  path = NULL
 )
 }
 \arguments{
 \item{n_runs}{Number of runs (rows). Defaults to 4, matching
-\code{RunVars.csv}. Cannot be changed after construction (use \code{add_row()} or
-\code{\link[=add_rows]{add_rows()}} instead).}
+\code{RunVars.csv}. Use add_row() to add runs after construction.}
 
 \item{Popvars}{A \code{\link[=PopVars]{PopVars()}} object, object-name/path string, or
 \verb{;}-joined/list of several (one per species), for each run.}
@@ -42,8 +42,8 @@ RunVars(
 \item{runtime}{Simulation run time in generations/years (positive
 integer).}
 
-\item{output_years}{Time steps to write output: a single integer (a
-stride, e.g. \code{2} -> years 0, 2, 4, ...), or exact years \code{|}-joined
+\item{output_years}{Time steps to write output: a single integer
+(e.g. \code{2} -> years 0, 2, 4, ...), or exact years joined by '|'
 (e.g. \code{"0|3|4"}).}
 
 \item{gridformat}{Genotype output format: \code{"cdpop"}, \code{"general"},
@@ -55,10 +55,10 @@ output when away from natal grounds).}
 \item{summaryOutput}{\code{"Y"}/\code{"N"}: produce per-patch summary metrics.}
 
 \item{cdclimgentime}{CDClimate module switch times: \code{"0"} (one surface
-throughout), or years \code{|}-joined (e.g. \code{"0|5|10"}).}
+throughout), or years, delimited with '|' (e.g. \code{"0|5|10"}).}
 
 \item{startcomp}{Year Lotka-Volterra competition begins (non-negative
-integer).}
+integer, multispecies runs only).}
 
 \item{implementcomp}{When to implement competition: \code{"Back"}, \code{"Out"}, or
 \code{"N"}.}
@@ -66,46 +66,50 @@ integer).}
 \item{ncores}{Number of cores for parallel Monte Carlo processing
 (positive integer).}
 
-\item{resolve_popvars}{Whether \code{Popvars} character entries should be
-resolved against \code{PopVars} objects in \code{.GlobalEnv} by name (see
-Details). Defaults to \code{TRUE}; set to \code{FALSE} when every \code{Popvars} value
-is known to already be a literal path (e.g.
-\code{read_cdmetapop(..., type = "RunVars")} does this automatically).}
+\item{resolve_popvars}{If TRUE, strings entered for PopVars will be checked against
+the global environment for PopVars objects of the same name (primarily helpful for multispecies structure e.g.,
+"popvars1;popvars2"). If FALSE, PopVars entries must be PopVars objects or they will be
+treated as filepaths.}
+
+\item{path}{Optional path to an existing RunVars csv file. If supplied, the
+object is built from that file, with the number of runs taken from its
+row count (so \code{n_runs} cannot also be given). Any column arguments
+supplied alongside \code{path} override the file's values, validated exactly
+as a later \code{$} assignment would be. Values read from the file are always
+treated as literal file paths, so \code{resolve_popvars} applies only when
+\code{path} is \code{NULL}. With no overrides, this is equivalent to
+\code{read_cdmetapop(path, type = "RunVars")}.}
 }
 \value{
 An R6 \code{RunVars} object.
 }
 \description{
 Constructs an R6 object representing a CDMetaPOP \code{RunVars.csv} input file
--- the top of CDMetaPOP's input-file hierarchy. Each row is a separate
+-- the top of CDMetaPOP's input-file hierarchy. Each row is a separate simulation
 "run", and its \code{Popvars} field references one or more \code{\link[=PopVars]{PopVars()}}
-objects/files (one per species). CDMetaPOP executes every run x every
+objects/files. CDMetaPOP executes every run x every
 \code{PopVars} batch x every Monte Carlo replicate (\code{mcruns}) as a separate
-simulation. Columns are edited as a whole after construction via \code{$},
-e.g. \code{myrunvars$runtime <- c(5, 5, 10)}.
+simulation. Columns may be edited as a whole after construction,
+e.g. \code{myrunvars$runtime <- c(5, 5, 10)}.  **To build the PopVars object from an existing PopVars file,
+use the 'path' argument or the read_cdmetapop() function.
 }
 \details{
 Any column argument left unsupplied defaults to the corresponding values
-in \code{example_files/RunVars.csv}, matched to each requested run (recycling
-the row-4 default, with a warning, for runs beyond what that file
-defines).
+in \code{example_files/RunVars.csv}, matched to the last row in the example file.
 
 \strong{CDMetaPOP reads \code{RunVars.csv} headers as dictionary keys} (like
 \code{PopVars.csv}, unlike \code{ClassVars.csv}/\code{PatchVars.csv}), so every column
-name below is used verbatim as both the data frame column name and this
-function's argument/active-binding name.
+name is used verbatim as both the data frame column name and this
+function's argument.
 
-\strong{Delimiters:} \code{output_years} and \code{cdclimgentime} support CDMetaPOP's
-\code{|} (multiple values; see \code{\link[=PatchVars]{PatchVars()}}'s Details for the analogous
-temporal-change mechanism). No RunVars field uses \code{~} or \code{:}.
+\strong{Delimiters:} \code{output_years} and \code{cdclimgentime} support temporal variation over time with
+\code{|} (see user manual for more details).
 
 \strong{\code{Popvars} is an object-or-path field:} it accepts a \code{\link[=PopVars]{PopVars()}} object
-directly, a character path, the name of a \code{PopVars} object in
-\code{.GlobalEnv} (see \code{\link[=PatchVars]{PatchVars()}}'s Details for the identical \code{class_vars}
-name-resolution mechanism and its caveats), or -- for a multispecies run
--- several of any of these joined with \verb{;} (e.g.
-\code{"popvars/PopVarsS1.csv;popvars/PopVarsS2.csv"}), or a list of them. Note
-\verb{;}, not \code{|}, is \code{Popvars}' multi-value separator.
+directly, a file path to an existing PopVars.csv file, the name of a \code{PopVars} object in
+\code{.GlobalEnv}, or, for a multispecies run,
+several of any of these joined with \verb{;} (e.g.
+\code{"popvars/PopVarsS1.csv;popvars/PopVarsS2.csv"}), or a list of them.
 }
 \examples{
 # Default 4-run object, matching RunVars.csv:
@@ -121,4 +125,9 @@ myrunvars$runtime <- c(5, 5, 10, 10)
 myrunvars$add_row()
 # or equivalently:
 add_rows(myrunvars)
+
+# Build from an existing RunVars csv, overriding one column:
+\dontrun{
+myrunvars <- RunVars(path = "RunVars.csv", runtime = 10)
+}
 }

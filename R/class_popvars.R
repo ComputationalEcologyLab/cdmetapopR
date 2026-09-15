@@ -3,18 +3,15 @@
 # A PopVars.csv file holds one row per species-level parameter set -- but
 # unlike ClassVars (rows = age classes of ONE simulation) and PatchVars
 # (rows = patches of ONE simulation), each PopVars row is its OWN
-# independent "batch" (confirmed against CDMetaPOP/example_files/
-# popvars/PopVars.csv, whose 4 rows each point at a different combination of
-# PatchVars file / parameter values -- see the user manual's Run Parameters
-# section: "each line in the PopVars file corresponds to a separate 'batch'").
+# independent "batch" simulation.
 # The matching RunVars-level concept is a "run" (each RunVars row); the
 # argument names follow that vocabulary -- PopVars() takes `n_batches`,
-# RunVars() takes `n_runs`. Despite that different semantic, the
-# column-active-binding pattern from ClassVars/PatchVars is kept here for
-# consistency -- `mypopvars$matemoveno <- c(6, 6, 4, 6)` edits all 4
+# RunVars() takes `n_runs`. 
+#
+# `mypopvars$matemoveno <- c(6, 6, 4, 6)` edits all 4
 # batches' values at once.
 #
-# CRITICAL DEVIATION from ClassVars/PatchVars: CDMetaPOP reads PopVars.csv
+# Deviation from ClassVars/PatchVars: CDMetaPOP reads PopVars.csv
 # headers as dictionary KEYS, not just column order -- so (a) every column
 # documented in the user manual must be present and (b) header text must match exactly.
 # Every PopVars.csv header is a valid R name with no
@@ -24,10 +21,9 @@
 # (e.g. `mypopvars$AssortativeMate_Model`).
 #
 # Headers/defaults are drawn verbatim from example_files/popvars/PopVars.csv
-# (the package's canonical PopVars example -- NOT PopVarsS1.csv, despite
-# that naming pattern holding for other classes).
+# (the package's canonical PopVars example -- NOT PopVarsS1.csv.
 # Rules are drawn from the user manual's section 3.2, "Run parameters and
-# output -- PopVars.csv file" (and its subsections 3.2.1-3.2.8).
+# output PopVars.csv file".
 
 # Canonical column headers/field names, in CDMetaPOP's expected order and
 # exact spelling/case (these are read as dictionary keys by CDMetaPOP, so
@@ -60,7 +56,7 @@
 
 # `xyfilename` (the nested PatchVars reference) is an object-or-path list
 # column: it holds a PatchVars object or a path, with `.GlobalEnv` name
-# resolution (the `class_vars` pattern from PatchVars). It is the ONLY field
+# resolution (the `class_vars` pattern from PatchVars). It is the only popvars field
 # that resolves an R6 object by name.
 .popv_object_fields <- c("xyfilename")
 
@@ -72,10 +68,14 @@
 # fields in `.popv_matrix_allow_N` -- the literal `"N"`. A matrix is never
 # combined with `|`/`~`; temporal/per-sex variation must be given as
 # filepaths (supporting matrices there too is parked until the package is
-# finished). At write time a matrix becomes the placeholder path
-# `cdmats/<fieldname>.csv` (serialized later by launch_cdmetapop()); a path
-# and `"N"` are written verbatim. No `.GlobalEnv` resolution (matrices/paths
-# are never looked up by name).
+# finished). All serialization is deferred to the graph-writer at
+# launch_cdmetapop() time (Key Design Decision 6): a raw matrix is written to
+# a csv named by reverse `.GlobalEnv` variable-name lookup (`mymat` ->
+# `cdmats/mymat.csv`, with a type+index fallback for an unnamed matrix); a
+# filepath is copied into the canonical `cdmats/` dir and its cell rewritten
+# to that relative path; `"N"` stays `"N"`. No `.GlobalEnv` resolution happens
+# here at assignment time (matrices/paths are never looked up by name on
+# assignment -- that lookup is the graph-writer's job, and only for naming).
 .popv_matrix_fields <- c(
 	"mate_cdmat", "migrateout_cdmat", "migrateback_cdmat", "stray_cdmat",
 	"disperseLocal_cdmat", "correlation_matrix", "subpopmort_file"
@@ -1206,12 +1206,12 @@
 #'
 #' Constructs an R6 object representing a CDMetaPOP `PopVars.csv` input
 #' file. Unlike [ClassVars()] (rows = age classes) and [PatchVars()] (rows =
-#' patches), each row of a `PopVars` object is its own independent "batch"
-#' -- CDMetaPOP runs each `RunVars` row (a "run") x each `PopVars` row (a
+#' patches), each row of a `PopVars` object is its own independent "batch" simulation set.
+#' CDMetaPOP runs each `RunVars` row (a "run") x each `PopVars` row (a
 #' "batch") as a separate simulation (see the user manual's run-parameters
-#' section). Despite that, columns are still edited as a whole via `$`, e.g.
-#' `mypopvars$matemoveno <- c(6, 6, 4, 6)`, for consistency with
-#' `ClassVars`/`PatchVars`.
+#' section). Columns may be edited as a whole via `$`, e.g.
+#' `mypopvars$matemoveno <- c(6, 6, 4, 6)`. **To build the PopVars object from an
+#' existing PopVars csv file, use the 'path' argument or the read_cdmetapop() function.
 #'
 #' Any column argument left unsupplied defaults to the corresponding values
 #' in `example_files/popvars/PopVars.csv`, matched to each requested
@@ -1219,19 +1219,11 @@
 #' beyond what that file defines).
 #'
 #' @details
-#' **CDMetaPOP reads `PopVars.csv` headers as dictionary keys**, unlike
-#' `ClassVars.csv`/`PatchVars.csv` (column *order* only) -- so every column
+#' CDMetaPOP reads `PopVars.csv` headers as dictionary keys, so every column
 #' name below is used verbatim as both the data frame's column name and this
-#' function's argument/active-binding name, with no separate human-readable
-#' header text. All manual-documented columns are included, even the
-#' disease-related ones (`egg_add`, `implement_disease`). `cdinfect`/
-#' `transmissionprob` were present in the canonical example file but are
-#' deliberately excluded -- confirmed stale leftovers; CDMetaPOP runs fine
-#' without them.
+#' function's argument name. 
 #'
-#' **Delimiters:** most columns support CDMetaPOP's `|` (temporal change,
-#' see [PatchVars()]'s Details) and/or `~` (per-sex, see [ClassVars()]'s
-#' Details) mechanisms, per the user manual's `†`/`**` markers respectively.
+#' Delimiters: most columns support CDMetaPOP's `|` (temporal change) and/or `~` (per-sex) mechanisms.
 #' A few fields use other manual-documented delimiters for a specific
 #' purpose: `alleles` and `implementSelection`/`implementPlasticgene` use
 #' `:` (per-locus allele counts; ':'-joined timing keywords, respectively),
@@ -1239,36 +1231,31 @@
 #' (`Loo_1;Loo_2`) -- see `.popv_rules`' doc comment in class_popvars.R for
 #' the full per-field delimiter design and known open questions.
 #'
-#' **`xyfilename` (nested PatchVars reference)** accepts a [PatchVars()]
+#' `xyfilename` (PatchVars.csv file pointer) accepts a [PatchVars()]
 #' object directly, a character path, or the name of a `PatchVars` object in
 #' `.GlobalEnv` (see [PatchVars()]'s Details for the identical `class_vars`
 #' name-resolution mechanism and its caveats).
 #'
-#' **Matrix fields** (`mate_cdmat`, `migrateout_cdmat`, `migrateback_cdmat`,
+#' Matrix fields (`mate_cdmat`, `migrateout_cdmat`, `migrateback_cdmat`,
 #' `stray_cdmat`, `disperseLocal_cdmat`, `correlation_matrix`,
 #' `subpopmort_file`) each accept, per batch, ONE of: a single raw R
-#' `matrix`; a file path; or (for `migrateout_cdmat`, `correlation_matrix`,
-#' `subpopmort_file`) the literal `"N"`. **A raw matrix may only be a single
-#' value** -- to vary a matrix over time (the `|` cdclimate mechanism) or by
+#' `matrix`; a file path; or sometimes `"N"`. When providin a matrix as an R variable, the cdclimate and per-sex options are not available.
+#' To vary a matrix over time (the `|` cdclimate mechanism) or by
 #' sex (`~`), you must supply file *paths*, not matrices (e.g.
-#' `pv$mate_cdmat <- "surface0.csv|surface5.csv"`). Supplying a matrix is an
-#' opt-in convenience for the common single-surface case; the field defaults
-#' remain the canonical csv paths, so a no-argument `PopVars()` is valid.
-#' When a matrix is supplied, it is serialized to a csv by
-#' [launch_cdmetapop()] (named after your R variable; see the package's file
-#' organization documentation), not by you. If you want control over a
-#' matrix file's location/format, supply a path and write that file
-#' yourself.
+#' `pv$mate_cdmat <- "surface0.csv|surface5.csv"`). 
+#' When a matrix is supplied, it is written to a csv by
+#' [launch_cdmetapop()] (named after the R variable; see the package's file
+#' organization documentation). If you want control over a
+#' matrix file's location/format, supply a path and provide the file separately.
 #'
 #' @param n_batches Number of independent batches. Defaults to 4,
-#'   matching `PopVars.csv`. Cannot be changed after construction (use
-#'   `add_row()` or [add_rows()] instead).
-#' @param xyfilename A [PatchVars()] object, object-name/path string, for
+#'   matching `PopVars.csv`. Can be changed after construction using
+#'   `add_row()` or [add_rows()].
+#' @param xyfilename A [PatchVars()] object, object name, or path string, for
 #'   each batch.
 #' @param mate_cdmat,migrateout_cdmat,migrateback_cdmat,stray_cdmat,disperseLocal_cdmat
-#'   A cost-distance/probability `matrix` (single value only) or a file path
-#'   (`|`/`~`-delimited for temporal/per-sex), or `"N"` for
-#'   `migrateout_cdmat` (skip the emigration module). See Details.
+#'   A cost-distance/probability `matrix` object (single variable only) or a file path
+#'   (`|`/`~`-delimited for temporal/per-sex). See Details.
 #' @param matemoveno,migratemoveOutno,migratemoveBackno,StrayBackno,disperseLocalno
 #'   Movement function code, `1`-`11` (see manual for the function each code
 #'   selects).
@@ -1308,7 +1295,8 @@
 #' @param Egg_FemaleProb Probability an egg is female, `[0, 1]`, or
 #'   `"WrightFisher"`.
 #' @param startGenes Time unit genetic exchange begins.
-#' @param loci,alleles Number of loci (>= 2); number of starting alleles per
+#' @param loci Number of loci (>= 2)
+#' @param alleles number of starting alleles per
 #'   locus (>= 2), or `:`-separated per-locus counts (e.g. `"2:5:3"`).
 #' @param muterate Allele mutation rate, `[0, 1]`.
 #' @param mutationtype Mutation model: `"random"`, `"forward"`,
@@ -1317,8 +1305,7 @@
 #' @param cdevolveans Selection model/mechanism (open-ended; see manual for
 #'   the full grammar, e.g. `"N"`, `"1"`, `"M"`, `"Hindex_Gauss_..."`).
 #' @param startSelection Time unit selection begins.
-#' @param implementSelection `:`-joined timing keyword(s), e.g.
-#'   `"Out:Back"`.
+#' @param implementSelection Timing of selection e.g., 'Out', 'Back', 'Eggs', 'Out:Back:Eggs', etc.
 #' @param betaFile_selection Polygenic-selection beta-value file path, or
 #'   `"N"`.
 #' @param plasticgeneans Phenotypic plasticity signal/response spec (open-
@@ -1326,17 +1313,16 @@
 #' @param plasticSignalResponse,plasticBehavioralResponse Plasticity signal
 #'   trigger value and behavioral response threshold.
 #' @param startPlasticgene Time unit the plastic process begins.
-#' @param implementPlasticgene `:`-joined timing keyword(s), e.g.
-#'   `"Back"`.
+#' @param implementPlasticgene Timing of plastic gene implementation ('Out', 'Back', or 'Out:Back')
 #' @param growth_option Growth function: `"N"`, `"known"`, `"vonB"`,
 #'   `"temperature"`, `"temperature_hindex"`, or `"bioenergetics"`.
 #' @param growth_Loo Von Bertalanffy L-infinity, or two `;`-separated
 #'   genotype-linked values (`"Loo_1;Loo_2"`).
 #' @param growth_R0,growth_temp_max,growth_temp_CV,growth_temp_t0 Remaining
 #'   growth function parameters.
-#' @param popmodel Population growth model: `"N"`, `"logistic_out"`,
-#'   `"logistic_back"`, `"packing"`, `"packing_1"`, or `"anadromy"`.
-#' @param popmodel_par1 Parameter for the `"packing"`/`"packing_1"` models.
+#' @param popmodel Population growth model: `"N"`(exponential), `"logistic_out"`,
+#'   `"logistic_back"`, `"packing"`, or `"anadromy"`.
+#' @param popmodel_par1 Parameter for the `"packing"` models.
 #' @param correlation_matrix Patch-level correlation matrix: a `matrix`
 #'   (single value), a file path, or `"N"`. A matrix field -- see Details.
 #' @param subpopmort_file Sub-population dispersal mortality matrix: a
@@ -1347,11 +1333,19 @@
 #' @param egg_add `"mating"` or `"nonmating"` (case-insensitive).
 #' @param implement_disease Disease module timing: `"N"`, `"Back"`,
 #'   `"Out"`, or `"Both"`.
-#' @param resolve_xyfilename Whether `xyfilename` character entries should
-#'   be resolved against `PatchVars` objects in `.GlobalEnv` by name (see
-#'   Details). Defaults to `TRUE`; set to `FALSE` when every `xyfilename`
-#'   value is known to already be a literal path (e.g.
-#'   `read_cdmetapop(..., type = "PopVars")` does this automatically).
+#' @param resolve_xyfilename If TRUE, strings entered for xyfilename will be
+#'   checked against the global environment for PatchVars objects of the same
+#'   name (primarily helpful for temporal changes e.g.,
+#'   "patchvars1|patchvars2"). If FALSE, xyfilename entries must be PatchVars
+#'   objects or they will be treated as filepaths.
+#' @param path Optional path to an existing PopVars csv file. If supplied, the
+#'   object is built from that file, with the number of batches taken from its
+#'   row count (so `n_batches` cannot also be given). Any column arguments
+#'   supplied alongside `path` override the file's values, validated exactly
+#'   as a later `$` assignment would be. Values read from the file are always
+#'   treated as literal file paths, so `resolve_xyfilename` applies only when
+#'   `path` is `NULL`. With no overrides, this is equivalent to
+#'   `read_cdmetapop(path, type = "PopVars")`.
 #'
 #' @return An R6 `PopVars` object.
 #' @export
@@ -1370,6 +1364,11 @@
 #' mypopvars$add_row()
 #' # or equivalently:
 #' add_rows(mypopvars)
+#'
+#' # Build from an existing PopVars csv, overriding one column:
+#' \dontrun{
+#' mypopvars <- PopVars(path = "popvars/PopVars.csv", matemoveno = 6)
+#' }
 PopVars <- function(
 	n_batches = 4,
 	xyfilename = c("patchvars/PatchVars.csv", "patchvars/PatchVars_anadromy.csv", "patchvars/PatchVars.csv", "patchvars/PatchVars.csv"),
@@ -1453,7 +1452,8 @@ PopVars <- function(
 	egg_delay = c("0", "0", "0", "0"),
 	egg_add = c("mating", "mating", "mating", "mating"),
 	implement_disease = c("N", "N", "N", "N"),
-	resolve_xyfilename = TRUE
+	resolve_xyfilename = TRUE,
+	path = NULL
 ) {
 	# See ClassVars()'s wrapper function for why these literal defaults are
 	# forwarded as NULL to .PopVarsR6$new() when not actually supplied by
@@ -1464,6 +1464,31 @@ PopVars <- function(
 		!eval(substitute(missing(x), list(x = as.name(field))), envir = this_env)
 	}, logical(1))
 	names(supplied) <- .popv_fields
+
+	# Build from an existing csv: read it (row count taken from the file;
+	# values read from disk are never name-resolved -- see
+	# .read_popvars_csv()), then apply any explicitly supplied columns as
+	# overrides. Overrides go through the active bindings, so they are
+	# validated and recycled exactly like a later `$` assignment, and quoted
+	# object names in them DO resolve.
+	if (!is.null(path)) {
+		if (!missing(n_batches)) {
+			stop("`n_batches` cannot be combined with `path`; the number of batches is taken from the file.", call. = FALSE)
+		}
+		if (!is.character(path) || length(path) != 1 || is.na(path) || !file.exists(path)) {
+			stop("`path` must be the path to an existing PopVars csv file.", call. = FALSE)
+		}
+		obj <- .read_popvars_csv(path)
+		for (field in .popv_fields[supplied]) {
+			obj[[field]] <- get(field, envir = this_env, inherits = FALSE)
+		}
+		return(obj)
+	}
+
+	# A file path passed positionally lands in `n_batches`; point to `path =`.
+	if (is.character(n_batches)) {
+		stop("`n_batches` must be a single positive integer. To build a PopVars object from an existing csv, use `PopVars(path = ...)`.", call. = FALSE)
+	}
 
 	column_args <- mget(.popv_fields, envir = environment())
 	column_args[!supplied] <- list(NULL)

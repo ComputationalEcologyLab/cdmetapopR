@@ -9,7 +9,7 @@
 # age-class rows. CDMetaPOP itself does not read the csv header text as
 # keys -- only column *order* matters at read time -- so the headers below
 # exist purely for human readability of the written file, and are copied
-# verbatim (including a spelling inconsistency) from
+# verbatim from
 # example_files/classvars/ClassVars_AS1.csv, the package's canonical
 # example.
 #
@@ -462,7 +462,8 @@
 #' file: one row per age/size class, with one column per class-level
 #' parameter (mortality, migration, fecundity, etc.). Columns are edited as
 #' a whole after construction via `$`, e.g.
-#' `myclassvars$age_mortality_out <- c(0, 0, 0.5)`.
+#' `myclassvars$age_mortality_out <- c(0, 0, 0.5)`. **To build the ClassVars object from an
+#' existing ClassVars csv file, use the 'path' argument or the read_cdmetapop() function.
 #'
 #' Any column argument left as `NULL` defaults to the corresponding values
 #' in `example_files/classvars/ClassVarsAS1.csv`, matched to each requested
@@ -491,15 +492,21 @@
 #'   deviation for the above; numeric, `"N"`, or `"~"`-separated.
 #' @param migration_out_prob,migration_back_prob,straying_prob,dispersal_prob
 #'   Movement probabilities `[0, 1]`, `"N"`, or `"~"`-separated per-sex
-#'   values.
+#'   values, multiplied by the corresponding values in PatchVars.
 #' @param maturation Probability `[0, 1]` of being/becoming reproductively
-#'   mature; or `"N"`; or `"~"`-separated per-sex values.
+#'   mature if sizeans from 'RunVars' = '"N"'; or `"N"`; or `"~"`-separated per-sex values.
 #' @param fecundity_ind,fecundity_ind_stdev Mean and standard deviation of
-#'   individual-based fecundity (litter/egg count) per age class.
+#'   individual-based fecundity (litter/egg count) per age class if sizeans from 'RunVars' = '"N"'.
 #' @param fecundity_leslie,fecundity_leslie_stdev Mean and standard
 #'   deviation of Leslie-matrix fecundity per age class.
 #' @param capture_out_prob,capture_back_prob Capture/detection probability
 #'   `[0, 1]`, `"N"`, or `"~"`-separated per-sex values.
+#' @param path Optional path to an existing ClassVars csv file. If supplied,
+#'   the object is built from that file, with the age classes taken from its
+#'   rows (so `ages` cannot also be given). Any column arguments supplied
+#'   alongside `path` override the file's values, validated exactly as a
+#'   later `$` assignment would be. With no overrides, this is equivalent to
+#'   `read_cdmetapop(path, type = "ClassVars")`.
 #'
 #' @return An R6 `ClassVars` object.
 #' @export
@@ -518,6 +525,11 @@
 #' myclassvars$add_row()
 #' # or equivalently:
 #' add_rows(myclassvars)
+#'
+#' # Build from an existing ClassVars csv, overriding one column:
+#' \dontrun{
+#' myclassvars <- ClassVars(path = "classvars/ClassVars_AS1.csv", maturation = 1)
+#' }
 ClassVars <- function(
 	ages = 0:5,
 	body_size_mean = c(31, 53, 92, 123, 147, 184),
@@ -542,7 +554,8 @@ ClassVars <- function(
 	fecundity_leslie = c(0, 2.5, 10, 11.7, 11.743, 15),
 	fecundity_leslie_stdev = rep(0, 6),
 	capture_out_prob = rep("N", 6),
-	capture_back_prob = rep("N", 6)
+	capture_back_prob = rep("N", 6),
+	path = NULL
 ) {
 	# The defaults above are shown literally (rather than NULL) purely so
 	# that `?ClassVars` and IDE argument tooltips display the actual
@@ -557,6 +570,29 @@ ClassVars <- function(
 		!eval(substitute(missing(x), list(x = as.name(field))), envir = this_env)
 	}, logical(1))
 	names(supplied) <- .cv_fields
+
+	# Build from an existing csv: read it (age classes taken from the file),
+	# then apply any explicitly supplied columns as overrides. Overrides go
+	# through the active bindings, so they are validated and recycled exactly
+	# like a later `$` assignment.
+	if (!is.null(path)) {
+		if (!missing(ages)) {
+			stop("`ages` cannot be combined with `path`; the age classes are taken from the file.", call. = FALSE)
+		}
+		if (!is.character(path) || length(path) != 1 || is.na(path) || !file.exists(path)) {
+			stop("`path` must be the path to an existing ClassVars csv file.", call. = FALSE)
+		}
+		obj <- .read_classvars_csv(path)
+		for (field in .cv_fields[supplied]) {
+			obj[[field]] <- get(field, envir = this_env, inherits = FALSE)
+		}
+		return(obj)
+	}
+
+	# A file path passed positionally lands in `ages`; point to `path =`.
+	if (is.character(ages)) {
+		stop("`ages` must be sequential integers starting at 0 (e.g. 0:5). To build a ClassVars object from an existing csv, use `ClassVars(path = ...)`.", call. = FALSE)
+	}
 
 	column_args <- mget(.cv_fields, envir = environment())
 	column_args[!supplied] <- list(NULL)

@@ -2,46 +2,76 @@
 % Please edit documentation in R/launch_cdmetapop.R
 \name{launch_cdmetapop}
 \alias{launch_cdmetapop}
-\title{Function to facilitate the running of CDMetaPOP software from R}
+\title{Launch a CDMetaPOP simulation from R}
 \usage{
 launch_cdmetapop(
+  runvars,
   pythonFilepath = "python",
   CDMetaPOPFilepath = "CDMetaPOP.py",
-  runvarsDirectory = NULL,
-  runvarsFilename = "RunVars.csv",
-  outputDirectory = "test_"
+  base_dir = getwd(),
+  output_prefix = "output_",
+  wait = FALSE
 )
 }
 \arguments{
-\item{pythonFilepath}{Location of Python executable, or just 'python' if the environment is already established}
+\item{runvars}{A \code{\link[=RunVars]{RunVars()}} object (its inputs are written to a fresh run
+directory), or a character path to an existing run directory or
+\code{RunVars.csv} file.}
 
-\item{CDMetaPOPFilepath}{Location of the CDMetaPOP.py file, if already in the working directory then this can just be 'CDMetaPOP.py'}
+\item{pythonFilepath}{Location of the Python executable, or just \code{"python"}
+if it is already on the PATH.}
 
-\item{runvarsDirectory}{Location of the directory where the RunVars.csv file is stored for the run}
+\item{CDMetaPOPFilepath}{Location of CDMetaPOP's \code{CDMetaPOP.py}, or just
+\code{"CDMetaPOP.py"} if it is in the working directory.}
 
-\item{runvarsFilename}{Name of the RunVars file to run}
+\item{base_dir}{Parent directory under which the fresh run directory is
+created when \code{runvars} is a \code{\link[=RunVars]{RunVars()}} object. Defaults to the working
+directory. Ignored when \code{runvars} is a path to an existing run.}
 
-\item{outputDirectory}{Name of output directory to be stored in the same location as runvarsDirectory}
+\item{output_prefix}{Name prefix for CDMetaPOP's output subfolder; CDMetaPOP
+appends a unix timestamp to it. Defaults to \code{"output_"}.}
+
+\item{wait}{If \code{FALSE} (the default), launch the simulation in the background
+and return immediately -- suitable for long runs. If \code{TRUE}, block until
+CDMetaPOP finishes before returning.}
+}
+\value{
+The run directory (a length-1 character path), invisibly -- hand this
+to the \verb{summary_*} output-reading functions (e.g. \code{\link[=summary_pop]{summary_pop()}}) once the
+run has completed.
 }
 \description{
-Function to run CDMetaPOP from R
-}
-\details{
-This function will launch a command prompt (Windows) or terminal (Linux/Mac) that will call Python and supply the 5 arguments needed to launch CDMetaPOP simulations
+Builds CDMetaPOP's input files from a \code{\link[=RunVars]{RunVars()}} object (or uses an existing
+on-disk run directory) and launches the Python simulation.
+
+When \code{runvars} is a \code{\link[=RunVars]{RunVars()}} object, its full input-file graph (RunVars ->
+PopVars -> PatchVars -> ClassVars, plus cost matrices and other referenced
+files) is written to a fresh, timestamped run directory
+(\verb{cdmetapop_run_<timestamp>/}) created under \code{base_dir}, and CDMetaPOP is
+pointed at it. When \code{runvars} is instead a path -- to a directory containing
+a \code{RunVars.csv}, or directly to a RunVars csv file -- that existing directory
+is used as-is and no input files are written.
+
+CDMetaPOP writes its output into a timestamped subfolder of the run directory
+(named \verb{<output_prefix><unix-time>}). Because CDMetaPOP runs can take a long
+time, the simulation launches in the background by default (\code{wait = FALSE})
+so the R session is not blocked; set \code{wait = TRUE} to block until it
+finishes. Either way, read results afterward by pointing the \verb{summary_*}
+functions (e.g. \code{\link[=summary_pop]{summary_pop()}}) at the returned run directory.
 }
 \examples{
-\dontrun{ 
-# Example: This function launches a system command to initiate CDMetaPOP.
-pythonFilepath="C:/Users/User1/anaconda3/python.exe" 
-CDMetaPOPFilepath="C:/Users/User1/CDMetaPOP_v3.03/src/CDMetaPOP.py"
-runvarsDirectory = "C:/Users/User1/CDMetaPOP_v3.03/example_files/"
-runvarsFilename = "RunVars.csv"
-outputDirectory = "test_" 
+\dontrun{
+# Build inputs from a RunVars object and launch in the background:
+myrun <- RunVars()
+run_dir <- launch_cdmetapop(
+  myrun,
+  pythonFilepath = "C:/Users/User1/anaconda3/python.exe",
+  CDMetaPOPFilepath = "C:/Users/User1/CDMetaPOP/src/CDMetaPOP.py"
+)
+# ... once the run finishes, read results from the same directory:
+summary_pop(run_dir, type = "N_initial")
 
-mymodel <- launch_cdmetapop(pythonFilepath,
-                           CDMetaPOPFilepath,
-                           runvarsDirectory,
-                           runvarsFilename,
-                           outputDirectory = "test_")
+# Or launch an existing on-disk run directory, blocking until it finishes:
+launch_cdmetapop("C:/Users/User1/CDMetaPOP/example_files", wait = TRUE)
 }
 }
