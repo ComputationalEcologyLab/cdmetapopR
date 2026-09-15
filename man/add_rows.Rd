@@ -16,7 +16,7 @@ add_rows(x, n = 1)
 \code{x}, invisibly (modified in place, since \code{x} is an R6 object).
 }
 \description{
-Generic function dispatching on the class of \code{x} -- a \code{\link[=ClassVars]{ClassVars()}},
+Generic function used to add rows to a \code{\link[=ClassVars]{ClassVars()}},
 \code{\link[=PatchVars]{PatchVars()}}, \code{\link[=PopVars]{PopVars()}}, or \code{\link[=RunVars]{RunVars()}} object. Adds \code{n} new rows,
 each initialized as a copy of the current last row; edit the new row(s)
 afterward via the column active bindings (e.g.

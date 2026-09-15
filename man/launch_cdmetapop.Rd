@@ -36,24 +36,23 @@ and return immediately -- suitable for long runs. If \code{TRUE}, block until
 CDMetaPOP finishes before returning.}
 }
 \value{
-The run directory (a length-1 character path), invisibly -- hand this
-to the \verb{summary_*} output-reading functions (e.g. \code{\link[=summary_pop]{summary_pop()}}) once the
-run has completed.
+The output run directory, to be used as an argument for output summary
+functions, (e.g. \code{\link[=summary_pop]{summary_pop()}}) once the run has completed.
 }
 \description{
 Builds CDMetaPOP's input files from a \code{\link[=RunVars]{RunVars()}} object (or uses an existing
 on-disk run directory) and launches the Python simulation.
 
-When \code{runvars} is a \code{\link[=RunVars]{RunVars()}} object, its full input-file graph (RunVars ->
+When \code{runvars} is a \code{\link[=RunVars]{RunVars()}} object, its full set of input files (RunVars ->
 PopVars -> PatchVars -> ClassVars, plus cost matrices and other referenced
 files) is written to a fresh, timestamped run directory
 (\verb{cdmetapop_run_<timestamp>/}) created under \code{base_dir}, and CDMetaPOP is
-pointed at it. When \code{runvars} is instead a path -- to a directory containing
-a \code{RunVars.csv}, or directly to a RunVars csv file -- that existing directory
+pointed at it. When \code{runvars} is instead a path to a directory containing
+a \code{RunVars.csv}, or directly to a RunVars csv file, that existing directory
 is used as-is and no input files are written.
 
-CDMetaPOP writes its output into a timestamped subfolder of the run directory
-(named \verb{<output_prefix><unix-time>}). Because CDMetaPOP runs can take a long
+CDMetaPOP writes its output into a timestamped subfolder of the run directory.
+Because CDMetaPOP runs can take a long
 time, the simulation launches in the background by default (\code{wait = FALSE})
 so the R session is not blocked; set \code{wait = TRUE} to block until it
 finishes. Either way, read results afterward by pointing the \verb{summary_*}
