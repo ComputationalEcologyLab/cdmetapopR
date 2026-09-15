@@ -127,8 +127,7 @@ the above; numeric.}
 \item{habitat_out, habitat_back}{Habitat quality values for the
 plasticity module.}
 
-\item{fitness_AA, fitness_Aa, fitness_aa, fitness_BB, fitness_Bb, fitness_bb, }{fitness_AABB,fitness_AaBB,fitness_aaBB,fitness_AABb,fitness_AaBb,
-fitness_aaBb,fitness_AAbb,fitness_Aabb,fitness_aabb Genotype-specific
+\item{fitness_AA, fitness_Aa, fitness_aa, fitness_BB, fitness_Bb, fitness_bb, fitness_AABB, fitness_AaBB, fitness_aaBB, fitness_AABb, fitness_AaBb, fitness_aaBb, fitness_AAbb, fitness_Aabb, fitness_aabb}{Genotype-specific
 fitness/selection values; format depends on \code{PopVars$cdevolveans}
 (not yet implemented), so validation here is permissive.}
 

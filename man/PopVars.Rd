@@ -297,11 +297,13 @@ organization documentation). If you want control over a
 matrix file's location/format, supply a path and provide the file separately.
 }
 \examples{
-# Default 4-batch object, matching PopVars.csv:
-mypopvars <- PopVars()
 
 # 1 batch, defaults taken from PopVars.csv's first row:
 mypopvars <- PopVars(n_batches = 1)
+
+# Default 4-batch object, matching PopVars.csv:
+mypopvars <- PopVars()
+
 
 # Edit a column in place (one value per batch):
 mypopvars$matemoveno <- c(6, 6, 4, 6)

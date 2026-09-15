@@ -112,11 +112,11 @@ several of any of these joined with \verb{;} (e.g.
 \code{"popvars/PopVarsS1.csv;popvars/PopVarsS2.csv"}), or a list of them.
 }
 \examples{
-# Default 4-run object, matching RunVars.csv:
-myrunvars <- RunVars()
-
 # 1 run, defaults taken from RunVars.csv's first row:
 myrunvars <- RunVars(n_runs = 1)
+
+# Default 4-run object, matching RunVars.csv:
+myrunvars <- RunVars()
 
 # Edit a column in place (one value per run):
 myrunvars$runtime <- c(5, 5, 10, 10)

@@ -488,7 +488,7 @@
 #' @export
 #'
 #' @examples
-#' 1 run, defaults taken from RunVars.csv's first row:
+#' # 1 run, defaults taken from RunVars.csv's first row:
 #' myrunvars <- RunVars(n_runs = 1)
 #'
 #' # Default 4-run object, matching RunVars.csv:
