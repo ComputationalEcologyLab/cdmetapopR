@@ -69,7 +69,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
           class = "upload-block",
           h5("How to best organize your directories"),
           # The Help button
-          actionButton("directory_help", "Show help")
+          actionButton("directory_help", "Show help", class="btn-info")
         ),
         div(class = "upload-block",
             h5("Transition Rates Matrix"),
@@ -78,7 +78,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
                 "Update ",
                 em(span("Transition Matrix", style = "color:#0072B2; font-weight: bold;"))
               )),
-            actionButton("help_transition_matrix", "?", class = "btn-info")
+            actionButton("help_transition_matrix", "Show help", class = "btn-info")
             ),
       downloadButton("download_diseasevars", "Download DiseaseVars File")
       ), #sidebar panel
@@ -97,7 +97,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
             
             tabPanel("Disease",
               
-              numericInput("Number_of_States", tagList("Define the number of states", em(span("Number of States", style = "color:#0072B2;"))), 
+              numericInput("Number_of_States", tagList("Define the number of states as an integer", em(span("Number of States", style = "color:#0072B2;"))), 
                            value = 0,
                            min = 0, step = 1),
               bsTooltip(
@@ -105,6 +105,8 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
                 "E.g. an SIRD model with states susceptible, infected, recovered and dead states should set Number of States = 4.",
                 placement = "right",
                 trigger = "hover"), 
+              
+              uiOutput("warning"),
               
               
               textInput("Initial_Conditions", tagList("Define the proportion of individuals to be initialized in each state, separated by semicolons", em(span("Initial Conditions", style = "color:#0072B2;")))
@@ -159,7 +161,17 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
                            tagList("Define how to initialize offspring states", em(span("Initial Conditions Offspring", style = "color:#0072B2;"))),
                            choices = c("Susceptible", "Random", "Vertical_X:Y"), 
                            selected = "Susceptible", 
-                           inline = TRUE)
+                           inline = TRUE),
+              conditionalPanel(
+                condition = "input.Initial_Conditions_Offspring == 'Vertical_X:Y'",
+                numericInput("Vertical_X", value = 0, min = 0,
+                          tagList("Define the mean rate X for vertical transmission from infected mothers")
+              )),
+              conditionalPanel(
+                condition = "input.Initial_Conditions_Offspring == 'Vertical_X:Y'",
+                numericInput("Vertical_Y", value =0, min = 0,
+                          tagList("Define the standard deviation Y for vertical transmission from infected mothers")
+                ))
               ),
               
               
@@ -349,7 +361,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
       
       # Update only the 'Transition Rates' column with the subdir name
       temp <- template_data()
-      temp$Transition_Rates <- input$Transition_Rates_file
+      temp$`Transition Rate` <- input$Transition_Rates_file
       template_data(temp)
     })
     
@@ -364,32 +376,46 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
     observeEvent(input$update_disease_vars_file, {
       temp <- template_data()
       
-      if (input$update_disease_vars_file == "Yes") {
-        temp$`Number of States` <- as.integer(input$Number_of_States)
-        temp$`Initial Conditions` <- input$Initial_Conditions
-        temp$`Transition Rates` <- input$Transition_Rates
-        temp$`Susceptible States` <- input$Susceptible_States
-        temp$`Infection States` <- input$Infection_States
-        temp$`Death States` <- input$Death_States
-        temp$`Initial Conditions Offspring` <- input$Initial_Conditions_Offspring
-        temp$`Start Disease` <- input$Start_Disease
-        temp$`Transmission Mode` <- input$Transmission_Mode
-        temp$`Disease Resistant` <- input$Disease_Resistant
-        temp$`Disease Tolerant` <- input$Disease_Tolerant
+      #warnings
+      output$warning <- renderUI({
         
-      } else {
+        is_integer_value <- function(x) {x %% 1 == 0}
+        
+        if (is_integer_value(input$Number_of_States) == FALSE) {
+          HTML("<b style='color:red;'>(!) Warning: Number of States needs to be an integer (whole number).</b>")
+        }
+        else {
+          NULL
+        }
+      })
+        
+        #Override Death_States if 'No' is selected
+        if (input$Include_Death_States == "No") {
+          temp$`Death States` <- "N"
+        } else {
+          temp$`Death States` <- input$Death_States
+        }
+      
+      #Initialize offspring states
+      if (input$Initial_Conditions_Offspring == "Vertical_X:Y" && length(input$Vertical_X) > 0 && length(input$Vertical_Y) > 0) {
+           temp$`Initial Conditions Offspring` <- paste0("Vertical_", input$Vertical_X, ":", input$Vertical_Y)
+          } else {
+            temp$`Initial Conditions Offspring` <- input$Initial_Conditions_Offspring
+          }
+        
+        #Update other cols
         temp$`Number of States` <- as.integer(input$Number_of_States)
         temp$`Initial Conditions` <- input$Initial_Conditions
-        temp$`Transition Rates` <- input$Transition_Rates
+        #temp$`Transition Rates` <- input$Transition_Rates # this is in side panel
         temp$`Susceptible States` <- input$Susceptible_States
         temp$`Infection States` <- input$Infection_States
-        temp$`Death States` <- input$Death_States
-        temp$`Initial Conditions Offspring` <- input$Initial_Conditions_Offspring
+        #temp$`Death States` <- input$Death_States #Overwritten by if statement above
+        #temp$`Initial Conditions Offspring` <- input$Initial_Conditions_Offspring #overwritten above
         temp$`Start Disease` <- input$Start_Disease
         temp$`Transmission Mode` <- input$Transmission_Mode
         temp$`Disease Resistant` <- input$Disease_Resistant
         temp$`Disease Tolerant` <- input$Disease_Tolerant
-      }
+
       
       template_data(temp)
     })
@@ -411,7 +437,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
         "DiseaseVars.csv"
       },
       content = function(file) {
-        write.csv(template_data(), file, row.names = FALSE)
+        write.csv(template_data(), file, row.names = FALSE, quote = FALSE)
       }
     )
     
