@@ -161,6 +161,16 @@ make_runvars <- function(output_file = "my_new_runvars.csv") {
             ), selected = "Back",
             choices = "Back"
             ),
+            numericInput("ncores", tagList(
+              "Number of cores to use for parallel processing of Monte Carlo replicates.",
+              em(span("ncores", style = "color:#0072B2;"))
+            ), value = 1, min = 1, step = 1),
+            bsTooltip(
+              "ncores",
+              "Note this does not apply to multispecies applications, where the number of cores is determined by the number of species, and parallel Monte Carlo processing is not available.",
+              placement = "right",
+              trigger = "hover"),
+            
             actionButton("update_parameters", "Apply changes")
           ),
           tabPanel(
