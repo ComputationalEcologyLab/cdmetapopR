@@ -444,5 +444,4 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
   }
   
   shinyApp(ui = ui, server = server)
-}      
-      
+}  
