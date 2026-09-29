@@ -13,7 +13,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
   template <- data.frame(
     `Number of States` = 3,
     `Initial Conditions` = "0.9;0.1;0.0",
-    `Transition Rate` = NA,
+    `Transition Rates` = NA,
     `Susceptible States` = 0,
     `Infection States` = 1,
     `Death States` = "N",
@@ -76,7 +76,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
             textInput("Transition_Rates_file", "Type the file name of your TransitionMatrix.csv file: "),
             actionButton("update_TransitionMatrix", tagList(
                 "Update ",
-                em(span("Transition Matrix", style = "color:#0072B2; font-weight: bold;"))
+                em(span("Transition Rates", style = "color:#0072B2; font-weight: bold;"))
               )),
             actionButton("help_transition_matrix", "Show help", class = "btn-info")
             ),
@@ -361,7 +361,7 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
       
       # Update only the 'Transition Rates' column with the subdir name
       temp <- template_data()
-      temp$`Transition Rate` <- input$Transition_Rates_file
+      temp$`Transition Rates` <- input$Transition_Rates_file
       template_data(temp)
     })
     
