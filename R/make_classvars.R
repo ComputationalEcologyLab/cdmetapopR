@@ -141,22 +141,42 @@ make_classvars <- function(output_file = "my_new_classvars.csv") {
                    # Show mortality settings only if 'Yes' is selected
                    conditionalPanel(
                      condition = "input.apply_mortality == 'Yes'",
-                     textInput("age_mortality_out", tagList("Define age specific mortality out from natal grounds [0-1] or 'N' for no mortality: ", em(span("Age Mortality Out %", style = "color:#0072B2;"))), 
+                     textInput("age_mortality_out", tagList("Define age specific mortality out from natal grounds [0-1] or 'N' for no mortality (comma-separated values for each age class): ", em(span("Age Mortality Out %", style = "color:#0072B2;"))), 
                                value = "N"),
-                     numericInput("age_mortality_out_sd", tagList("Define standard deviation for age specific mortality out from natal grounds: ", em(span("Age Mortality Out StDev", style = "color:#0072B2;"))), 
-                                  value = 0, min = 0, step = 0.01),
-                     textInput("age_mortality_back", tagList("Define age specific mortality back at natal grounds [0-1] or 'N' for no mortality: ", em(span("Age Mortality Back %", style = "color:#0072B2;"))), 
+                     bsTooltip(
+                       "age_mortality_out",
+                       "Enter values with sexes separated by ~ and ages within each sex separated by ,. Example: if Age class = 2 with 3 sexes, enter '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5' (sex1: ages 0,1,2; sex2: ages 0,1,2; sex3: ages 0,1,2). For equal mortality across all ages, enter single value per sex: '0.6~0.3' (replicates across all ages). Values must be between 0 and 1. Enter 'N' for no mortality.",
+                       placement = "right",
+                       trigger = "hover"),
+                     textInput("age_mortality_out_sd", tagList("Define standard deviation for age specific mortality out from natal grounds (comma-separated values for each age class): ", em(span("Age Mortality Out StDev", style = "color:#0072B2;"))), 
+                               value = "0"),
+                     bsTooltip(
+                       "age_mortality_out_sd",
+                       "Enter values with sexes separated by ~ and ages within each sex separated by ,. Example: if Age class = 2 with 3 sexes, enter '0,0.01,0.02~0,0.01,0.02~0.01,0.03,0.05' (sex1: ages 0,1,2; sex2: ages 0,1,2; sex3: ages 0,1,2).",
+                       placement = "right",
+                       trigger = "hover"),
+                     textInput("age_mortality_back", tagList("Define age specific mortality back at natal grounds [0-1] or 'N' for no mortality (comma-separated values for each age class): ", em(span("Age Mortality Back %", style = "color:#0072B2;"))), 
                                value = "N"),
-                     numericInput("age_mortality_back_sd", tagList("Define standard deviation for age specific mortality back at natal grounds: ", em(span("Age Mortality Back StDev", style = "color:#0072B2;"))), 
-                                  value = 0, min = 0, step = 0.01),
-                     textInput("size_mortality_out", tagList("Define size specific mortality out from natal grounds [0-1] or 'N' for no mortality: ", em(span("Size Mortality Out %", style = "color:#0072B2;"))), 
+                     bsTooltip(
+                       "age_mortality_back",
+                       "Enter values with sexes separated by ~ and ages within each sex separated by ,. Example: if Age class = 2 with 3 sexes, enter '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5' (sex1: ages 0,1,2; sex2: ages 0,1,2; sex3: ages 0,1,2). For equal mortality across all ages, enter single value per sex: '0.6~0.3' (replicates across all ages). Values must be between 0 and 1. Enter 'N' for no mortality.",
+                       placement = "right",
+                       trigger = "hover"),
+                     textInput("age_mortality_back_sd", tagList("Define standard deviation for age specific mortality back at natal grounds (comma-separated values for each age class): ", em(span("Age Mortality Back StDev", style = "color:#0072B2;"))), 
+                               value = "0"),
+                     bsTooltip(
+                       "age_mortality_back_sd",
+                       "Enter values with sexes separated by ~ and ages within each sex separated by ,. Example: if Age class = 2 with 3 sexes, enter '0,0.01,0.02~0,0.01,0.02~0.01,0.03,0.05' (sex1: ages 0,1,2; sex2: ages 0,1,2; sex3: ages 0,1,2).",
+                       placement = "right",
+                       trigger = "hover"),
+                     textInput("size_mortality_out", tagList("Define size specific mortality out from natal grounds [0-1] or 'N' for no mortality (comma-separated values for each age class): ", em(span("Size Mortality Out %", style = "color:#0072B2;"))), 
                                value = "N"),
-                     numericInput("size_mortality_out_sd", tagList("Define standard deviation for size specific mortality out from natal grounds: ", em(span("Size Mortality Out StDev", style = "color:#0072B2;"))), 
-                                  value = 0, min = 0, step = 0.01),
-                     textInput("size_mortality_back", tagList("Define size specific mortality back at natal grounds [0-1] or 'N' for no mortality: ", em(span("Size Mortality Back %", style = "color:#0072B2;"))), 
+                     textInput("size_mortality_out_sd", tagList("Define standard deviation for size specific mortality out from natal grounds (comma-separated values for each age class): ", em(span("Size Mortality Out StDev", style = "color:#0072B2;"))), 
+                               value = "0"),
+                     textInput("size_mortality_back", tagList("Define size specific mortality back at natal grounds [0-1] or 'N' for no mortality (comma-separated values for each age class): ", em(span("Size Mortality Back %", style = "color:#0072B2;"))), 
                                value = "0.1~0.1"),
-                     numericInput("size_mortality_back_sd", tagList("Define standard deviation for size specific mortality back at natal grounds: ", em(span("Size Mortality Back StDev", style = "color:#0072B2;"))), 
-                                  value = 0, min = 0, step = 0.01),
+                     textInput("size_mortality_back_sd", tagList("Define standard deviation for size specific mortality back at natal grounds (comma-separated values for each age class): ", em(span("Size Mortality Back StDev", style = "color:#0072B2;"))), 
+                               value = "0"),
                      actionButton("update_mortality", "Apply changes")
                    ),
           ),
@@ -177,18 +197,34 @@ make_classvars <- function(output_file = "my_new_classvars.csv") {
                    # Show movement settings only if 'Yes' is selected
                    conditionalPanel(
                      condition = "input.apply_movement == 'Yes'",
-                     numericInput("migration_out_prob", tagList("Enter the emigration probability [0-1] applied before moving to rearing/overwinter grounds. ", em(span("Migration Out Prob", style = "color:#0072B2;"))), 
-                                  value = 0,
-                                  min = 0, max = 1, step = 0.05),
-                     numericInput("migration_back_prob", tagList("Set return probability [0-1] (Set these values to 1 for patch level control on migration) ", em(span("Migration Back Prob", style = "color:#0072B2;"))), 
-                                  value = 1, # 
-                                  min = 0, max = 1, step = 0.05),
-                     numericInput("straying_prob", tagList("Set straying probability [0-1] of a migrant straying to a patch other than their natal patch ", em(span("Straying Prob", style = "color:#0072B2;"))),
-                                  value = 0,
-                                  min = 0, max = 1, step = 0.05),
-                     numericInput("dispersal_prob", tagList("Set dispersal probability [0-1] of an individual undergoing annual dispersal from their natal/spawning patch", em(span("Dispersal Prob", style = "color:#0072B2;"))), 
-                                  value = 0,
-                                  min = 0, max = 1, step = 0.05),
+                     textInput("migration_out_prob", tagList("Enter the emigration probability [0-1] applied before moving to rearing/overwinter grounds (comma-separated values for each age class): ", em(span("Migration Out Prob", style = "color:#0072B2;"))), 
+                               value = "0"),
+                     bsTooltip(
+                       "migration_out_prob",
+                       "Enter values with sexes separated by ~ and ages within each sex separated by ,. Example: if Age class = 2 with 3 sexes, enter '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5' (sex1: ages 0,1,2; sex2: ages 0,1,2; sex3: ages 0,1,2). For equal probability across all ages, enter single value per sex: '0.6~0.3' (replicates across all ages). Values must be between 0 and 1.",
+                       placement = "right",
+                       trigger = "hover"),
+                     textInput("migration_back_prob", tagList("Set return probability [0-1] (comma-separated values for each age class): ", em(span("Migration Back Prob", style = "color:#0072B2;"))), 
+                               value = "1"),
+                     bsTooltip(
+                       "migration_back_prob",
+                       "Enter values with sexes separated by ~ and ages within each sex separated by ,. Example: if Age class = 2 with 3 sexes, enter '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5' (sex1: ages 0,1,2; sex2: ages 0,1,2; sex3: ages 0,1,2). For equal probability across all ages, enter single value per sex: '0.6~0.3' (replicates across all ages). Values must be between 0 and 1.",
+                       placement = "right",
+                       trigger = "hover"),
+                     textInput("straying_prob", tagList("Set straying probability [0-1] of a migrant straying to a patch other than their natal patch (comma-separated values for each age class): ", em(span("Straying Prob", style = "color:#0072B2;"))),
+                               value = "0"),
+                     bsTooltip(
+                       "straying_prob",
+                       "Enter values with sexes separated by ~ and ages within each sex separated by ,. Example: if Age class = 2 with 3 sexes, enter '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5' (sex1: ages 0,1,2; sex2: ages 0,1,2; sex3: ages 0,1,2). For equal probability across all ages, enter single value per sex: '0.6~0.3' (replicates across all ages). Values must be between 0 and 1.",
+                       placement = "right",
+                       trigger = "hover"),
+                     textInput("dispersal_prob", tagList("Set dispersal probability [0-1] of an individual undergoing annual dispersal from their natal/spawning patch (comma-separated values for each age class): ", em(span("Dispersal Prob", style = "color:#0072B2;"))), 
+                               value = "0"),
+                     bsTooltip(
+                       "dispersal_prob",
+                       "Enter values with sexes separated by ~ and ages within each sex separated by ,. Example: if Age class = 2 with 3 sexes, enter '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5' (sex1: ages 0,1,2; sex2: ages 0,1,2; sex3: ages 0,1,2). For equal probability across all ages, enter single value per sex: '0.6~0.3' (replicates across all ages). Values must be between 0 and 1.",
+                       placement = "right",
+                       trigger = "hover"),
                      actionButton("update_movement", "Apply changes")
                    ),
           ),
@@ -200,8 +236,14 @@ make_classvars <- function(output_file = "my_new_classvars.csv") {
           tabPanel("Reproduction",
                    helpText("Define the probability of being a reproductively mature individual and stay this way."), 
                    
-                   uiOutput("Maturation_inputs"),
-                   helpText("If size option is specified (sizecontrol in RunVars), then these values are not used and population fit parameters based on size/length relationships are used instead. 3 sex class values can be used here, as well, separated by '~'."),
+                   textInput("maturation", tagList("Define maturation parameters for each age class (comma-separated values, sex-specific values separated by ~): ", em(span("Maturation", style = "color:#0072B2;"))), 
+                            value = "0"),
+                   bsTooltip(
+                     "maturation",
+                     "Enter values with sexes separated by ~ and ages within each sex separated by ,. Example: if Age class = 2 with 3 sexes, enter '0.4,0.5,0.6~0.3,0.4,0.5~0.2,0.3,0.4' (sex1: ages 0,1,2; sex2: ages 0,1,2; sex3: ages 0,1,2). For equal maturation across all ages, enter single value per sex: '0.4~0.3' (replicates across all ages).",
+                     placement = "right",
+                     trigger = "hover"),
+                   helpText("If size option is specified (sizecontrol in RunVars), then these values are not used and population fit parameters based on size/length relationships are used instead. Sex-specific values can be separated by '~' within each age class."),
                    
                    actionButton("update_Maturation", "Apply changes"),
                    
@@ -245,13 +287,21 @@ make_classvars <- function(output_file = "my_new_classvars.csv") {
                    conditionalPanel(
                      condition = "input.apply_capture_prob == 'Yes'",
                      
-                     numericInput("Capture_Out_Probability", tagList("Define the capture probability when individuals are out from natal grounds [0-1]: ", em(span("Capture Out Probability", style = "color:#0072B2;"))), 
-                                  value = 0, 
-                                  min = 0, step = 0.05, max = 1),
+                     textInput("Capture_Out_Probability", tagList("Define the capture probability when individuals are out from natal grounds [0-1] (comma-separated values for each age class): ", em(span("Capture Out Probability", style = "color:#0072B2;"))), 
+                               value = "0"),
+                     bsTooltip(
+                       "Capture_Out_Probability",
+                       "Enter values with sexes separated by ~ and ages within each sex separated by ,. Example: if Age class = 2 with 3 sexes, enter '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5' (sex1: ages 0,1,2; sex2: ages 0,1,2; sex3: ages 0,1,2). For equal probability across all ages, enter single value per sex: '0.6~0.3' (replicates across all ages). Values must be between 0 and 1. Enter 'N' for no capture.",
+                       placement = "right",
+                       trigger = "hover"),
                      
-                     numericInput("Capture_Back_Probability", tagList("Define the capture probability when individuals are back at natal grounds [0-1]: ", em(span("Capture Back Probability", style = "color:#0072B2;"))), 
-                                  value = 0,
-                                  min = 0, max = 1, step = 0.05),
+                     textInput("Capture_Back_Probability", tagList("Define the capture probability when individuals are back at natal grounds [0-1] (comma-separated values for each age class): ", em(span("Capture Back Probability", style = "color:#0072B2;"))), 
+                               value = "0"),
+                     bsTooltip(
+                       "Capture_Back_Probability",
+                       "Enter values with sexes separated by ~ and ages within each sex separated by ,. Example: if Age class = 2 with 3 sexes, enter '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5' (sex1: ages 0,1,2; sex2: ages 0,1,2; sex3: ages 0,1,2). For equal probability across all ages, enter single value per sex: '0.6~0.3' (replicates across all ages). Values must be between 0 and 1. Enter 'N' for no capture.",
+                       placement = "right",
+                       trigger = "hover"),
                      
                      actionButton("update_capture_prob", "Apply changes")
                    ),
@@ -390,50 +440,62 @@ make_classvars <- function(output_file = "my_new_classvars.csv") {
       # Update age class column
       temp$`Age class` <- 0:input$age_max
       
-      # Update body size columns
+      # Parse comma-separated values for body size
+      parse_comma_values <- function(input_val, age_max) {
+        values <- strsplit(as.character(input_val), ",")[[1]]
+        values <- trimws(values)
+        if (length(values) == 1) {
+          return(rep(as.numeric(values), age_max + 1))
+        }
+        return(as.numeric(values))
+      }
+      
+      # Validate and parse body size mean
+      body_size_mean <- parse_comma_values(input$body_size_mean, input$age_max)
+      if (length(body_size_mean) != input$age_max + 1) {
+        showNotification(paste("Body Size Mean: Expected", input$age_max + 1, "values, got", length(body_size_mean)), type = "error")
+        return()
+      }
+      
+      # Validate and parse body size std
+      body_size_std <- parse_comma_values(input$body_size_std, input$age_max)
+      if (length(body_size_std) != input$age_max + 1) {
+        showNotification(paste("Body Size Std: Expected", input$age_max + 1, "values, got", length(body_size_std)), type = "error")
+        return()
+      }
+      
+      # Update body size columns with parsed values
       for (age in 0:input$age_max) {
-        if (age <= nrow(temp)) {
-          temp$`Body Size Mean (mm)`[age + 1] <- input[[paste0("Body_Size_Mean_", age)]]
-          temp$`Body Size Std (mm)`[age + 1] <- input[[paste0("Body_Size_Std_", age)]]
+        if (age + 1 <= nrow(temp)) {
+          temp$`Body Size Mean (mm)`[age + 1] <- body_size_mean[age + 1]
+          temp$`Body Size Std (mm)`[age + 1] <- body_size_std[age + 1]
         }
       }
       
       template_data(temp)
+      showNotification("Age & Size parameters updated successfully!", type = "message")
       
     })
     
-    # Generate dynamic body size inputs based on age_max
+    # Generate body size inputs for comma-separated values
     output$body_size_inputs <- renderUI({
-      req(input$age_max >= 0) # Allow age_max to be 0
-      
-      age_classes <- 0:input$age_max
+      req(input$age_max >= 0)
       
       tagList(
-        h5("Please enter the body size parameters for initialization at each age class stage:", em(span("Body Size Mean (mm) & Body Size Mean Std (mm)", style = "color:#0072B2;"))),
-        lapply(age_classes, function(age) {
-          fluidRow(
-            column(6,
-                   numericInput(
-                     inputId = paste0("Body_Size_Mean_", age),
-                     label = tagList("Age ", age, " - Mean (mm): ", 
-                     ),
-                     value = 0,  # default values
-                     min = 0,
-                     step = 0.1
-                   )
-            ),
-            column(6,
-                   numericInput(
-                     inputId = paste0("Body_Size_Std_", age),
-                     label = tagList("Age ", age, " - Std (mm): ", 
-                     ),
-                     value = 0,  # default values
-                     min = 0,
-                     step = 0.1
-                   )
-            )
-          )
-        })
+        textInput("body_size_mean", tagList("Define body size mean for each age class (comma-separated values in mm): ", em(span("Body Size Mean (mm)", style = "color:#0072B2;"))), 
+                  value = "0"),
+        bsTooltip(
+          "body_size_mean",
+          "Enter comma-separated values for each age class. Example: if Age class = 2, enter '10,15,20' for ages 0, 1, 2. If only one value is provided, it will be replicated across all age classes.",
+          placement = "right",
+          trigger = "hover"),
+        textInput("body_size_std", tagList("Define body size standard deviation for each age class (comma-separated values in mm): ", em(span("Body Size Mean Std (mm)", style = "color:#0072B2;"))), 
+                  value = "0"),
+        bsTooltip(
+          "body_size_std",
+          "Enter comma-separated values for each age class. Example: if Age class = 2, enter '1,2,3' for ages 0, 1, 2. If only one value is provided, it will be replicated across all age classes.",
+          placement = "right",
+          trigger = "hover")
       )
     })
     
@@ -443,7 +505,12 @@ make_classvars <- function(output_file = "my_new_classvars.csv") {
       
       temp <- template_data()
       current_rows <- nrow(temp)
-      needed_rows <- max(current_rows, input$age_max + 1)
+      needed_rows <- input$age_max + 1
+      
+      # Shrink template if needed (when age_max is reduced)
+      if (needed_rows < current_rows) {
+        temp <- temp[1:needed_rows, ]
+      }
       
       # Expand template if needed
       if (needed_rows > current_rows) {
@@ -535,6 +602,7 @@ make_classvars <- function(output_file = "my_new_classvars.csv") {
         })
       )
     })
+    
     ###################################################
     # update Sex Ratio tab
     ###################################################
@@ -566,21 +634,234 @@ make_classvars <- function(output_file = "my_new_classvars.csv") {
     ###################################################
     observeEvent(input$update_mortality, {
       temp <- template_data()
+      req(input$age_max >= 0)
+      
+      # Ensure template has enough rows for all age classes
+      current_rows <- nrow(temp)
+      needed_rows <- max(current_rows, input$age_max + 1)
+      
+      if (needed_rows > current_rows) {
+        additional_rows <- needed_rows - current_rows
+        new_rows <- temp[1, ]
+        new_rows[] <- NA
+        temp <- rbind(temp, new_rows[rep(1, additional_rows), ])
+      }
       
       if (input$apply_mortality == "Yes") {
-        temp$`Age Mortality Out %` <- input$age_mortality_out
-        temp$`Age Mortality Out StDev` <- input$age_mortality_out_sd
-        temp$`Age Mortality Back %` <- input$age_mortality_back
-        temp$`Age Mortality Back StDev` <- input$age_mortality_back_sd
-        temp$`Size Mortality Out %` <- input$size_mortality_out
-        temp$`Size Mortality Out StDev` <- input$size_mortality_out_sd
-        temp$`Size Mortality Back %` <- input$size_mortality_back
-        temp$`Size Mortaltiy Back StDev` <- input$size_mortality_back_sd
+        # Parse comma-separated values for age-specific mortality with optional sex-specific values
+        parse_comma_values <- function(input_val, age_max) {
+          if (is.null(input_val) || input_val == "N") {
+            return(rep("N", age_max + 1))
+          }
+          values <- strsplit(as.character(input_val), ",")[[1]]
+          values <- trimws(values)
+          if (length(values) == 1) {
+            return(rep(values, age_max + 1))
+          }
+          return(values)
+        }
+        
+        # Parse values with sex (tilde) and age (comma) separators
+        # Format: sex1_age0,sex1_age1,sex1_age2~sex2_age0,sex2_age1,sex2_age2~...
+        # Or: sex1_value~sex2_value (single value per sex replicates across all ages)
+        parse_age_sex_values <- function(input_val, age_max) {
+          if (is.null(input_val) || input_val == "N") {
+            return(rep("N", age_max + 1))
+          }
+          # Split by ~ to get sex groups
+          sex_groups <- strsplit(as.character(input_val), "~")[[1]]
+          sex_groups <- trimws(sex_groups)
+          
+          # If only one sex group without ~, treat as single sex
+          if (length(sex_groups) == 1 && !grepl("~", input_val)) {
+            age_values <- strsplit(sex_groups[1], ",")[[1]]
+            age_values <- trimws(age_values)
+            if (length(age_values) == 1) {
+              return(rep(age_values, age_max + 1))
+            }
+            return(age_values)
+          }
+          
+          # For each sex group, split by comma to get age values
+          sex_age_values <- lapply(sex_groups, function(sg) {
+            age_vals <- strsplit(sg, ",")[[1]]
+            trimws(age_vals)
+          })
+          
+          # Validate that all sex groups have the same number of age values
+          age_counts <- sapply(sex_age_values, length)
+          if (length(unique(age_counts)) > 1) {
+            return(NULL)  # Will trigger validation error
+          }
+          
+          # If each sex group has only 1 value, replicate it across all ages
+          if (age_counts[1] == 1) {
+            sex_age_values <- lapply(sex_age_values, function(sav) {
+              rep(sav[1], age_max + 1)
+            })
+          } else {
+            # Check if number of age values matches age_max + 1
+            if (age_counts[1] != age_max + 1) {
+              return(NULL)  # Will trigger validation error
+            }
+          }
+          
+          # Transpose: create age-specific values with sex values separated by ~
+          age_specific_values <- character(age_max + 1)
+          for (age in 0:age_max) {
+            sex_values_for_age <- sapply(sex_age_values, function(sav) {
+              if (age + 1 <= length(sav)) sav[age + 1] else "N"
+            })
+            age_specific_values[age + 1] <- paste(sex_values_for_age, collapse = "~")
+          }
+          
+          return(age_specific_values)
+        }
+        
+        # Validate that the parsed values are valid
+        validate_parsed_values <- function(values, age_max) {
+          if (is.null(values)) return(FALSE)
+          if (length(values) != age_max + 1) return(FALSE)
+          return(TRUE)
+        }
+        
+        # Validate and parse age mortality out
+        age_mort_out <- parse_age_sex_values(input$age_mortality_out, input$age_max)
+        if (!validate_parsed_values(age_mort_out, input$age_max)) {
+          showNotification(paste("Age Mortality Out %: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        # Validate 0-1 bounds for age mortality out
+        for (val in age_mort_out) {
+          if (val != "N") {
+            sex_vals <- strsplit(as.character(val), "~")[[1]]
+            for (sv in sex_vals) {
+              num_val <- as.numeric(trimws(sv))
+              if (is.na(num_val) || num_val < 0 || num_val > 1) {
+                showNotification(paste("Age Mortality Out %: Values must be between 0 and 1, or 'N'. Invalid value:", sv), type = "error")
+                return()
+              }
+            }
+          }
+        }
+        
+        # Validate and parse age mortality out SD
+        age_mort_out_sd <- parse_age_sex_values(as.character(input$age_mortality_out_sd), input$age_max)
+        if (!validate_parsed_values(age_mort_out_sd, input$age_max)) {
+          showNotification(paste("Age Mortality Out StDev: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        
+        # Validate and parse age mortality back
+        age_mort_back <- parse_age_sex_values(input$age_mortality_back, input$age_max)
+        if (!validate_parsed_values(age_mort_back, input$age_max)) {
+          showNotification(paste("Age Mortality Back %: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        # Validate 0-1 bounds for age mortality back
+        for (val in age_mort_back) {
+          if (val != "N") {
+            sex_vals <- strsplit(as.character(val), "~")[[1]]
+            for (sv in sex_vals) {
+              num_val <- as.numeric(trimws(sv))
+              if (is.na(num_val) || num_val < 0 || num_val > 1) {
+                showNotification(paste("Age Mortality Back %: Values must be between 0 and 1, or 'N'. Invalid value:", sv), type = "error")
+                return()
+              }
+            }
+          }
+        }
+        
+        # Validate and parse age mortality back SD
+        age_mort_back_sd <- parse_age_sex_values(as.character(input$age_mortality_back_sd), input$age_max)
+        if (!validate_parsed_values(age_mort_back_sd, input$age_max)) {
+          showNotification(paste("Age Mortality Back StDev: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        
+        # Update age-specific mortality values for each age class
+        for (age in 0:input$age_max) {
+          if (age + 1 <= nrow(temp)) {
+            temp$`Age Mortality Out %`[age + 1] <- age_mort_out[age + 1]
+            temp$`Age Mortality Out StDev`[age + 1] <- as.numeric(age_mort_out_sd[age + 1])
+            temp$`Age Mortality Back %`[age + 1] <- age_mort_back[age + 1]
+            temp$`Age Mortality Back StDev`[age + 1] <- as.numeric(age_mort_back_sd[age + 1])
+          }
+        }
+        
+        # Validate and parse size mortality out
+        size_mort_out <- parse_age_sex_values(input$size_mortality_out, input$age_max)
+        if (!validate_parsed_values(size_mort_out, input$age_max)) {
+          showNotification(paste("Size Mortality Out %: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        # Validate 0-1 bounds for size mortality out
+        for (val in size_mort_out) {
+          if (val != "N") {
+            sex_vals <- strsplit(as.character(val), "~")[[1]]
+            for (sv in sex_vals) {
+              num_val <- as.numeric(trimws(sv))
+              if (is.na(num_val) || num_val < 0 || num_val > 1) {
+                showNotification(paste("Size Mortality Out %: Values must be between 0 and 1, or 'N'. Invalid value:", sv), type = "error")
+                return()
+              }
+            }
+          }
+        }
+        
+        # Validate and parse size mortality out SD
+        size_mort_out_sd <- parse_age_sex_values(as.character(input$size_mortality_out_sd), input$age_max)
+        if (!validate_parsed_values(size_mort_out_sd, input$age_max)) {
+          showNotification(paste("Size Mortality Out StDev: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        
+        # Validate and parse size mortality back
+        size_mort_back <- parse_age_sex_values(input$size_mortality_back, input$age_max)
+        if (!validate_parsed_values(size_mort_back, input$age_max)) {
+          showNotification(paste("Size Mortality Back %: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        # Validate 0-1 bounds for size mortality back
+        for (val in size_mort_back) {
+          if (val != "N") {
+            sex_vals <- strsplit(as.character(val), "~")[[1]]
+            for (sv in sex_vals) {
+              num_val <- as.numeric(trimws(sv))
+              if (is.na(num_val) || num_val < 0 || num_val > 1) {
+                showNotification(paste("Size Mortality Back %: Values must be between 0 and 1, or 'N'. Invalid value:", sv), type = "error")
+                return()
+              }
+            }
+          }
+        }
+        
+        # Validate and parse size mortality back SD
+        size_mort_back_sd <- parse_age_sex_values(as.character(input$size_mortality_back_sd), input$age_max)
+        if (!validate_parsed_values(size_mort_back_sd, input$age_max)) {
+          showNotification(paste("Size Mortality Back StDev: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        
+        # Update size-specific mortality values for each age class
+        for (age in 0:input$age_max) {
+          if (age + 1 <= nrow(temp)) {
+            temp$`Size Mortality Out %`[age + 1] <- size_mort_out[age + 1]
+            temp$`Size Mortality Out StDev`[age + 1] <- size_mort_out_sd[age + 1]
+            temp$`Size Mortality Back %`[age + 1] <- size_mort_back[age + 1]
+            temp$`Size Mortaltiy Back StDev`[age + 1] <- size_mort_back_sd[age + 1]
+          }
+        }
       } else {
-        temp$`Age Mortality Out %` <- "N"
-        temp$`Age Mortality Out StDev` <- 0
-        temp$`Age Mortality Back %` <- "N"
-        temp$`Age Mortality Back StDev` <- 0
+        # Reset age-specific mortality values to defaults
+        for (age in 0:input$age_max) {
+          if (age + 1 <= nrow(temp)) {
+            temp$`Age Mortality Out %`[age + 1] <- "N"
+            temp$`Age Mortality Out StDev`[age + 1] <- 0
+            temp$`Age Mortality Back %`[age + 1] <- "N"
+            temp$`Age Mortality Back StDev`[age + 1] <- 0
+          }
+        }
         temp$`Size Mortality Out %` <- "N"
         temp$`Size Mortality Out StDev` <- 0
         temp$`Size Mortality Back %` <- "0.1~0.1"
@@ -588,6 +869,7 @@ make_classvars <- function(output_file = "my_new_classvars.csv") {
       }
       
       template_data(temp)
+      showNotification("Mortality parameters updated successfully!", type = "message")
     })
     
     ###################################################
@@ -595,19 +877,175 @@ make_classvars <- function(output_file = "my_new_classvars.csv") {
     ###################################################
     observeEvent(input$update_movement, {
       temp <- template_data()
+      req(input$age_max >= 0)
+      
+      # Ensure template has enough rows for all age classes
+      current_rows <- nrow(temp)
+      needed_rows <- max(current_rows, input$age_max + 1)
+      
+      if (needed_rows > current_rows) {
+        additional_rows <- needed_rows - current_rows
+        new_rows <- temp[1, ]
+        new_rows[] <- NA
+        temp <- rbind(temp, new_rows[rep(1, additional_rows), ])
+      }
       
       if (input$apply_movement == "Yes") {
-        temp$`Migration Out Prob` <- input$migration_out_prob
-        temp$`Migration Back Prob` <- input$migration_back_prob
-        temp$`Straying Prob` <- input$straying_prob
-        temp$`Dispersal Prob` <- input$dispersal_prob
+        # Parse values with sex (tilde) and age (comma) separators
+        # Format: sex1_age0,sex1_age1,sex1_age2~sex2_age0,sex2_age1,sex2_age2~...
+        # Or: sex1_value~sex2_value (single value per sex replicates across all ages)
+        parse_age_sex_values <- function(input_val, age_max) {
+          if (is.null(input_val) || input_val == "N") {
+            return(rep("N", age_max + 1))
+          }
+          # Split by ~ to get sex groups
+          sex_groups <- strsplit(as.character(input_val), "~")[[1]]
+          sex_groups <- trimws(sex_groups)
+          
+          # If only one sex group without ~, treat as single sex
+          if (length(sex_groups) == 1 && !grepl("~", input_val)) {
+            age_values <- strsplit(sex_groups[1], ",")[[1]]
+            age_values <- trimws(age_values)
+            if (length(age_values) == 1) {
+              return(rep(age_values, age_max + 1))
+            }
+            return(age_values)
+          }
+          
+          # For each sex group, split by comma to get age values
+          sex_age_values <- lapply(sex_groups, function(sg) {
+            age_vals <- strsplit(sg, ",")[[1]]
+            trimws(age_vals)
+          })
+          
+          # Validate that all sex groups have the same number of age values
+          age_counts <- sapply(sex_age_values, length)
+          if (length(unique(age_counts)) > 1) {
+            return(NULL)  # Will trigger validation error
+          }
+          
+          # If each sex group has only 1 value, replicate it across all ages
+          if (age_counts[1] == 1) {
+            sex_age_values <- lapply(sex_age_values, function(sav) {
+              rep(sav[1], age_max + 1)
+            })
+          } else {
+            # Check if number of age values matches age_max + 1
+            if (age_counts[1] != age_max + 1) {
+              return(NULL)  # Will trigger validation error
+            }
+          }
+          
+          # Transpose: create age-specific values with sex values separated by ~
+          age_specific_values <- character(age_max + 1)
+          for (age in 0:age_max) {
+            sex_values_for_age <- sapply(sex_age_values, function(sav) {
+              if (age + 1 <= length(sav)) sav[age + 1] else "N"
+            })
+            age_specific_values[age + 1] <- paste(sex_values_for_age, collapse = "~")
+          }
+          
+          return(age_specific_values)
+        }
+        
+        # Validate that the parsed values are valid
+        validate_parsed_values <- function(values, age_max) {
+          if (is.null(values)) return(FALSE)
+          if (length(values) != age_max + 1) return(FALSE)
+          return(TRUE)
+        }
+        
+        # Validate and parse migration out prob
+        mig_out <- parse_age_sex_values(input$migration_out_prob, input$age_max)
+        if (!validate_parsed_values(mig_out, input$age_max)) {
+          showNotification(paste("Migration Out Prob: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        # Validate 0-1 bounds
+        for (val in mig_out) {
+          sex_vals <- strsplit(as.character(val), "~")[[1]]
+          for (sv in sex_vals) {
+            num_val <- as.numeric(trimws(sv))
+            if (is.na(num_val) || num_val < 0 || num_val > 1) {
+              showNotification(paste("Migration Out Prob: Values must be between 0 and 1. Invalid value:", sv), type = "error")
+              return()
+            }
+          }
+        }
+        
+        # Validate and parse migration back prob
+        mig_back <- parse_age_sex_values(input$migration_back_prob, input$age_max)
+        if (!validate_parsed_values(mig_back, input$age_max)) {
+          showNotification(paste("Migration Back Prob: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        for (val in mig_back) {
+          sex_vals <- strsplit(as.character(val), "~")[[1]]
+          for (sv in sex_vals) {
+            num_val <- as.numeric(trimws(sv))
+            if (is.na(num_val) || num_val < 0 || num_val > 1) {
+              showNotification(paste("Migration Back Prob: Values must be between 0 and 1. Invalid value:", sv), type = "error")
+              return()
+            }
+          }
+        }
+        
+        # Validate and parse straying prob
+        stray_prob <- parse_age_sex_values(input$straying_prob, input$age_max)
+        if (!validate_parsed_values(stray_prob, input$age_max)) {
+          showNotification(paste("Straying Prob: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        for (val in stray_prob) {
+          sex_vals <- strsplit(as.character(val), "~")[[1]]
+          for (sv in sex_vals) {
+            num_val <- as.numeric(trimws(sv))
+            if (is.na(num_val) || num_val < 0 || num_val > 1) {
+              showNotification(paste("Straying Prob: Values must be between 0 and 1. Invalid value:", sv), type = "error")
+              return()
+            }
+          }
+        }
+        
+        # Validate and parse dispersal prob
+        disp_prob <- parse_age_sex_values(input$dispersal_prob, input$age_max)
+        if (!validate_parsed_values(disp_prob, input$age_max)) {
+          showNotification(paste("Dispersal Prob: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        for (val in disp_prob) {
+          sex_vals <- strsplit(as.character(val), "~")[[1]]
+          for (sv in sex_vals) {
+            num_val <- as.numeric(trimws(sv))
+            if (is.na(num_val) || num_val < 0 || num_val > 1) {
+              showNotification(paste("Dispersal Prob: Values must be between 0 and 1. Invalid value:", sv), type = "error")
+              return()
+            }
+          }
+        }
+        
+        # Update movement values for each age class
+        for (age in 0:input$age_max) {
+          if (age + 1 <= nrow(temp)) {
+            temp$`Migration Out Prob`[age + 1] <- mig_out[age + 1]
+            temp$`Migration Back Prob`[age + 1] <- mig_back[age + 1]
+            temp$`Straying Prob`[age + 1] <- stray_prob[age + 1]
+            temp$`Dispersal Prob`[age + 1] <- disp_prob[age + 1]
+          }
+        }
       } else {
-        temp$`Migration Out Prob` <- 0
-        temp$`Migration Back Prob` <- 0
-        temp$`Straying Prob` <- 0
-        temp$`Dispersal Prob` <- 0
+        # Reset movement values to defaults
+        for (age in 0:input$age_max) {
+          if (age + 1 <= nrow(temp)) {
+            temp$`Migration Out Prob`[age + 1] <- 0
+            temp$`Migration Back Prob`[age + 1] <- 0
+            temp$`Straying Prob`[age + 1] <- 0
+            temp$`Dispersal Prob`[age + 1] <- 0
+          }
+        }
       }
       template_data(temp)
+      showNotification("Movement parameters updated successfully!", type = "message")
     })
     ###################################################
     # update Reproduction tab
@@ -626,47 +1064,87 @@ make_classvars <- function(output_file = "my_new_classvars.csv") {
         temp <- rbind(temp, new_rows[rep(1, additional_rows), ])
       }
       
-      # Get Maturation values from inputs
-      maturation_values <- numeric(0)
-      for (age in 0:input$age_max) {
-        if (age <= nrow(temp)) {
-          maturation_values <- c(maturation_values, input[[paste0("Maturation_", age)]])
+      # Parse values with sex (tilde) and age (comma) separators
+      # Format: sex1_age0,sex1_age1,sex1_age2~sex2_age0,sex2_age1,sex2_age2~...
+      # Or: sex1_value~sex2_value (single value per sex replicates across all ages)
+      parse_age_sex_values <- function(input_val, age_max) {
+        if (is.null(input_val) || input_val == "N") {
+          return(rep("N", age_max + 1))
         }
+        # Split by ~ to get sex groups
+        sex_groups <- strsplit(as.character(input_val), "~")[[1]]
+        sex_groups <- trimws(sex_groups)
+        
+        # If only one sex group without ~, treat as single sex
+        if (length(sex_groups) == 1 && !grepl("~", input_val)) {
+          age_values <- strsplit(sex_groups[1], ",")[[1]]
+          age_values <- trimws(age_values)
+          if (length(age_values) == 1) {
+            return(rep(age_values, age_max + 1))
+          }
+          return(age_values)
+        }
+        
+        # For each sex group, split by comma to get age values
+        sex_age_values <- lapply(sex_groups, function(sg) {
+          age_vals <- strsplit(sg, ",")[[1]]
+          trimws(age_vals)
+        })
+        
+        # Validate that all sex groups have the same number of age values
+        age_counts <- sapply(sex_age_values, length)
+        if (length(unique(age_counts)) > 1) {
+          return(NULL)  # Will trigger validation error
+        }
+        
+        # If each sex group has only 1 value, replicate it across all ages
+        if (age_counts[1] == 1) {
+          sex_age_values <- lapply(sex_age_values, function(sav) {
+            rep(sav[1], age_max + 1)
+          })
+        } else {
+          # Check if number of age values matches age_max + 1
+          if (age_counts[1] != age_max + 1) {
+            return(NULL)  # Will trigger validation error
+          }
+        }
+        
+        # Transpose: create age-specific values with sex values separated by ~
+        age_specific_values <- character(age_max + 1)
+        for (age in 0:age_max) {
+          sex_values_for_age <- sapply(sex_age_values, function(sav) {
+            if (age + 1 <= length(sav)) sav[age + 1] else "N"
+          })
+          age_specific_values[age + 1] <- paste(sex_values_for_age, collapse = "~")
+        }
+        
+        return(age_specific_values)
       }
       
+      # Validate that the parsed values are valid
+      validate_parsed_values <- function(values, age_max) {
+        if (is.null(values)) return(FALSE)
+        if (length(values) != age_max + 1) return(FALSE)
+        return(TRUE)
+      }
+      
+      # Validate and parse maturation
+      maturation_vals <- parse_age_sex_values(input$maturation, input$age_max)
+      if (!validate_parsed_values(maturation_vals, input$age_max)) {
+        showNotification(paste("Maturation: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '4,5,6~3,4,5~2,3,4'"), type = "error")
+        return()
+      }
       
       # Update maturation column
       for (age in 0:input$age_max) {
-        if (age <= nrow(temp)) {
-          temp$`Maturation`[age + 1] <- input[[paste0("Maturation_", age)]]
+        if (age + 1 <= nrow(temp)) {
+          temp$`Maturation`[age + 1] <- maturation_vals[age + 1]
         }
       }
       
       template_data(temp)
+      showNotification("Maturation parameters updated successfully!", type = "message")
       
-    })
-    
-    # Generate dynamic maturation inputs based on age_max
-    output$Maturation_inputs <- renderUI({
-      req(input$age_max >= 0) # Allow age_max to be 0
-      
-      age_classes <- 0:input$age_max
-      
-      tagList(
-        h5("Please enter the maturation parameters for initialization at each age class stage:", em(span("Maturation", style = "color:#0072B2;"))),
-        lapply(age_classes, function(age) {
-          fluidRow(
-            column(6,
-                   textInput(
-                     inputId = paste0("Maturation_", age),
-                     label = tagList("Age ", age, " - Maturation (e.g., 4~3~2): "),
-                     value = "0",  # default as string
-                     placeholder = "e.g., 4~3~2 for 3 sex classes"
-                   )
-            )
-          )
-        })
-      )
     })
     ############
     
@@ -691,18 +1169,144 @@ make_classvars <- function(output_file = "my_new_classvars.csv") {
     ###################################################
     # update Capture Probabilities tab
     ###################################################
-    observeEvent(input$update_capture_prob, { ##### FIX THIS  BECAUSE IT IS NOT UPDATING PROPERLY
+    observeEvent(input$update_capture_prob, {
       temp <- template_data()
+      req(input$age_max >= 0)
+      
+      # Ensure template has enough rows for all age classes
+      current_rows <- nrow(temp)
+      needed_rows <- max(current_rows, input$age_max + 1)
+      
+      if (needed_rows > current_rows) {
+        additional_rows <- needed_rows - current_rows
+        new_rows <- temp[1, ]
+        new_rows[] <- NA
+        temp <- rbind(temp, new_rows[rep(1, additional_rows), ])
+      }
       
       if (input$apply_capture_prob == "Yes") {
-        temp$`Capture Out Probability` <- input$Capture_Out_Probability
-        temp$`Capture Back Probability` <- input$Capture_Back_Probability
+        # Parse values with sex (tilde) and age (comma) separators
+        # Format: sex1_age0,sex1_age1,sex1_age2~sex2_age0,sex2_age1,sex2_age2~...
+        # Or: sex1_value~sex2_value (single value per sex replicates across all ages)
+        parse_age_sex_values <- function(input_val, age_max) {
+          if (is.null(input_val) || input_val == "N") {
+            return(rep("N", age_max + 1))
+          }
+          # Split by ~ to get sex groups
+          sex_groups <- strsplit(as.character(input_val), "~")[[1]]
+          sex_groups <- trimws(sex_groups)
+          
+          # If only one sex group without ~, treat as single sex
+          if (length(sex_groups) == 1 && !grepl("~", input_val)) {
+            age_values <- strsplit(sex_groups[1], ",")[[1]]
+            age_values <- trimws(age_values)
+            if (length(age_values) == 1) {
+              return(rep(age_values, age_max + 1))
+            }
+            return(age_values)
+          }
+          
+          # For each sex group, split by comma to get age values
+          sex_age_values <- lapply(sex_groups, function(sg) {
+            age_vals <- strsplit(sg, ",")[[1]]
+            trimws(age_vals)
+          })
+          
+          # Validate that all sex groups have the same number of age values
+          age_counts <- sapply(sex_age_values, length)
+          if (length(unique(age_counts)) > 1) {
+            return(NULL)  # Will trigger validation error
+          }
+          
+          # If each sex group has only 1 value, replicate it across all ages
+          if (age_counts[1] == 1) {
+            sex_age_values <- lapply(sex_age_values, function(sav) {
+              rep(sav[1], age_max + 1)
+            })
+          } else {
+            # Check if number of age values matches age_max + 1
+            if (age_counts[1] != age_max + 1) {
+              return(NULL)  # Will trigger validation error
+            }
+          }
+          
+          # Transpose: create age-specific values with sex values separated by ~
+          age_specific_values <- character(age_max + 1)
+          for (age in 0:age_max) {
+            sex_values_for_age <- sapply(sex_age_values, function(sav) {
+              if (age + 1 <= length(sav)) sav[age + 1] else "N"
+            })
+            age_specific_values[age + 1] <- paste(sex_values_for_age, collapse = "~")
+          }
+          
+          return(age_specific_values)
+        }
+        
+        # Validate that the parsed values are valid
+        validate_parsed_values <- function(values, age_max) {
+          if (is.null(values)) return(FALSE)
+          if (length(values) != age_max + 1) return(FALSE)
+          return(TRUE)
+        }
+        
+        # Validate and parse capture out probability
+        capture_out <- parse_age_sex_values(input$Capture_Out_Probability, input$age_max)
+        if (!validate_parsed_values(capture_out, input$age_max)) {
+          showNotification(paste("Capture Out Probability: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        # Validate 0-1 bounds
+        for (val in capture_out) {
+          if (val != "N") {
+            sex_vals <- strsplit(as.character(val), "~")[[1]]
+            for (sv in sex_vals) {
+              num_val <- as.numeric(trimws(sv))
+              if (is.na(num_val) || num_val < 0 || num_val > 1) {
+                showNotification(paste("Capture Out Probability: Values must be between 0 and 1, or 'N'. Invalid value:", sv), type = "error")
+                return()
+              }
+            }
+          }
+        }
+        
+        # Validate and parse capture back probability
+        capture_back <- parse_age_sex_values(input$Capture_Back_Probability, input$age_max)
+        if (!validate_parsed_values(capture_back, input$age_max)) {
+          showNotification(paste("Capture Back Probability: Invalid format. Expected format: sex1_age0,sex1_age1,...~sex2_age0,sex2_age1,... For age=2 with 3 sexes: '0,0.1,0.2~0,0.1,0.2~1,0.3,0.5'"), type = "error")
+          return()
+        }
+        for (val in capture_back) {
+          if (val != "N") {
+            sex_vals <- strsplit(as.character(val), "~")[[1]]
+            for (sv in sex_vals) {
+              num_val <- as.numeric(trimws(sv))
+              if (is.na(num_val) || num_val < 0 || num_val > 1) {
+                showNotification(paste("Capture Back Probability: Values must be between 0 and 1, or 'N'. Invalid value:", sv), type = "error")
+                return()
+              }
+            }
+          }
+        }
+        
+        # Update capture probability values for each age class
+        for (age in 0:input$age_max) {
+          if (age + 1 <= nrow(temp)) {
+            temp$`Capture Out Probability`[age + 1] <- capture_out[age + 1]
+            temp$`Capture Back Probability`[age + 1] <- capture_back[age + 1]
+          }
+        }
       } else {
-        temp$`Capture Out Probability` <- "N"
-        temp$`Capture Back Probability` <- "N"
+        # Reset capture probability values to defaults
+        for (age in 0:input$age_max) {
+          if (age + 1 <= nrow(temp)) {
+            temp$`Capture Out Probability`[age + 1] <- "N"
+            temp$`Capture Back Probability`[age + 1] <- "N"
+          }
+        }
       }
       
       template_data(temp)
+      showNotification("Capture probability parameters updated successfully!", type = "message")
     })
     
     ###################################################
