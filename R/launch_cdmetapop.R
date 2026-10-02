@@ -10,6 +10,18 @@
 # line. Returns list(data_dir, cmd). No process is launched here.
 .launch_prepare <- function(runvars, pythonFilepath, CDMetaPOPFilepath,
 		base_dir, output_prefix) {
+	# Expand a leading `~` up front. R's own file functions expand it, but the
+	# command line built below is handed to a shell with the paths
+	# double-quoted, and NEITHER the shell (tilde expansion does not happen
+	# inside double quotes) NOR Python's open() expands `~` -- so an
+	# unexpanded `~` would pass R's checks here and then fail only once
+	# CDMetaPOP started looking for its files. path.expand() leaves paths
+	# without a `~` untouched.
+	pythonFilepath <- path.expand(pythonFilepath)
+	CDMetaPOPFilepath <- path.expand(CDMetaPOPFilepath)
+	base_dir <- path.expand(base_dir)
+	if (is.character(runvars)) runvars <- path.expand(runvars)
+
 	if (inherits(runvars, "RunVars")) {
 		# Object: materialize the whole input-file graph into a fresh run dir
 		# (RunVars.csv at its root; see .write_cdmetapop_inputfiles()).

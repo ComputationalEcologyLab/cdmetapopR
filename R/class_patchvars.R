@@ -10,13 +10,19 @@
 # PatchVarsS1.csv, the package's canonical example (CDMetaPOP reads column
 # *order*, not header text -- see class_classvars.R's top-of-file note).
 #
-# Scope note: CDMetaPOP's user manual (section "Patch level controls --
-# PatchVars.csv file") also documents disease-related columns (Disease_file,
-# Env Res, DiseaseDefense1_CC/Cc/cc, DiseaseDefense1_DD/Dd/dd) appended after
-# comp_coef. These are intentionally NOT included here, since they are
-# absent from PatchVarsS1.csv (the basic, non-disease canonical example this
-# package's other defaults are drawn from); will add them as a follow-up task as
-# disease-model support is needed.
+# Disease columns: CDMetaPOP appends EIGHT further columns after comp_coef
+# when the disease module is on -- the per-patch DiseaseVars file, the
+# environmental reservoir, and two sets of three genotype-specific transition
+# rates (see `.pv_disease_headers` below). CDMetaPOP requires PatchVars.csv to
+# have EXACTLY 50 columns when PopVars' `implement_disease` is "N" and EXACTLY
+# 58 when it is not: src/CDmetaPOP_PreProcess.py sets the expected count from
+# `implement_disease` and then hard-validates it, so neither shape is accepted
+# in the other mode. The eight are therefore stored here but OMITTED from
+# `as_data_frame()` -- and so from everything written -- unless at least one of
+# them is set. They are absent from PatchVarsS1.csv, the non-disease canonical
+# example every other default comes from, so unlike every other column they
+# have NO default value: leaving them unset is how a non-disease PatchVars file
+# is expressed.
 
 # Canonical column headers, in CDMetaPOP's expected order. "PatchID" is
 # handled separately from the other columns (see `patch_id` active binding
@@ -56,6 +62,35 @@
 	"fitness_AABB", "fitness_AaBB", "fitness_aaBB", "fitness_AABb",
 	"fitness_AaBb", "fitness_aaBb", "fitness_AAbb", "fitness_Aabb",
 	"fitness_aabb", "comp_coef"
+)
+
+# The eight disease columns, appended after `comp_coef` when the disease
+# module is on (see the note at the top of this file). Kept in their own
+# vectors rather than appended to `.pv_headers`/`.pv_fields`, since those
+# define the 50-column non-disease file that `.read_patchvars_csv()` and the
+# graph-writer still treat as the base form.
+#
+# HEADER TEXT: read positionally by CDMetaPOP, so it is for humans only -- and
+# the two example sets disagree about it. `Adaptive_Run06` uses
+# `Resistant_CC`/`Resistant Cc`/`Resistant_cc`/`Tolerant_*` (note the space
+# typo) while `OnePatch_SIDP` uses ` DiseaseDefense1_CC` ... ` DiseaseDefense1_dd`
+# (leading spaces, and the same `1` prefix reused for BOTH loci, which the
+# manual says must be unique). The resistance/tolerance spelling is used here
+# because it names what each locus does.
+#
+# As with the genotype-suffixed fitness fields, the genotype part of the field
+# name keeps its original case (`resistant_CC` vs `resistant_cc`), since
+# lowercasing would collide two distinct genotypes onto one name.
+.pv_disease_headers <- c(
+	"disease_file", "Env Res",
+	"Resistant_CC", "Resistant_Cc", "Resistant_cc",
+	"Tolerant_DD", "Tolerant_Dd", "Tolerant_dd"
+)
+
+.pv_disease_fields <- c(
+	"disease_file", "env_res",
+	"resistant_CC", "resistant_Cc", "resistant_cc",
+	"tolerant_DD", "tolerant_Dd", "tolerant_dd"
 )
 
 # Default values taken from example_files/patchvars/PatchVarsS1.csv (the
@@ -167,13 +202,22 @@
 	straying_prob               = list(type = "numeric", lower = 0, upper = 1,   allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
 	dispersal_prob             = list(type = "numeric", lower = 0, upper = 1,   allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
 	growth_temp_out            = list(type = "numeric", lower = -Inf, upper = Inf, allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
-	growth_temp_out_stdev      = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	# The four growth StDev columns accept "N" for the same reason their mean
+	# columns do: CDMetaPOP only coerces the StDev when the mean is not "N"
+	# (`if mu != 'N': mu = float(mu); sigma = float(sigma)` in
+	# DoStochasticUpdate, src/CDmetaPOP_PreProcess.py), so "N" there is never
+	# parsed. Growth is normally switched off globally via PopVars'
+	# `growth_option`; an "N" in these per-patch columns is the finer-grained
+	# override, which only does anything under the `temperature` growth
+	# options. CDMetaPOP's own disease example files pair "N" means with "N"
+	# StDevs, so rejecting it made cdmetapopR refuse a valid file.
+	growth_temp_out_stdev      = list(type = "numeric", lower = 0, upper = Inf, allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
 	grow_days_out              = list(type = "numeric", lower = 0, upper = 365, allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
-	grow_days_out_stdev        = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	grow_days_out_stdev        = list(type = "numeric", lower = 0, upper = Inf, allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
 	growth_temp_back           = list(type = "numeric", lower = -Inf, upper = Inf, allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
-	growth_temp_back_stdev     = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	growth_temp_back_stdev     = list(type = "numeric", lower = 0, upper = Inf, allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
 	grow_days_back             = list(type = "numeric", lower = 0, upper = 365, allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
-	grow_days_back_stdev       = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	grow_days_back_stdev       = list(type = "numeric", lower = 0, upper = Inf, allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
 	capture_prob_out           = list(type = "numeric", lower = 0, upper = 1,   allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
 	capture_prob_back          = list(type = "numeric", lower = 0, upper = 1,   allow_N = TRUE,  allow_E = FALSE, allow_pipe = TRUE),
 	habitat_out                = list(type = "free_numeric", allow_pipe = TRUE),
@@ -183,7 +227,34 @@
 	fitness_AABB = list(type = "free_char", allow_pipe = TRUE), fitness_AaBB = list(type = "free_char", allow_pipe = TRUE), fitness_aaBB = list(type = "free_char", allow_pipe = TRUE),
 	fitness_AABb = list(type = "free_char", allow_pipe = TRUE), fitness_AaBb = list(type = "free_char", allow_pipe = TRUE), fitness_aaBb = list(type = "free_char", allow_pipe = TRUE),
 	fitness_AAbb = list(type = "free_char", allow_pipe = TRUE), fitness_Aabb = list(type = "free_char", allow_pipe = TRUE), fitness_aabb = list(type = "free_char", allow_pipe = TRUE),
-	comp_coef = list(type = "free_char", allow_pipe = TRUE)
+	comp_coef = list(type = "free_char", allow_pipe = TRUE),
+
+	# Disease columns (see the note at the top of this file). `disease_file`
+	# is an object-or-path column handled like `class_vars`, outside
+	# `.validate_pv_field()`. `env_res` is the starting pathogen load, which
+	# CDMetaPOP passes straight to float() whenever the disease module is on
+	# -- even under Direct transmission, where the value is unused -- so it
+	# must be a number regardless of transmission mode.
+	#
+	# The six defense columns give the transition rate for each genotype at
+	# the resistance locus (CC/Cc/cc) and the tolerance locus (DD/Dd/dd),
+	# overriding the matching cell of the DiseaseVars transition matrix. Each
+	# holds ONE rate per transition named in that DiseaseVars file's
+	# `disease_resistant`/`disease_tolerant` field, `;`-separated in the same
+	# order (hence "semicolon_numeric"), e.g. "0.2;0.9" for `"0_1;3_1"`.
+	# Matching those counts is a cross-FILE rule, checked by the launch-time
+	# writer rather than here. The range is deliberately unbounded: these
+	# override transition-matrix entries, and under Indirect transmission such
+	# an entry is scaled by the pathogen concentration rather than used
+	# directly as a probability, so a value above 1 is not necessarily wrong.
+	disease_file = list(type = "disease_file"),
+	env_res      = list(type = "numeric", lower = 0, upper = Inf, allow_N = FALSE, allow_E = FALSE, allow_pipe = TRUE),
+	resistant_CC = list(type = "semicolon_numeric", allow_pipe = TRUE),
+	resistant_Cc = list(type = "semicolon_numeric", allow_pipe = TRUE),
+	resistant_cc = list(type = "semicolon_numeric", allow_pipe = TRUE),
+	tolerant_DD  = list(type = "semicolon_numeric", allow_pipe = TRUE),
+	tolerant_Dd  = list(type = "semicolon_numeric", allow_pipe = TRUE),
+	tolerant_dd  = list(type = "semicolon_numeric", allow_pipe = TRUE)
 )
 
 #' Validate a single (post-'|'-split) PatchVars value against its column's
@@ -206,6 +277,20 @@
 	if (type == "free_char") {
 		if (is.na(seg) || !nzchar(seg)) {
 			stop(sprintf("`%s`[%d] cannot be an empty/NA value.", field, i))
+		}
+		return(invisible(NULL))
+	}
+
+	if (type == "semicolon_numeric") {
+		# One or more `;`-separated numbers, unbounded (see the disease rules
+		# in `.pv_rules` for why no range is enforced).
+		parts <- strsplit(seg, ";", fixed = TRUE)[[1]]
+		nums <- suppressWarnings(as.numeric(parts))
+		if (length(nums) == 0 || any(is.na(nums))) {
+			stop(sprintf(
+				"`%s`[%d] = \"%s\" must be one or more numbers, separated by `;` (one per transition named in the DiseaseVars file).",
+				field, i, seg
+			))
 		}
 		return(invisible(NULL))
 	}
@@ -447,6 +532,106 @@
 	lapply(values, .pv_normalize_class_vars_patch, resolve = resolve)
 }
 
+#' Resolve one `disease_file` `|`-segment to a live object or a literal path
+#'
+#' The `disease_file` counterpart of `.pv_resolve_class_vars_segment()`, with
+#' the same `.GlobalEnv`-only lookup and the same rationale -- see that
+#' function's documentation. Kept as a separate function rather than
+#' generalizing both: each class already carries its own copy of this pattern
+#' (`.popv_resolve_object_segment()`, `.rv_resolve_popvars_segment()`), so a
+#' per-field copy here follows the established shape. Worth unifying across
+#' all four if a fifth reference field ever appears.
+#'
+#' @param seg A single character segment, or already a `DiseaseVars` object.
+#' @param resolve If `FALSE`, skip the lookup and return `seg` unchanged --
+#'   used when reading an existing PatchVars.csv, where every `disease_file`
+#'   cell is necessarily a literal path.
+#' @return Either a `DiseaseVars` object, or `seg` unchanged.
+#' @keywords internal
+.pv_resolve_disease_file_segment <- function(seg, resolve = TRUE) {
+	if (resolve && is.character(seg) && length(seg) == 1 && !is.na(seg) && nzchar(seg) &&
+			exists(seg, envir = .GlobalEnv, inherits = FALSE)) {
+		candidate <- get(seg, envir = .GlobalEnv, inherits = FALSE)
+		if (inherits(candidate, "DiseaseVars")) return(candidate)
+	}
+	seg
+}
+
+#' Normalize one patch's `disease_file` entry into a flat list of items
+#'
+#' The `disease_file` counterpart of `.pv_normalize_class_vars_patch()`; `|`
+#' separates DiseaseVars files that take effect at successive cdclimate time
+#' steps (CDMetaPOP splits this cell with the same `split_or_get()` call it
+#' uses for `class_vars`).
+#'
+#' @keywords internal
+.pv_normalize_disease_file_patch <- function(x, resolve = TRUE) {
+	if (inherits(x, "DiseaseVars")) return(list(x))
+	if (is.character(x) && length(x) == 1) {
+		segs <- strsplit(x, "|", fixed = TRUE)[[1]]
+		return(lapply(segs, .pv_resolve_disease_file_segment, resolve = resolve))
+	}
+	if (is.list(x) || is.character(x)) {
+		items <- if (is.list(x)) x else as.list(x)
+		return(Reduce(c, lapply(items, .pv_normalize_disease_file_patch, resolve = resolve), list()))
+	}
+	stop("`disease_file` items must each be a DiseaseVars object or a single character string.")
+}
+
+#' Validate and normalize the `disease_file` column
+#'
+#' The `disease_file` counterpart of `.validate_pv_class_vars()`: a list
+#' column whose per-patch elements are each a flat list of `DiseaseVars`
+#' objects and/or paths. Several patches may reference the SAME `DiseaseVars`
+#' object, which is the usual case for a spatially uniform disease model.
+#'
+#' @keywords internal
+.validate_pv_disease_file <- function(values, n, resolve = TRUE) {
+	# A single DiseaseVars object is an R6 environment, not a list of
+	# per-patch values -- see `.validate_pv_class_vars()` for why this is
+	# detected before falling back to as.list().
+	is_scalar_value <- inherits(values, "DiseaseVars") ||
+		(is.character(values) && length(values) == 1)
+	if (is_scalar_value) {
+		one_patch <- .pv_normalize_disease_file_patch(values, resolve = resolve)
+		return(rep(list(one_patch), n))
+	}
+
+	if (!is.list(values)) values <- as.list(values)
+	if (length(values) == 1 && n != 1) values <- rep(values, n)
+	if (length(values) != n) {
+		stop(sprintf(
+			"`disease_file` must have length 1 or %d (the number of patches), not %d.",
+			n, length(values)
+		))
+	}
+	lapply(values, .pv_normalize_disease_file_patch, resolve = resolve)
+}
+
+#' Report which disease columns are still unset
+#'
+#' CDMetaPOP needs all eight disease columns present together (see the note at
+#' the top of this file), so a partially filled set cannot produce a runnable
+#' file. Returns the names of the unset ones when SOME but not all are set, and
+#' `character(0)` when none or all are -- the caller warns rather than errors,
+#' since an object part-way through being filled in is a legitimate
+#' intermediate state and CDMetaPOP reports the real problem at launch.
+#'
+#' @param df The stored (58-column) data frame.
+#' @keywords internal
+.pv_disease_unset <- function(df) {
+	unset <- vapply(seq_along(.pv_disease_fields), function(j) {
+		col <- df[[.pv_disease_headers[j]]]
+		if (.pv_disease_fields[j] == "disease_file") {
+			all(vapply(col, length, integer(1)) == 0)
+		} else {
+			all(is.na(col))
+		}
+	}, logical(1))
+	if (all(unset) || !any(unset)) return(character(0))
+	.pv_disease_fields[unset]
+}
+
 # Default values for one PatchVars column, for a given set of patch ids.
 # Looks up `.pv_s1_defaults` by patch index. Patches beyond what
 # PatchVarsS1.csv defines (i.e. above patch 7) have no principled default,
@@ -489,7 +674,11 @@
 			fitness_AABb = NULL, fitness_AaBb = NULL, fitness_aaBb = NULL,
 			fitness_AAbb = NULL, fitness_Aabb = NULL, fitness_aabb = NULL,
 			comp_coef = NULL,
-			resolve_class_vars = TRUE
+			disease_file = NULL, env_res = NULL,
+			resistant_CC = NULL, resistant_Cc = NULL, resistant_cc = NULL,
+			tolerant_DD = NULL, tolerant_Dd = NULL, tolerant_dd = NULL,
+			resolve_class_vars = TRUE,
+			resolve_disease_file = TRUE
 		) {
 			# `patch_id` must be sequential integers starting at 1 (per the
 			# user manual: "Begin label 1 through n in consecutive order").
@@ -530,12 +719,29 @@
 				comp_coef = comp_coef
 			)
 
-			private$data <- as.data.frame(matrix(nrow = n, ncol = length(.pv_headers)))
-			colnames(private$data) <- .pv_headers
+			# The eight disease columns are collected separately: unlike every
+			# other column they have no default, so NULL means "leave unset"
+			# rather than "fill in from PatchVarsS1.csv".
+			supplied_disease <- list(
+				disease_file = disease_file, env_res = env_res,
+				resistant_CC = resistant_CC, resistant_Cc = resistant_Cc,
+				resistant_cc = resistant_cc, tolerant_DD = tolerant_DD,
+				tolerant_Dd = tolerant_Dd, tolerant_dd = tolerant_dd
+			)
+
+			# The stored table always carries all 58 columns; as_data_frame()
+			# drops the trailing eight when none of them is set, which is what
+			# keeps a non-disease object at CDMetaPOP's required 50.
+			all_headers <- c(.pv_headers, .pv_disease_headers)
+			private$data <- as.data.frame(matrix(nrow = n, ncol = length(all_headers)))
+			colnames(private$data) <- all_headers
 			private$data[["PatchID"]] <- patch_id
-			# "Class Vars" is a list column (can hold ClassVars objects), so
-			# it must be assigned via `[[<-`, not the matrix-fill above.
+			# "Class Vars" and "disease_file" are list columns (they can hold
+			# ClassVars/DiseaseVars objects), so they must be assigned via
+			# `[[<-`, not the matrix-fill above. An unset disease_file cell is
+			# an empty list, which is how `.pv_disease_unset()` recognizes it.
 			private$data[["Class Vars"]] <- vector("list", n)
+			private$data[["disease_file"]] <- rep(list(list()), n)
 
 			# PatchVarsS1.csv only defines defaults for patches 1-7. If more
 			# patches are requested and any column is left unspecified, warn
@@ -560,6 +766,21 @@
 					private$data[[header]] <- private$validate(field, raw)
 				}
 			}
+
+			# Disease columns: only the ones actually supplied are written;
+			# the rest stay NA (or an empty list) so the object keeps its
+			# non-disease 50-column shape until the first one is set.
+			for (field in .pv_disease_fields) {
+				raw <- supplied_disease[[field]]
+				if (is.null(raw)) next
+				header <- .pv_disease_headers[match(field, .pv_disease_fields)]
+				if (field == "disease_file") {
+					private$data[["disease_file"]] <- private$validate_disease_file(raw, resolve = resolve_disease_file)
+				} else {
+					private$data[[header]] <- private$validate(field, raw)
+				}
+			}
+			private$warn_disease_unset()
 		},
 
 		# Add one or more patches, copying the current last row. All new
@@ -583,23 +804,50 @@
 
 
 		print = function(...) {
-			cat("<PatchVars>", nrow(private$data), "patches\n")
-			out <- private$data
+			cat("<PatchVars>", nrow(private$data), "patches",
+				if (self$has_disease()) "(disease columns set)" else "", "\n")
+			out <- self$as_data_frame()
 			out[["Class Vars"]] <- vapply(out[["Class Vars"]], function(items) {
 				paste(vapply(items, function(val) {
 					if (inherits(val, "ClassVars")) "<ClassVars object>" else val
 				}, character(1)), collapse = "|")
 			}, character(1))
+			if (self$has_disease()) {
+				out[["disease_file"]] <- vapply(out[["disease_file"]], function(items) {
+					if (length(items) == 0) return(NA_character_)
+					paste(vapply(items, function(val) {
+						if (inherits(val, "DiseaseVars")) "<DiseaseVars object>" else val
+					}, character(1)), collapse = "|")
+				}, character(1))
+			}
 			print(out)
 			invisible(self)
+		},
+
+		# TRUE once any disease column is set. Derived from the stored table
+		# rather than tracked as a flag, so it cannot fall out of step with
+		# the data after an active-binding assignment.
+		has_disease = function() {
+			if (any(vapply(private$data[["disease_file"]], length, integer(1)) > 0)) return(TRUE)
+			plain <- .pv_disease_headers[.pv_disease_fields != "disease_file"]
+			any(!is.na(unlist(private$data[plain], use.names = FALSE)))
 		},
 
 		# Returns a plain (independent) copy of the underlying table -- see
 		# class_classvars.R's as_data_frame() for rationale. The `Class
 		# Vars` list column is left as-is (still possibly holding ClassVars
 		# objects), since collapsing it to character here would silently
-		# lose information for callers who want the actual objects.
-		as_data_frame = function() private$data
+		# lose information for callers who want the actual objects; the same
+		# applies to `disease_file`.
+		#
+		# The eight disease columns are included ONLY once at least one of
+		# them is set, so a non-disease object yields CDMetaPOP's required 50
+		# columns and a disease one yields 58 (see the note at the top of this
+		# file).
+		as_data_frame = function() {
+			if (self$has_disease()) return(private$data)
+			private$data[, .pv_headers, drop = FALSE]
+		}
 	),
 
 	private = list(
@@ -610,6 +858,22 @@
 		},
 		validate_class_vars = function(values, resolve = TRUE) {
 			.validate_pv_class_vars(values, nrow(private$data), resolve = resolve)
+		},
+		validate_disease_file = function(values, resolve = TRUE) {
+			.validate_pv_disease_file(values, nrow(private$data), resolve = resolve)
+		},
+
+		# Warn (never error) when the disease columns are partly filled in:
+		# CDMetaPOP needs all eight together, but part-way through setting
+		# them is a legitimate intermediate state.
+		warn_disease_unset = function() {
+			unset <- .pv_disease_unset(private$data)
+			if (length(unset) == 0) return(invisible(NULL))
+			warning(sprintf(
+				"Some disease columns are set but these are not: %s. CDMetaPOP requires all eight together (it expects exactly 58 PatchVars columns when PopVars' `implement_disease` is not \"N\"), so set the rest before launching.",
+				paste(unset, collapse = ", ")
+			), call. = FALSE)
+			invisible(NULL)
 		}
 	),
 
@@ -813,6 +1077,50 @@
 		comp_coef = function(value) {
 			if (missing(value)) return(private$data[["comp_coef"]])
 			private$data[["comp_coef"]] <- private$validate("comp_coef", value)
+		},
+
+		# Disease columns. Each assignment re-checks the whole set and warns if
+		# it is still partly filled in, so the reminder follows whichever
+		# column was touched last.
+		disease_file = function(value) {
+			if (missing(value)) return(private$data[["disease_file"]])
+			private$data[["disease_file"]] <- private$validate_disease_file(value)
+			private$warn_disease_unset()
+		},
+		env_res = function(value) {
+			if (missing(value)) return(private$data[["Env Res"]])
+			private$data[["Env Res"]] <- private$validate("env_res", value)
+			private$warn_disease_unset()
+		},
+		resistant_CC = function(value) {
+			if (missing(value)) return(private$data[["Resistant_CC"]])
+			private$data[["Resistant_CC"]] <- private$validate("resistant_CC", value)
+			private$warn_disease_unset()
+		},
+		resistant_Cc = function(value) {
+			if (missing(value)) return(private$data[["Resistant_Cc"]])
+			private$data[["Resistant_Cc"]] <- private$validate("resistant_Cc", value)
+			private$warn_disease_unset()
+		},
+		resistant_cc = function(value) {
+			if (missing(value)) return(private$data[["Resistant_cc"]])
+			private$data[["Resistant_cc"]] <- private$validate("resistant_cc", value)
+			private$warn_disease_unset()
+		},
+		tolerant_DD = function(value) {
+			if (missing(value)) return(private$data[["Tolerant_DD"]])
+			private$data[["Tolerant_DD"]] <- private$validate("tolerant_DD", value)
+			private$warn_disease_unset()
+		},
+		tolerant_Dd = function(value) {
+			if (missing(value)) return(private$data[["Tolerant_Dd"]])
+			private$data[["Tolerant_Dd"]] <- private$validate("tolerant_Dd", value)
+			private$warn_disease_unset()
+		},
+		tolerant_dd = function(value) {
+			if (missing(value)) return(private$data[["Tolerant_dd"]])
+			private$data[["Tolerant_dd"]] <- private$validate("tolerant_dd", value)
+			private$warn_disease_unset()
 		}
 	)
 ))
@@ -829,9 +1137,25 @@
 #' Any column argument left as `NULL` defaults to the corresponding values
 #' in `example_files/patchvars/PatchVarsS1.csv`, matched to each requested
 #' patch (recycling the patch-7 default, with a warning, for patches beyond
-#' what that file defines).
+#' what that file defines). The eight disease arguments are the exception:
+#' they have no default and are left out of the file entirely unless set (see
+#' Details).
 #'
 #' @details
+#' **Disease columns.** `disease_file`, `env_res`, and the six
+#' `resistant_*`/`tolerant_*` rates are only part of a PatchVars file when the
+#' disease module is on. CDMetaPOP requires all eight together: it expects
+#' exactly 50 columns when [PopVars()]'s `implement_disease` is `"N"` and
+#' exactly 58 when it is `"Out"`, `"Back"`, or `"Both"`, and rejects either
+#' shape in the other mode. So leaving them unset -- the default -- produces
+#' the 50-column non-disease file, setting all eight produces the 58-column
+#' one, and setting only some warns, since no file with a partial set can run.
+#' They are absent from `PatchVarsS1.csv`, which is why they alone have no
+#' default values. Disease states, transition rates, and compartments are
+#' defined in the referenced [DiseaseVars()] file, not here; these columns only
+#' say which model each patch follows and give the per-patch, per-genotype
+#' values.
+#'
 #' Temporal changes via `"|"`: CDMetaPOP lets most PatchVars columns
 #' specify a value that changes based on values in the RunVars object (`cdclimate`
 #' module), by giving multiple values separated by `|` in one cell, e.g.
@@ -924,11 +1248,29 @@
 #'   (not yet implemented), so validation here is permissive.
 #' @param comp_coef Lotka-Volterra competition coefficient(s) for
 #'   multispecies applications, `;`-separated if more than 2 species.
+#' @param disease_file A [DiseaseVars()] object, object-name/path string, or
+#'   several joined with `|` (successive time steps), for each patch. Required
+#'   -- along with the seven other disease arguments -- when [PopVars()]'s
+#'   `implement_disease` is not `"N"`. Several patches may share one
+#'   `DiseaseVars` object. See Details.
+#' @param env_res Starting pathogen load in each patch's environmental
+#'   reservoir (a non-negative number). Only used when the referenced
+#'   [DiseaseVars()] sets `transmission_mode = "Indirect"`, but CDMetaPOP
+#'   requires a number either way; use `0` when transmission is direct.
+#' @param resistant_CC,resistant_Cc,resistant_cc Transition rate for each
+#'   genotype at the disease-resistance locus, overriding the matching cell of
+#'   the [DiseaseVars()] transition matrix. Give one rate per transition named
+#'   in that file's `disease_resistant` field, `;`-separated in the same order
+#'   (e.g. `"0.2;0.9"` for `"0_1;3_1"`).
+#' @param tolerant_DD,tolerant_Dd,tolerant_dd As the `resistant_*` arguments,
+#'   for the disease-tolerance locus and its `disease_tolerant` field.
 #' @param resolve_class_vars If TRUE, strings entered for class_vars will be
 #'   checked against the global environment for ClassVars objects of the same
 #'   name (primarily helpful for temporal changes e.g.,
 #'   "classvars1|classvars2"). If FALSE, class_vars entries must be ClassVars
 #'   objects or they will be treated as filepaths.
+#' @param resolve_disease_file As `resolve_class_vars`, for `disease_file`
+#'   strings and [DiseaseVars()] objects.
 #' @param path Optional path to an existing PatchVars csv file. If supplied,
 #'   the object is built from that file, with the patches taken from its rows
 #'   (so `patch_id` cannot also be given). Any column arguments supplied
@@ -1004,7 +1346,16 @@ PatchVars <- function(
 	fitness_AABb = rep(0, 7), fitness_AaBb = rep(0, 7), fitness_aaBb = rep(0, 7),
 	fitness_AAbb = rep(0, 7), fitness_Aabb = rep(0, 7), fitness_aabb = rep(0, 7),
 	comp_coef = rep("0.5;0.1", 7),
+	disease_file = NULL,
+	env_res = NULL,
+	resistant_CC = NULL,
+	resistant_Cc = NULL,
+	resistant_cc = NULL,
+	tolerant_DD = NULL,
+	tolerant_Dd = NULL,
+	tolerant_dd = NULL,
 	resolve_class_vars = TRUE,
+	resolve_disease_file = TRUE,
 	path = NULL
 ) {
 	# See ClassVars()'s wrapper function for why these literal defaults are
@@ -1033,6 +1384,12 @@ PatchVars <- function(
 		for (field in .pv_fields[supplied]) {
 			obj[[field]] <- get(field, envir = this_env, inherits = FALSE)
 		}
+		# The disease columns need no missing() test: NULL already means
+		# "not supplied", since they have no literal default.
+		for (field in .pv_disease_fields) {
+			val <- get(field, envir = this_env, inherits = FALSE)
+			if (!is.null(val)) obj[[field]] <- val
+		}
 		return(obj)
 	}
 
@@ -1043,9 +1400,14 @@ PatchVars <- function(
 
 	column_args <- mget(.pv_fields, envir = environment())
 	column_args[!supplied] <- list(NULL)
+	# Disease arguments pass through as-is: their NULL default already means
+	# "leave this column unset".
+	disease_args <- mget(.pv_disease_fields, envir = environment())
 
 	do.call(.PatchVarsR6$new, c(
-		list(patch_id = patch_id, resolve_class_vars = resolve_class_vars),
-		column_args
+		list(patch_id = patch_id, resolve_class_vars = resolve_class_vars,
+			resolve_disease_file = resolve_disease_file),
+		column_args,
+		disease_args
 	))
 }
