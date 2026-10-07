@@ -8,7 +8,7 @@
 }
 \arguments{
 \item{x}{A cdmetapopR input-file object: a \code{\link[=ClassVars]{ClassVars()}}, \code{\link[=PatchVars]{PatchVars()}},
-\code{\link[=PopVars]{PopVars()}}, or \code{\link[=RunVars]{RunVars()}} object.}
+\code{\link[=PopVars]{PopVars()}}, \code{\link[=RunVars]{RunVars()}}, or \code{\link[=DiseaseVars]{DiseaseVars()}} object.}
 
 \item{...}{Currently unused; present for S3 consistency with
 \code{\link[base:as.data.frame]{base::as.data.frame()}}.}

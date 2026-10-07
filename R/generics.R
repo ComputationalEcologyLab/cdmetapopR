@@ -1,5 +1,5 @@
 # Standalone, non-`$`-based functions for working with cdmetapopR's R6
-# input-file objects (ClassVars, PatchVars, PopVars, RunVars).
+# input-file objects (ClassVars, PatchVars, PopVars, RunVars, DiseaseVars).
 #
 # These are thin S3 generics dispatching on each object's R6 class name; the
 # actual implementation lives on the R6 object itself (e.g. `x$add_row()`),
@@ -8,10 +8,10 @@
 # class-specific logic. Add one new `.<ClassName>` method per generic here
 # as each new input-file class is implemented.
 #
-# Note: there is deliberately NO standalone csv-writer here. Writing input
-# files to disk is handled entirely by the graph-writer at
-# launch_cdmetapop() time (see plan.md Key Design Decision 6); the user
-# never writes a single object's csv directly.
+# Note: the csv-writer here is not a generic. Writing input files is handled
+# by the graph-writer at launch_cdmetapop() time (see plan.md Key Design
+# Decision 6); write_cdmetapop() (R/write_cdmetapop.R) is a plain function
+# providing a convenience fallback for writing one object by hand.
 
 #' Add one or more rows to a cdmetapopR input-file object
 #'
@@ -22,6 +22,11 @@
 #' `myclassvars$maturation <- ...`). What a "row" represents depends on the
 #' class: an age class ([ClassVars()]), a patch ([PatchVars()]), a batch
 #' ([PopVars()]), or a run ([RunVars()]).
+#'
+#' A [DiseaseVars()] object holds exactly one row -- CDMetaPOP reads a single
+#' disease model from `DiseaseVars.csv` and ignores any further rows -- so
+#' calling this on one is an error rather than a no-op. Create another
+#' [DiseaseVars()] object to describe a second disease model.
 #'
 #' @param x A cdmetapopR input-file object: a [ClassVars()], [PatchVars()],
 #'   [PopVars()], or [RunVars()] object.
@@ -47,6 +52,10 @@ add_rows.PopVars <- function(x, n = 1) x$add_row(n)
 #' @export
 add_rows.RunVars <- function(x, n = 1) x$add_row(n)
 
+# Errors, by way of the method on the object itself (which explains why).
+#' @export
+add_rows.DiseaseVars <- function(x, n = 1) x$add_row(n)
+
 #' View a cdmetapopR input-file object as a plain data frame
 #'
 #' Returns an ordinary (independent) `data.frame` copy of `x`'s underlying
@@ -56,7 +65,7 @@ add_rows.RunVars <- function(x, n = 1) x$add_row(n)
 #' (e.g. `x$maturation <- ...`) instead.
 #'
 #' @param x A cdmetapopR input-file object: a [ClassVars()], [PatchVars()],
-#'   [PopVars()], or [RunVars()] object.
+#'   [PopVars()], [RunVars()], or [DiseaseVars()] object.
 #' @param ... Currently unused; present for S3 consistency with
 #'   [base::as.data.frame()].
 #' @return A `data.frame`.
@@ -75,3 +84,6 @@ as.data.frame.PopVars <- function(x, ...) x$as_data_frame()
 
 #' @export
 as.data.frame.RunVars <- function(x, ...) x$as_data_frame()
+
+#' @export
+as.data.frame.DiseaseVars <- function(x, ...) x$as_data_frame()

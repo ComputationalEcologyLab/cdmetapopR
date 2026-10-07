@@ -10,6 +10,18 @@
 # line. Returns list(data_dir, cmd). No process is launched here.
 .launch_prepare <- function(runvars, pythonFilepath, CDMetaPOPFilepath,
 		base_dir, output_prefix) {
+	# Expand a leading `~` up front. R's own file functions expand it, but the
+	# command line built below is handed to a shell with the paths
+	# double-quoted, and NEITHER the shell (tilde expansion does not happen
+	# inside double quotes) NOR Python's open() expands `~` -- so an
+	# unexpanded `~` would pass R's checks here and then fail only once
+	# CDMetaPOP started looking for its files. path.expand() leaves paths
+	# without a `~` untouched.
+	pythonFilepath <- path.expand(pythonFilepath)
+	CDMetaPOPFilepath <- path.expand(CDMetaPOPFilepath)
+	base_dir <- path.expand(base_dir)
+	if (is.character(runvars)) runvars <- path.expand(runvars)
+
 	if (inherits(runvars, "RunVars")) {
 		# Object: materialize the whole input-file graph into a fresh run dir
 		# (RunVars.csv at its root; see .write_cdmetapop_inputfiles()).
@@ -79,7 +91,10 @@
 #'   appends a unix timestamp to it. Defaults to `"output_"`.
 #' @param wait If `FALSE` (the default), launch the simulation in the background
 #'   and return immediately -- suitable for long runs. If `TRUE`, block until
-#'   CDMetaPOP finishes before returning.
+#'   CDMetaPOP finishes before returning. On macOS and Linux a background run
+#'   opens no console window, so CDMetaPOP's output may not reach the R console;
+#'   check its `CDmetaPOP0.log` file in the output folder for progress and
+#'   errors (a warning on launch says the same).
 #'
 #' @return The output run directory, to be used as an argument for output summary 
 #' functions, (e.g. [summary_pop()]) once the run has completed.
@@ -135,6 +150,17 @@ launch_cdmetapop <- function(runvars,
 		message(sprintf(
 			"CDMetaPOP launched in the background in:\n  %s\nWhen it finishes, read results with e.g. summary_pop(\"%s\").",
 			prep$data_dir, prep$data_dir))
+
+		# On Windows a background run gets its own console window (shell() with
+		# the trailing `pause`), so progress and errors are visible as they
+		# happen. On macOS/Linux system(wait = FALSE) opens no window: whether
+		# anything reaches the console depends on how R was started (a terminal
+		# session shows it, RStudio generally does not), so point the user at
+		# CDMetaPOP's log file, which always records the full run.
+		if (.Platform$OS.type != "windows") {
+			warning("Check CDMetaPOP's log file (\"CDmetaPOP0.log\", in the output folder) for progress and errors, or use wait = TRUE.",
+				call. = FALSE)
+		}
 	}
 	invisible(prep$data_dir)
 }

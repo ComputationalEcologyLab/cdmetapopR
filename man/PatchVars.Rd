@@ -57,7 +57,16 @@ PatchVars(
   fitness_Aabb = rep(0, 7),
   fitness_aabb = rep(0, 7),
   comp_coef = rep("0.5;0.1", 7),
+  disease_file = NULL,
+  env_res = NULL,
+  resistant_CC = NULL,
+  resistant_Cc = NULL,
+  resistant_cc = NULL,
+  tolerant_DD = NULL,
+  tolerant_Dd = NULL,
+  tolerant_dd = NULL,
   resolve_class_vars = TRUE,
+  resolve_disease_file = TRUE,
   path = NULL
 )
 }
@@ -134,11 +143,34 @@ fitness/selection values; format depends on \code{PopVars$cdevolveans}
 \item{comp_coef}{Lotka-Volterra competition coefficient(s) for
 multispecies applications, \verb{;}-separated if more than 2 species.}
 
+\item{disease_file}{A \code{\link[=DiseaseVars]{DiseaseVars()}} object, object-name/path string, or
+several joined with \code{|} (successive time steps), for each patch. Required
+-- along with the seven other disease arguments -- when \code{\link[=PopVars]{PopVars()}}'s
+\code{implement_disease} is not \code{"N"}. Several patches may share one
+\code{DiseaseVars} object. See Details.}
+
+\item{env_res}{Starting pathogen load in each patch's environmental
+reservoir (a non-negative number). Only used when the referenced
+\code{\link[=DiseaseVars]{DiseaseVars()}} sets \code{transmission_mode = "Indirect"}, but CDMetaPOP
+requires a number either way; use \code{0} when transmission is direct.}
+
+\item{resistant_CC, resistant_Cc, resistant_cc}{Transition rate for each
+genotype at the disease-resistance locus, overriding the matching cell of
+the \code{\link[=DiseaseVars]{DiseaseVars()}} transition matrix. Give one rate per transition named
+in that file's \code{disease_resistant} field, \verb{;}-separated in the same order
+(e.g. \code{"0.2;0.9"} for \code{"0_1;3_1"}).}
+
+\item{tolerant_DD, tolerant_Dd, tolerant_dd}{As the \verb{resistant_*} arguments,
+for the disease-tolerance locus and its \code{disease_tolerant} field.}
+
 \item{resolve_class_vars}{If TRUE, strings entered for class_vars will be
 checked against the global environment for ClassVars objects of the same
 name (primarily helpful for temporal changes e.g.,
 "classvars1|classvars2"). If FALSE, class_vars entries must be ClassVars
 objects or they will be treated as filepaths.}
+
+\item{resolve_disease_file}{As \code{resolve_class_vars}, for \code{disease_file}
+strings and \code{\link[=DiseaseVars]{DiseaseVars()}} objects.}
 
 \item{path}{Optional path to an existing PatchVars csv file. If supplied,
 the object is built from that file, with the patches taken from its rows
@@ -164,7 +196,23 @@ existing PatchVars csv file, use the 'path' argument or the read_cdmetapop() fun
 Any column argument left as \code{NULL} defaults to the corresponding values
 in \code{example_files/patchvars/PatchVarsS1.csv}, matched to each requested
 patch (recycling the patch-7 default, with a warning, for patches beyond
-what that file defines).
+what that file defines). The eight disease arguments are the exception:
+they have no default and are left out of the file entirely unless set (see
+Details).
+
+\strong{Disease columns.} \code{disease_file}, \code{env_res}, and the six
+\verb{resistant_*}/\verb{tolerant_*} rates are only part of a PatchVars file when the
+disease module is on. CDMetaPOP requires all eight together: it expects
+exactly 50 columns when \code{\link[=PopVars]{PopVars()}}'s \code{implement_disease} is \code{"N"} and
+exactly 58 when it is \code{"Out"}, \code{"Back"}, or \code{"Both"}, and rejects either
+shape in the other mode. So leaving them unset -- the default -- produces
+the 50-column non-disease file, setting all eight produces the 58-column
+one, and setting only some warns, since no file with a partial set can run.
+They are absent from \code{PatchVarsS1.csv}, which is why they alone have no
+default values. Disease states, transition rates, and compartments are
+defined in the referenced \code{\link[=DiseaseVars]{DiseaseVars()}} file, not here; these columns only
+say which model each patch follows and give the per-patch, per-genotype
+values.
 
 Temporal changes via \code{"|"}: CDMetaPOP lets most PatchVars columns
 specify a value that changes based on values in the RunVars object (\code{cdclimate}
