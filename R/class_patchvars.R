@@ -795,7 +795,10 @@
 		add_row = function(n = 1) {
 			last_row <- private$data[nrow(private$data), , drop = FALSE]
 			new_rows <- last_row[rep(1, n), , drop = FALSE]
-			new_rows[["PatchID"]] <- seq(max(private$data[["PatchID"]]) + 1, length.out = n)
+			# as.integer() for the same reason as ClassVars' add_row(): seq()
+			# returns doubles, which would change the id column's type from the
+			# integer set at construction and break an identical() round trip.
+			new_rows[["PatchID"]] <- as.integer(seq(max(private$data[["PatchID"]]) + 1, length.out = n))
 			private$data <- rbind(private$data, new_rows)
 			# See class_classvars.R's add_row() for why row names are reset.
 			rownames(private$data) <- NULL

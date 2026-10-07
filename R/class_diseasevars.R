@@ -599,49 +599,33 @@
 #' Create a DiseaseVars object
 #'
 #' Constructs an R6 object representing a CDMetaPOP `DiseaseVars.csv` input
-#' file -- one compartmental disease model, referenced per patch by
-#' [PatchVars()]'s `disease_file` column. Columns may be edited after
-#' construction, e.g. `mydiseasevars$start_disease <- 10`. **To build the
+#' file, referenced per patch by [PatchVars()]'s `disease_file` column. Columns may be edited after
+#' construction, e.g. `mydiseasevars$start_disease <- 10`. To build the
 #' object from an existing DiseaseVars file, use the `path` argument or the
-#' [read_cdmetapop()] function.**
+#' [read_cdmetapop()] function.
 #'
 #' Any column argument left unsupplied defaults to the basic 3-state SIR model
 #' from the user manual's disease quick-start.
 #'
 #' @details
-#' **The file holds exactly one row.** CDMetaPOP reads a single disease model
-#' from `DiseaseVars.csv` and ignores any further rows, so there is no
-#' row-count argument and [add_rows()] errors on this class. Note `n_states`
-#' is a *column* -- the number of disease compartments -- not a row count. To
-#' give different patches different disease models, create several
-#' `DiseaseVars` objects and reference them from the relevant patches.
+#' **The file holds only one row.** [add_rows()] is not available for Disease parameters. 
+#' Disease models may vary by patch by providing different `DiseaseVars` objects to 
+#' different patches.
 #'
-#' **The disease module must also be switched on in [PopVars()]**, by setting
+#' **The disease module must also be turned on in [PopVars()]**, by setting
 #' `implement_disease` to `"Out"`, `"Back"`, or `"Both"`, and each patch must
-#' reference a disease file in [PatchVars()]. A `DiseaseVars` object on its own
-#' has no effect.
+#' reference a disease file in [PatchVars()]. 
 #'
 #' **Delimiters:** `;` is the only delimiter used in this file, separating the
-#' per-state proportions in `initial_conditions`, multiple state indices, and
-#' multiple defense transitions. Unlike the other input files, no column
-#' supports `|` for variation over time -- to change disease parameters over a
-#' simulation, point [PatchVars()]'s `disease_file` column at several
-#' `DiseaseVars` files joined with `|` instead.
+#' initial state proportions in `initial_conditions` and indicating which comparments
+#' correspond to which disease state. To vary disease parameters over time,
+#' use the `|` delimited in [PatchVars()]'s `disease_file` column.
 #'
 #' **States are numbered from 0**, and state 0 is assumed to be the initial
-#' susceptible state. With `n_states = 3` the valid indices are 0, 1, and 2.
+#' susceptible state. With `n_states = 3` the valid compartment numbers are 0, 1, and 2.
 #' Under `"Indirect"` transmission the environmental reservoir occupies one
-#' further index (`n_states`), which `transition_rates` must include and which
-#' `disease_resistant`/`disease_tolerant` may name as a source state.
-#'
-#' **Cross-column rules.** Several values must agree with each other: one
-#' `initial_conditions` proportion per state summing to 1, every state index
-#' below `n_states`, and a `transition_rates` matrix of `n_states` square for
-#' `"Direct"` transmission or `n_states + 1` square for `"Indirect"`. These are
-#' errors at construction, but editing a single column afterward only warns --
-#' so a change needing two assignments (such as moving from 3 to 4 states) can
-#' be made in either order. Call `mydiseasevars$check()` to confirm the object
-#' is consistent again; [launch_cdmetapop()] re-checks before writing anything.
+#' additional index (`n_states`), which must be included in `transition_rates` and
+#' can be the state named for `disease_resistant`/`disease_tolerant`.
 #'
 #' @param n_states Number of disease compartments (a whole number, 1 or more).
 #'   State 0 is always the initial susceptible state.
@@ -651,14 +635,14 @@
 #' @param transition_rates The state-to-state transition matrix: either a
 #'   square `matrix` or a path to a csv holding one. Rows are the state moved
 #'   TO and columns the state moved FROM. A cell may be a single rate, or
-#'   `"mu;sigma"` (supply a character matrix) to redraw that rate from a normal
+#'   `"mu;sigma"` to redraw that rate from a normal
 #'   distribution at each CDClimate time step.
 #' @param infection_states State index considered infectious, or several
 #'   joined by `;`.
 #' @param susceptible_states State index considered susceptible, or several
 #'   joined by `;`.
-#' @param death_states State index used for mortality -- individuals entering
-#'   it are removed from the simulation -- or `"N"` for no death compartment.
+#' @param death_states State index used for mortality 
+#'    or `"N"` for no death compartment.
 #' @param initial_conditions_offspring How newborns' disease states are
 #'   assigned: `"Susceptible"` (all born into state 0), or
 #'   `"Vertical;<rate>"` for vertical transmission from infected mothers at
@@ -671,13 +655,12 @@
 #'   Matched exactly, including case.
 #' @param disease_resistant The transition(s) modified by the resistance
 #'   locus, each written `"<from>_<to>"` with state indices and joined by `;`
-#'   (e.g. `"0_1;3_1"`), or `"N"` for no resistance locus. The rates
-#'   themselves are per-patch and per-genotype, set in [PatchVars()].
-#' @param disease_tolerant As `disease_resistant`, for the tolerance locus.
+#'   (e.g. `"0_1;3_1"`), or `"N"` for no resistance locus. Rates
+#'   can vary by patch and with genotype, see [PatchVars()].
+#' @param disease_tolerant Same as `disease_resistant`, but for the tolerance locus.
 #' @param path Optional path to an existing DiseaseVars csv file. If supplied,
 #'   the object is built from that file. Any column arguments supplied
-#'   alongside `path` override the file's values, validated exactly as a later
-#'   `$` assignment would be. With no overrides, this is equivalent to
+#'   alongside `path` override the file's values. With no overrides, this is equivalent to
 #'   `read_cdmetapop(path, type = "DiseaseVars")`.
 #'
 #' @return An R6 `DiseaseVars` object.
@@ -687,7 +670,7 @@
 #' # The default 3-state SIR model:
 #' mydiseasevars <- DiseaseVars()
 #'
-#' # Start the epidemic at year 10 instead of year 0:
+#' # Start the disease dynamics at year 10 instead of year 0:
 #' mydiseasevars$start_disease <- 10
 #'
 #' # An SIR model supplying the transition matrix directly. Rows are the state
