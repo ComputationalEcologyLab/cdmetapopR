@@ -319,7 +319,12 @@
 		add_row = function(n = 1) {
 			last_row <- private$data[nrow(private$data), , drop = FALSE]
 			new_rows <- last_row[rep(1, n), , drop = FALSE]
-			new_rows[["Age class"]] <- seq(max(private$data[["Age class"]]) + 1, length.out = n)
+			# as.integer() because seq() returns doubles here, which would
+			# silently change the id column's type from the integer set at
+			# construction -- enough to make a round trip through
+			# write_cdmetapop()/read_cdmetapop() compare unequal under
+			# identical(), despite the values and the written file matching.
+			new_rows[["Age class"]] <- as.integer(seq(max(private$data[["Age class"]]) + 1, length.out = n))
 			private$data <- rbind(private$data, new_rows)
 			# Repeated single-row subsetting above (rep(1, n)) leaves
 			# R's auto-generated row names mangled (e.g. "61" instead of

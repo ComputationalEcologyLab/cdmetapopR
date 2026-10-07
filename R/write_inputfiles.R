@@ -3,7 +3,8 @@
 #
 # The eventual `.write_cdmetapop_inputfiles()` (built incrementally across
 # sub-tasks 1-6) walks the RunVars -> PopVars -> PatchVars -> ClassVars
-# object graph (plus raw-matrix and external-file leaves), assigns each
+# object graph -- plus PatchVars -> DiseaseVars -> transition matrix when the
+# disease module is in use -- (plus raw-matrix and external-file leaves), assigns each
 # unique node a file in a fresh run directory, writes every input file with
 # cross-references rewritten to canonical relative paths, and returns the
 # run directory. It is UNEXPORTED and called only by launch_cdmetapop()
@@ -25,10 +26,11 @@
 # why object nodes dedup on identity alone (no subdir in their key). The root
 # RunVars.csv lives at the run-directory root, hence subdir "".
 .wif_type_subdir <- c(
-	RunVars   = "",
-	PopVars   = "popvars",
-	PatchVars = "patchvars",
-	ClassVars = "classvars"
+	RunVars     = "",
+	PopVars     = "popvars",
+	PatchVars   = "patchvars",
+	ClassVars   = "classvars",
+	DiseaseVars = "otherfiles/disease"
 )
 
 # Canonical output subdirectory for each field that references a
@@ -47,7 +49,13 @@
 	correlation_matrix  = "otherfiles",
 	subpopmort_file     = "otherfiles",
 	betaFile_selection  = "otherfiles/betafiles",
-	genes_initialize    = "genes"
+	genes_initialize    = "genes",
+	# DiseaseVars' transition matrix. Shares `otherfiles/disease` with the
+	# DiseaseVars csvs themselves (the layout CDMetaPOP's OnePatch_SIDP example
+	# and the user manual both use); name uniqueness is per-subdir, so an
+	# object and a matrix landing there with the same preferred name are
+	# resolved by the usual `_k` suffix.
+	transition_rates    = "otherfiles/disease"
 )
 
 # ---------------------------------------------------------------------
@@ -373,6 +381,28 @@
 				.wif_register_copyfile(reg, seg, genes_subdir, node_id, "genes_initialize")
 			}
 		}
+		# disease_file: list column like class_vars; each cell a flat list of
+		# DiseaseVars objects/paths (pre-split on '|'). An EMPTY cell means the
+		# disease columns were never set, i.e. a non-disease PatchVars -- there
+		# is nothing to reference, and `as_data_frame()` leaves the column out
+		# of the written file entirely.
+		for (cell in obj[["disease_file"]]) {
+			for (item in cell) {
+				.wif_resolve_object_ref(reg, item, "DiseaseVars", node_id, "disease_file")
+			}
+		}
+		return(invisible(NULL))
+	}
+
+	if (kind == "DiseaseVars") {
+		# transition_rates: one item (a matrix or a path). The only reference a
+		# DiseaseVars object holds, and the first matrix leaf owned by a class
+		# other than PopVars. DiseaseVars has no '|'/'~' delimiters, so the
+		# split inside .wif_resolve_matrix_ref() is a no-op on a plain path.
+		tr_subdir <- .wif_leaf_field_subdir[["transition_rates"]]
+		for (item in obj[["transition_rates"]]) {
+			.wif_resolve_matrix_ref(reg, item, tr_subdir, node_id, "transition_rates")
+		}
 		return(invisible(NULL))
 	}
 
@@ -459,7 +489,7 @@
 	candidates <- list()
 	for (nm in ls(envir = .GlobalEnv)) {
 		val <- get(nm, envir = .GlobalEnv, inherits = FALSE)
-		if (inherits(val, c("RunVars", "PopVars", "PatchVars", "ClassVars")) ||
+		if (inherits(val, c("RunVars", "PopVars", "PatchVars", "ClassVars", "DiseaseVars")) ||
 				is.matrix(val)) {
 			candidates[[nm]] <- val
 		}
@@ -655,6 +685,23 @@
 			.wif_rewrite_delimited(reg, v, genes_subdir, outer = "|", inner = ";",
 				keywords = c("random", "random_var"))
 		}, character(1))
+		# disease_file: object list column, '|'-joined. Present only when the
+		# object has its disease columns set -- `as_data_frame()` returns 50
+		# columns otherwise (see class_patchvars.R), which is the non-disease
+		# file CDMetaPOP requires.
+		if ("disease_file" %in% names(df)) {
+			df[["disease_file"]] <- .wif_rewrite_object_column(reg, df[["disease_file"]], "DiseaseVars", "|")
+		}
+		return(df)
+	}
+
+	if (node$kind == "DiseaseVars") {
+		# Transition Rates: one item per row (a matrix or a path), the same
+		# shape as PopVars' matrix fields.
+		tr_subdir <- .wif_leaf_field_subdir[["transition_rates"]]
+		df[["Transition Rates"]] <- vapply(df[["Transition Rates"]], function(item) {
+			.wif_rewrite_matrix_cell(reg, item, tr_subdir)
+		}, character(1))
 		return(df)
 	}
 
@@ -798,7 +845,7 @@
 .wif_write_node <- function(reg, node, run_dir) {
 	if (node$kind == "matrix")   return(.wif_write_matrix_csv(reg, node, run_dir))
 	if (node$kind == "copyfile") return(.wif_copy_leaf_file(reg, node, run_dir))
-	.wif_write_object_csv(reg, node, run_dir)  # the four object kinds
+	.wif_write_object_csv(reg, node, run_dir)  # the five object kinds
 }
 
 # Pre-flight: every Tier-2 copyfile source must exist, so we never create a
@@ -817,6 +864,183 @@
 	if (length(missing) > 0) {
 		stop(sprintf("Cannot find %d referenced file(s):\n%s",
 			length(missing), paste(missing, collapse = "\n")), call. = FALSE)
+	}
+	invisible(NULL)
+}
+
+# ---------------------------------------------------------------------
+# Disease pre-flight: the cross-FILE rules
+# ---------------------------------------------------------------------
+# Three things can only be checked once the whole graph is in hand, because
+# they span two or more files -- which is why they live here and not in any
+# one class:
+#
+#   1. PopVars' `implement_disease` must agree with whether its PatchVars
+#      carry the disease columns. CDMetaPOP expects EXACTLY 50 PatchVars
+#      columns when `implement_disease` is "N" and EXACTLY 58 when it is not
+#      (src/CDmetaPOP_PreProcess.py), and rejects either shape in the other
+#      mode -- so a mismatch here produces a file that cannot run.
+#   2. Each DiseaseVars object's own cross-field rules, re-checked strictly.
+#      Editing one column of a DiseaseVars object only WARNS (see
+#      class_diseasevars.R), so an inconsistent object can reach launch; this
+#      is where that becomes an error, before anything is written.
+#   3. The per-genotype defense rates in PatchVars must supply one value per
+#      transition named in the referenced DiseaseVars' `disease_resistant`/
+#      `disease_tolerant` field. CDMetaPOP indexes one into the other
+#      (`defense_vals[k].split(';')[idx]`, src/CDmetaPOP_Disease.py), so a
+#      short list is an IndexError mid-run.
+
+# The registered payload for one reference item (a live object, or a path that
+# was read into one during discovery). Returns NULL if it is not registered,
+# which should not happen for a discovered graph.
+.wif_payload_for_item <- function(reg, item, target_kind) {
+	if (inherits(item, target_kind)) {
+		id <- .wif_find_object_node(reg, item)
+		return(if (is.na(id)) NULL else reg$nodes[[id]]$payload)
+	}
+	if (is.character(item) && length(item) == 1 && !is.na(item)) {
+		id <- reg$path_cache[[.wif_path_key(.wif_type_subdir[[target_kind]], item)]]
+		return(if (is.null(id)) NULL else reg$nodes[[id]]$payload)
+	}
+	NULL
+}
+
+# Describe every gap in one PatchVars object's disease columns: patches with no
+# `disease_file`, and patches left NA in any of the other seven. Returns
+# character(0) when the eight columns are completely filled in.
+.wif_patchvars_disease_gaps <- function(patchvars) {
+	df <- patchvars$as_data_frame()
+	if (!("disease_file" %in% names(df))) return("none of the eight disease columns are set")
+
+	gaps <- character(0)
+	empty <- which(vapply(df[["disease_file"]], length, integer(1)) == 0)
+	if (length(empty) > 0) {
+		gaps <- c(gaps, sprintf("`disease_file` is unset for patch(es) %s",
+			paste(empty, collapse = ", ")))
+	}
+	for (j in seq_along(.pv_disease_fields)) {
+		if (.pv_disease_fields[j] == "disease_file") next
+		na_rows <- which(is.na(df[[.pv_disease_headers[j]]]))
+		if (length(na_rows) > 0) {
+			gaps <- c(gaps, sprintf("`%s` is unset for patch(es) %s",
+				.pv_disease_fields[j], paste(na_rows, collapse = ", ")))
+		}
+	}
+	gaps
+}
+
+# Count the `;`-separated values in one cell. Only called for cells with a
+# single `|` group (see .wif_check_defense_counts()).
+.wif_semicolon_count <- function(x) length(strsplit(as.character(x), ";", fixed = TRUE)[[1]])
+
+# Rule 3: compare each patch's defense-rate counts against the transition
+# count in the DiseaseVars it references.
+#
+# DELIBERATE LIMITATION: this is checked only when the patch references ONE
+# DiseaseVars and the defense cell holds ONE `|` group -- i.e. no temporal
+# variation on either side. With several `|` groups, which group pairs with
+# which DiseaseVars depends on the cdclimate switch years in RunVars, and
+# getting that pairing wrong would produce confident but false errors; the
+# single-surface case covers the examples and the common workflow.
+.wif_check_defense_counts <- function(reg, patchvars, pv_label) {
+	df <- patchvars$as_data_frame()
+	if (!("disease_file" %in% names(df))) return(character(0))
+
+	problems <- character(0)
+	specs <- list(
+		list(dv_field = "disease_resistant", cols = c("Resistant_CC", "Resistant_Cc", "Resistant_cc")),
+		list(dv_field = "disease_tolerant",  cols = c("Tolerant_DD", "Tolerant_Dd", "Tolerant_dd"))
+	)
+
+	for (i in seq_len(nrow(df))) {
+		items <- df[["disease_file"]][[i]]
+		if (length(items) != 1) next                      # temporal: skipped
+		dv <- .wif_payload_for_item(reg, items[[1]], "DiseaseVars")
+		if (is.null(dv)) next
+
+		for (spec in specs) {
+			transitions <- dv[[spec$dv_field]]
+			# "N" means the locus is unused, so the rates are never read.
+			if (identical(transitions, "N")) next
+			n_expected <- .wif_semicolon_count(transitions)
+
+			for (col in spec$cols) {
+				cell <- df[[col]][i]
+				if (is.na(cell)) next                      # reported as a gap already
+				if (grepl("|", cell, fixed = TRUE)) next   # temporal: skipped
+				n_got <- .wif_semicolon_count(cell)
+				if (n_got != n_expected) {
+					problems <- c(problems, sprintf(
+						"  %s patch %d: `%s` = \"%s\" gives %d rate(s), but the DiseaseVars it references names %d transition(s) in `%s` (\"%s\") -- supply one rate per transition, `;`-separated.",
+						pv_label, i, col, cell, n_got, n_expected, spec$dv_field, transitions))
+				}
+			}
+		}
+	}
+	problems
+}
+
+# Run all three disease pre-flight rules over the discovered graph. Errors with
+# every problem found, rather than stopping at the first, so one launch attempt
+# surfaces the whole list.
+.wif_check_disease <- function(reg) {
+	problems <- character(0)
+
+	# Rule 2: each DiseaseVars object must be internally consistent.
+	for (node in reg$nodes) {
+		if (node$kind != "DiseaseVars") next
+		label <- if (!is.na(node$varname)) node$varname else node$relpath
+		msg <- tryCatch({ node$payload$check(); NA_character_ },
+			error = function(e) conditionMessage(e))
+		if (!is.na(msg)) {
+			problems <- c(problems, sprintf("  DiseaseVars `%s`: %s", label,
+				gsub("\n\\s*", " ", sub("^Inconsistent DiseaseVars values:\\s*", "", msg))))
+		}
+	}
+
+	# Rules 1 and 3: walk each PopVars batch row, pairing its
+	# `implement_disease` value with the PatchVars that row references.
+	for (node in reg$nodes) {
+		if (node$kind != "PopVars") next
+		popv <- node$payload
+		pv_name <- if (!is.na(node$varname)) node$varname else node$relpath
+		impl <- popv[["implement_disease"]]
+		xy <- popv[["xyfilename"]]
+
+		for (i in seq_along(impl)) {
+			disease_on <- !identical(impl[i], "N")
+			for (item in xy[[i]]) {
+				patchvars <- .wif_payload_for_item(reg, item, "PatchVars")
+				if (is.null(patchvars)) next
+				pv_id <- .wif_find_object_node(reg, patchvars)
+				pv_label <- if (!is.na(pv_id) && !is.na(reg$nodes[[pv_id]]$varname)) {
+					sprintf("PatchVars `%s`", reg$nodes[[pv_id]]$varname)
+				} else {
+					"the referenced PatchVars"
+				}
+
+				if (disease_on) {
+					gaps <- .wif_patchvars_disease_gaps(patchvars)
+					if (length(gaps) > 0) {
+						problems <- c(problems, sprintf(
+							"  PopVars `%s` batch %d sets implement_disease = \"%s\", but in %s: %s.",
+							pv_name, i, impl[i], pv_label, paste(gaps, collapse = "; ")))
+					} else {
+						problems <- c(problems, .wif_check_defense_counts(reg, patchvars, pv_label))
+					}
+				} else if (patchvars$has_disease()) {
+					problems <- c(problems, sprintf(
+						"  PopVars `%s` batch %d sets implement_disease = \"N\", but %s has disease columns set. CDMetaPOP requires exactly 50 PatchVars columns with the disease module off; either turn it on (\"Out\", \"Back\" or \"Both\") or clear those columns.",
+						pv_name, i, pv_label))
+				}
+			}
+		}
+	}
+
+	problems <- unique(problems)
+	if (length(problems) > 0) {
+		stop(sprintf("Disease settings are inconsistent across input files:\n%s",
+			paste(problems, collapse = "\n")), call. = FALSE)
 	}
 	invisible(NULL)
 }
@@ -851,12 +1075,19 @@
 		stop("`runvars` must be a RunVars object.")
 	}
 
+	# Expand a leading `~` so the run-directory path returned here is usable
+	# verbatim by the shell/Python later (neither expands `~`); paths without a
+	# `~` are untouched.
+	base_dir <- path.expand(base_dir)
+
 	# Discover (reads any Tier-1 object paths -> errors here if those are
 	# missing) and assign filenames, BEFORE creating any directory.
 	reg <- .wif_discover_nodes(runvars)
 	.wif_assign_names(reg)
 	# Fail fast if any Tier-2 source file is missing (no half-written dir).
 	.wif_check_sources(reg)
+	# Same for the cross-file disease rules, which need the whole graph.
+	.wif_check_disease(reg)
 
 	# Create the fresh run directory, then write everything into it.
 	run_dir <- .wif_make_run_dir(base_dir)

@@ -24,6 +24,12 @@ afterward via the column active bindings (e.g.
 class: an age class (\code{\link[=ClassVars]{ClassVars()}}), a patch (\code{\link[=PatchVars]{PatchVars()}}), a batch
 (\code{\link[=PopVars]{PopVars()}}), or a run (\code{\link[=RunVars]{RunVars()}}).
 }
+\details{
+A \code{\link[=DiseaseVars]{DiseaseVars()}} object holds exactly one row -- CDMetaPOP reads a single
+disease model from \code{DiseaseVars.csv} and ignores any further rows -- so
+calling this on one is an error rather than a no-op. Create another
+\code{\link[=DiseaseVars]{DiseaseVars()}} object to describe a second disease model.
+}
 \examples{
 myclassvars <- ClassVars()
 add_rows(myclassvars)

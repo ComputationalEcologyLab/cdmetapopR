@@ -10,8 +10,8 @@
 #'
 #' @param filepath Path to an existing CDMetaPOP input csv.
 #' @param type Which input file type `filepath` is. One of `"RunVars"`
-#'   (the default), `"PopVars"`, `"PatchVars"`, or `"ClassVars"`.
-#'   Case-insensitive.
+#'   (the default), `"PopVars"`, `"PatchVars"`, `"ClassVars"`, or
+#'   `"DiseaseVars"`. Case-insensitive.
 #'
 #' @return An R6 object of the corresponding class (e.g. a [RunVars()]
 #'   object).
@@ -23,6 +23,7 @@
 #' mypopvars <- read_cdmetapop("popvars/PopVars.csv", type = "PopVars")
 #' mypatchvars <- read_cdmetapop("patchvars/PatchVarsS1.csv", type = "PatchVars")
 #' myclassvars <- read_cdmetapop("classvars/ClassVars_AS1.csv", type = "ClassVars")
+#' mydiseasevars <- read_cdmetapop("otherfiles/disease/DiseaseVars_SIR.csv", type = "DiseaseVars")
 #' }
 read_cdmetapop <- function(filepath, type = "RunVars") {
 	type <- tolower(type)
@@ -38,8 +39,11 @@ read_cdmetapop <- function(filepath, type = "RunVars") {
 	if (type == "classvars") {
 		return(.read_classvars_csv(filepath))
 	}
+	if (type == "diseasevars") {
+		return(.read_diseasevars_csv(filepath))
+	}
 	stop(sprintf(
-		"Unsupported `type` \"%s\". Supported types are \"RunVars\", \"PopVars\", \"PatchVars\", and \"ClassVars\".",
+		"Unsupported `type` \"%s\". Supported types are \"RunVars\", \"PopVars\", \"PatchVars\", \"ClassVars\", and \"DiseaseVars\".",
 		type
 	))
 }
@@ -90,10 +94,15 @@ read_cdmetapop <- function(filepath, type = "RunVars") {
 		stringsAsFactors = FALSE
 	)
 
-	if (ncol(raw) != length(.pv_headers)) {
+	# Two valid widths, matching what CDMetaPOP itself accepts: the base file,
+	# or the base file plus the eight disease columns (see the note at the top
+	# of class_patchvars.R). Nothing in between is a runnable file.
+	n_base    <- length(.pv_headers)
+	n_disease <- n_base + length(.pv_disease_headers)
+	if (!ncol(raw) %in% c(n_base, n_disease)) {
 		stop(sprintf(
-			"\"%s\" has %d columns; expected %d (one 'PatchID' column plus the %d PatchVars columns, in CDMetaPOP's expected order).",
-			filepath, ncol(raw), length(.pv_headers), length(.pv_fields)
+			"\"%s\" has %d columns; expected %d (one 'PatchID' column plus the %d PatchVars columns, in CDMetaPOP's expected order), or %d with the eight disease columns appended.",
+			filepath, ncol(raw), n_base, length(.pv_fields), n_disease
 		))
 	}
 
@@ -103,9 +112,22 @@ read_cdmetapop <- function(filepath, type = "RunVars") {
 		.pv_fields
 	)
 
+	# Disease columns, when present. `resolve_disease_file = FALSE` for the
+	# same reason as `resolve_class_vars`: a value read from a csv is always a
+	# literal path, never a reference to a DiseaseVars object in the session.
+	disease_args <- list()
+	if (ncol(raw) == n_disease) {
+		disease_args <- stats::setNames(
+			lapply(seq_along(.pv_disease_fields), function(i) raw[[n_base + i]]),
+			.pv_disease_fields
+		)
+	}
+
 	do.call(PatchVars, c(
-		list(patch_id = patch_id, resolve_class_vars = FALSE),
-		column_args
+		list(patch_id = patch_id, resolve_class_vars = FALSE,
+			resolve_disease_file = FALSE),
+		column_args,
+		disease_args
 	))
 }
 
@@ -185,4 +207,48 @@ read_cdmetapop <- function(filepath, type = "RunVars") {
 		list(n_runs = n_runs, resolve_popvars = FALSE),
 		column_args
 	))
+}
+
+# Read a DiseaseVars.csv file into a DiseaseVars object. Columns are read as
+# plain character and matched to DiseaseVars() arguments by *position*, as in
+# .read_classvars_csv()/.read_patchvars_csv() -- CDMetaPOP reads this file
+# with `header=None` and indexes it positionally, so its header text is never
+# interpreted (see the note at the top of class_diseasevars.R).
+#
+# Only the FIRST data row is used, which is what CDMetaPOP does: it reads
+# `df.iloc[1, N]` and silently ignores anything further. Here that is a
+# warning rather than silence, since a multi-row file is more likely a mistake
+# than an intent.
+#
+# `transition_rates` is passed through as the literal path it is in the file;
+# the matrix itself is not read in. Read it separately if the values are
+# needed in R, or assign a matrix to that field directly.
+.read_diseasevars_csv <- function(filepath) {
+	raw <- utils::read.csv(
+		filepath, colClasses = "character", check.names = FALSE,
+		stringsAsFactors = FALSE
+	)
+
+	if (ncol(raw) != length(.dv_headers)) {
+		stop(sprintf(
+			"\"%s\" has %d columns; expected %d DiseaseVars columns, in CDMetaPOP's expected order.",
+			filepath, ncol(raw), length(.dv_headers)
+		))
+	}
+	if (nrow(raw) < 1) {
+		stop(sprintf("\"%s\" has no data rows; a DiseaseVars file needs a header row plus one data row.", filepath))
+	}
+	if (nrow(raw) > 1) {
+		warning(sprintf(
+			"\"%s\" has %d data rows; only the first is used (CDMetaPOP reads one disease model per DiseaseVars file and ignores the rest).",
+			filepath, nrow(raw)
+		), call. = FALSE)
+	}
+
+	column_args <- stats::setNames(
+		lapply(seq_along(.dv_fields), function(i) raw[[i]][1]),
+		.dv_fields
+	)
+
+	do.call(DiseaseVars, column_args)
 }

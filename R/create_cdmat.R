@@ -76,7 +76,11 @@ create_cdmat <- function(coords, method=c("euclidean", "equal", "lcp"), resistan
 
     # Euclidean distance cost matrix
   if(method == "euclidean"){
-    distmat <- stats::dist(coords, method="euclidean", upper=TRUE, diag=TRUE)
+    # as.matrix() because stats::dist() returns a "dist" object (its lower
+    # triangle only), while the "equal" and "lcp" branches below both return a
+    # full NxN matrix. Without this the return type depended on `method`, and
+    # a dist passed to a PopVars matrix field failed with a length error.
+    distmat <- as.matrix(stats::dist(coords, method="euclidean", upper=TRUE, diag=TRUE))
   }
 
   # Cost matrix with equal probability to move to any patch

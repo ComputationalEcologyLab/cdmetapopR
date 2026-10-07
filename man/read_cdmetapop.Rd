@@ -10,8 +10,8 @@ read_cdmetapop(filepath, type = "RunVars")
 \item{filepath}{Path to an existing CDMetaPOP input csv.}
 
 \item{type}{Which input file type \code{filepath} is. One of \code{"RunVars"}
-(the default), \code{"PopVars"}, \code{"PatchVars"}, or \code{"ClassVars"}.
-Case-insensitive.}
+(the default), \code{"PopVars"}, \code{"PatchVars"}, \code{"ClassVars"}, or
+\code{"DiseaseVars"}. Case-insensitive.}
 }
 \value{
 An R6 object of the corresponding class (e.g. a \code{\link[=RunVars]{RunVars()}}
@@ -26,5 +26,6 @@ myrunvars <- read_cdmetapop("RunVars.csv", type = "RunVars")
 mypopvars <- read_cdmetapop("popvars/PopVars.csv", type = "PopVars")
 mypatchvars <- read_cdmetapop("patchvars/PatchVarsS1.csv", type = "PatchVars")
 myclassvars <- read_cdmetapop("classvars/ClassVars_AS1.csv", type = "ClassVars")
+mydiseasevars <- read_cdmetapop("otherfiles/disease/DiseaseVars_SIR.csv", type = "DiseaseVars")
 }
 }

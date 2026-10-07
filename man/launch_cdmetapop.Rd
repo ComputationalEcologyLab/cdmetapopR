@@ -33,7 +33,10 @@ appends a unix timestamp to it. Defaults to \code{"output_"}.}
 
 \item{wait}{If \code{FALSE} (the default), launch the simulation in the background
 and return immediately -- suitable for long runs. If \code{TRUE}, block until
-CDMetaPOP finishes before returning.}
+CDMetaPOP finishes before returning. On macOS and Linux a background run
+opens no console window, so CDMetaPOP's output may not reach the R console;
+check its \code{CDmetaPOP0.log} file in the output folder for progress and
+errors (a warning on launch says the same).}
 }
 \value{
 The output run directory, to be used as an argument for output summary
