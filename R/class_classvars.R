@@ -1,3 +1,4 @@
+#' @import R6
 # ClassVars: R6 wrapper for CDMetaPOP's ClassVars.csv input file.
 #
 # A ClassVars.csv file holds one row per age/size class, with one column
