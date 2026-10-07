@@ -30,7 +30,7 @@ summing to 1 (e.g. \code{"0.9;0.1;0.0"}).}
 \item{transition_rates}{The state-to-state transition matrix: either a
 square \code{matrix} or a path to a csv holding one. Rows are the state moved
 TO and columns the state moved FROM. A cell may be a single rate, or
-\code{"mu;sigma"} (supply a character matrix) to redraw that rate from a normal
+\code{"mu;sigma"} to redraw that rate from a normal
 distribution at each CDClimate time step.}
 
 \item{susceptible_states}{State index considered susceptible, or several
@@ -39,8 +39,8 @@ joined by \verb{;}.}
 \item{infection_states}{State index considered infectious, or several
 joined by \verb{;}.}
 
-\item{death_states}{State index used for mortality -- individuals entering
-it are removed from the simulation -- or \code{"N"} for no death compartment.}
+\item{death_states}{State index used for mortality
+or \code{"N"} for no death compartment.}
 
 \item{initial_conditions_offspring}{How newborns' disease states are
 assigned: \code{"Susceptible"} (all born into state 0), or
@@ -57,15 +57,14 @@ Matched exactly, including case.}
 
 \item{disease_resistant}{The transition(s) modified by the resistance
 locus, each written \code{"<from>_<to>"} with state indices and joined by \verb{;}
-(e.g. \code{"0_1;3_1"}), or \code{"N"} for no resistance locus. The rates
-themselves are per-patch and per-genotype, set in \code{\link[=PatchVars]{PatchVars()}}.}
+(e.g. \code{"0_1;3_1"}), or \code{"N"} for no resistance locus. Rates
+can vary by patch and with genotype, see \code{\link[=PatchVars]{PatchVars()}}.}
 
-\item{disease_tolerant}{As \code{disease_resistant}, for the tolerance locus.}
+\item{disease_tolerant}{Same as \code{disease_resistant}, but for the tolerance locus.}
 
 \item{path}{Optional path to an existing DiseaseVars csv file. If supplied,
 the object is built from that file. Any column arguments supplied
-alongside \code{path} override the file's values, validated exactly as a later
-\code{$} assignment would be. With no overrides, this is equivalent to
+alongside \code{path} override the file's values. With no overrides, this is equivalent to
 \code{read_cdmetapop(path, type = "DiseaseVars")}.}
 }
 \value{
@@ -73,55 +72,39 @@ An R6 \code{DiseaseVars} object.
 }
 \description{
 Constructs an R6 object representing a CDMetaPOP \code{DiseaseVars.csv} input
-file -- one compartmental disease model, referenced per patch by
-\code{\link[=PatchVars]{PatchVars()}}'s \code{disease_file} column. Columns may be edited after
-construction, e.g. \code{mydiseasevars$start_disease <- 10}. \strong{To build the
+file, referenced per patch by \code{\link[=PatchVars]{PatchVars()}}'s \code{disease_file} column. Columns may be edited after
+construction, e.g. \code{mydiseasevars$start_disease <- 10}. To build the
 object from an existing DiseaseVars file, use the \code{path} argument or the
-\code{\link[=read_cdmetapop]{read_cdmetapop()}} function.}
+\code{\link[=read_cdmetapop]{read_cdmetapop()}} function.
 }
 \details{
 Any column argument left unsupplied defaults to the basic 3-state SIR model
 from the user manual's disease quick-start.
 
-\strong{The file holds exactly one row.} CDMetaPOP reads a single disease model
-from \code{DiseaseVars.csv} and ignores any further rows, so there is no
-row-count argument and \code{\link[=add_rows]{add_rows()}} errors on this class. Note \code{n_states}
-is a \emph{column} -- the number of disease compartments -- not a row count. To
-give different patches different disease models, create several
-\code{DiseaseVars} objects and reference them from the relevant patches.
+\strong{The file holds only one row.} \code{\link[=add_rows]{add_rows()}} is not available for Disease parameters.
+Disease models may vary by patch by providing different \code{DiseaseVars} objects to
+different patches.
 
-\strong{The disease module must also be switched on in \code{\link[=PopVars]{PopVars()}}}, by setting
+\strong{The disease module must also be turned on in \code{\link[=PopVars]{PopVars()}}}, by setting
 \code{implement_disease} to \code{"Out"}, \code{"Back"}, or \code{"Both"}, and each patch must
-reference a disease file in \code{\link[=PatchVars]{PatchVars()}}. A \code{DiseaseVars} object on its own
-has no effect.
+reference a disease file in \code{\link[=PatchVars]{PatchVars()}}.
 
 \strong{Delimiters:} \verb{;} is the only delimiter used in this file, separating the
-per-state proportions in \code{initial_conditions}, multiple state indices, and
-multiple defense transitions. Unlike the other input files, no column
-supports \code{|} for variation over time -- to change disease parameters over a
-simulation, point \code{\link[=PatchVars]{PatchVars()}}'s \code{disease_file} column at several
-\code{DiseaseVars} files joined with \code{|} instead.
+initial state proportions in \code{initial_conditions} and indicating which comparments
+correspond to which disease state. To vary disease parameters over time,
+use the \code{|} delimited in \code{\link[=PatchVars]{PatchVars()}}'s \code{disease_file} column.
 
 \strong{States are numbered from 0}, and state 0 is assumed to be the initial
-susceptible state. With \code{n_states = 3} the valid indices are 0, 1, and 2.
+susceptible state. With \code{n_states = 3} the valid compartment numbers are 0, 1, and 2.
 Under \code{"Indirect"} transmission the environmental reservoir occupies one
-further index (\code{n_states}), which \code{transition_rates} must include and which
-\code{disease_resistant}/\code{disease_tolerant} may name as a source state.
-
-\strong{Cross-column rules.} Several values must agree with each other: one
-\code{initial_conditions} proportion per state summing to 1, every state index
-below \code{n_states}, and a \code{transition_rates} matrix of \code{n_states} square for
-\code{"Direct"} transmission or \code{n_states + 1} square for \code{"Indirect"}. These are
-errors at construction, but editing a single column afterward only warns --
-so a change needing two assignments (such as moving from 3 to 4 states) can
-be made in either order. Call \code{mydiseasevars$check()} to confirm the object
-is consistent again; \code{\link[=launch_cdmetapop]{launch_cdmetapop()}} re-checks before writing anything.
+additional index (\code{n_states}), which must be included in \code{transition_rates} and
+can be the state named for \code{disease_resistant}/\code{disease_tolerant}.
 }
 \examples{
 # The default 3-state SIR model:
 mydiseasevars <- DiseaseVars()
 
-# Start the epidemic at year 10 instead of year 0:
+# Start the disease dynamics at year 10 instead of year 0:
 mydiseasevars$start_disease <- 10
 
 # An SIR model supplying the transition matrix directly. Rows are the state
