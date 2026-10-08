@@ -89,7 +89,7 @@ to inspect or subset.
 as.data.frame(mycv)[, c("Age class", "Body Size Mean", "Age Mortality Out")]
 ```
 
-Deafult columns can be modified when the function is called, or already created 
+Default columns can be modified when the function is called, or already created
 objects can be modified just like a data frame. Input values
 are validated immediately, so incorrect input values will be flagged immediately:
 
