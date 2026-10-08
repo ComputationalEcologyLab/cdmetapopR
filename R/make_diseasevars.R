@@ -119,10 +119,10 @@ make_diseasevars <- function(output_file = "my_new_diseasevars.csv") {
             
               
               textInput("Susceptible_States",
-                        tagList("Define the state considered succeptible", em(span("Susceptible States", style = "color:#0072B2;")))),
+                        tagList("Define the state considered susceptible", em(span("Susceptible States", style = "color:#0072B2;")))),
               bsTooltip(
                 "Susceptible_States",
-                "Define the state considered succeptible. Typically this is state 0.",
+                "Define the state considered susceptible. Typically this is state 0.",
                 placement = "right",
                 trigger = "hover"), 
               
