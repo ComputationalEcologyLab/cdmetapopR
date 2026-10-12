@@ -16,7 +16,7 @@ devtools::install_github("computationalecologylab/cdmetapopR")
 ```
 
 **Documentation**: A full tutorial is available in the vignette:\
-👉 <https://computationalecologylab.github.io/cdmetapop_web/>
+👉 <https://computationalecologylab.github.io/cdmetapop_web/cdmetapopr/cdmetapopr_tutorial.html>
 
 **Shiny App to create Input files**: Shiny Apps to create CDMetaPOP input files are also available on this server:\
 👉 <https://kratos-shiny.umontana.net/cel-apps/cdmetapopR/>
