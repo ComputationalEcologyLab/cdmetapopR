@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Building CDMetaPOP input files with the R wrapper</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Building CDMetaPOP input files with the R
+wrapper</h1>
+<h3 class="subtitle">Create ClassVars, PatchVars, PopVars and RunVars
+objects, and launch a simulation</h3>
+
+
+
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+<p>CDMetaPOP input files consist of a series of connected csv files: a
+<code>RunVars.csv</code> naming one or more <code>PopVars.csv</code>
+files, each naming a <code>PatchVars.csv</code>, which in turn names a
+<code>ClassVars.csv</code> plus cost-distance matrices, gene frequency
+files, and other inputs. This wrapper is mean to help the user create
+and assemble these files and handle the directories and relative paths
+of the different input files under the hood.</p>
+<p><code>cdmetapopR</code> represents these file types as R objects
+based on unique classes:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Object</th>
+<th>File</th>
+<th>Each row is</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>ClassVars()</code></td>
+<td><code>ClassVars.csv</code></td>
+<td>an age class</td>
+</tr>
+<tr class="even">
+<td><code>PatchVars()</code></td>
+<td><code>PatchVars.csv</code></td>
+<td>a patch</td>
+</tr>
+<tr class="odd">
+<td><code>PopVars()</code></td>
+<td><code>PopVars.csv</code></td>
+<td>a batch</td>
+</tr>
+<tr class="even">
+<td><code>RunVars()</code></td>
+<td><code>RunVars.csv</code></td>
+<td>a run</td>
+</tr>
+</tbody>
+</table>
+<p>Default values for each input class match values in CDMetaPOP’s own
+example files, each column can be modified by the user, after which the
+wrapper will validate everything assigned to an input object, and can
+hold another object wherever the inputs call for another object.
+‘launch_cdmetapop()’ will write the entire input file directory for you,
+and you never have to name a csv file or manage subdirectories. If your
+CDMetaPOP input files already exist, you can read them in as R objects
+using ‘read_cdmetapop()’ or using the ‘path’ argument in each of the
+above functions.</p>
+<p>Here is on example that will create all necessary inputs:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>mycv     <span class="ot">&lt;-</span> <span class="fu">ClassVars</span>()</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>mypv     <span class="ot">&lt;-</span> <span class="fu">PatchVars</span>(<span class="at">class_vars =</span> mycv)       <span class="co"># an object, not a path</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>mypopv   <span class="ot">&lt;-</span> <span class="fu">PopVars</span>(<span class="at">xyfilename =</span> mypv)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>myrv     <span class="ot">&lt;-</span> <span class="fu">RunVars</span>(<span class="at">Popvars =</span> mypopv)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>run_dir  <span class="ot">&lt;-</span> <span class="fu">launch_cdmetapop</span>(myrv, <span class="at">pythonFilepath =</span> <span class="st">&quot;python&quot;</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>                             <span class="at">CDMetaPOPFilepath =</span> <span class="st">&quot;CDMetaPOP.py&quot;</span>)</span></code></pre></div>
+<p>Even simpler, you can run the default example simulation by just
+calling ‘RunVars()’ in the ‘launch_cdmetapop()’ function.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>run_dir  <span class="ot">&lt;-</span> <span class="fu">launch_cdmetapop</span>(<span class="fu">RunVars</span>(), <span class="at">pythonFilepath =</span> <span class="st">&quot;python&quot;</span>,</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>                             <span class="at">CDMetaPOPFilepath =</span> <span class="st">&quot;CDMetaPOP.py&quot;</span>)</span></code></pre></div>
+<p><code>write_cdmetapop()</code> can be used to write a single object
+to file, <code>read_cdmetapop()</code> or the <code>path =</code>
+argument can be used to read an existing file in as an R object.</p>
+<p>This vignette builds a complete, valid input set from scratch.
+Everything except the launch itself runs as shown.</p>
+</div>
+<div id="classvars" class="section level1">
+<h1>ClassVars</h1>
+<p><code>ClassVars.csv</code> holds the age-class parameters: size at
+age, mortality, maturation, migration probability, etc. A default call
+reproduces CDMetaPOP’s <code>ClassVars_AS1.csv</code>, which has six age
+classes.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>mycv <span class="ot">&lt;-</span> <span class="fu">ClassVars</span>()</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>mycv<span class="sc">$</span>ages</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; [1] 0 1 2 3 4 5</span></span></code></pre></div>
+<p>Columns are read and written as vectors with one value per age class.
+Printing the object shows the table; <code>as.data.frame()</code> gives
+you an ordinary data frame to inspect or subset.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">as.data.frame</span>(mycv)[, <span class="fu">c</span>(<span class="st">&quot;Age class&quot;</span>, <span class="st">&quot;Body Size Mean&quot;</span>, <span class="st">&quot;Age Mortality Out&quot;</span>)]</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt;   Age class Body Size Mean Age Mortality Out</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; 1         0             31                 N</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; 2         1             53                 N</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; 3         2             92                 N</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; 4         3            123                 N</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; 5         4            147                 N</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; 6         5            184                 N</span></span></code></pre></div>
+<p>Default columns can be modified when the function is called, or
+already created objects can be modified just like a data frame. Input
+values are validated immediately, so incorrect input values will be
+flagged immediately:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>mycv<span class="sc">$</span>age_mortality_out <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.6</span>, <span class="fl">0.4</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.1</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>mycv<span class="sc">$</span>maturation <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>mycv<span class="sc">$</span>age_mortality_out</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; [1] &quot;0.6&quot; &quot;0.4&quot; &quot;0.2&quot; &quot;0.1&quot; &quot;0.1&quot; &quot;0.1&quot;</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co"># Alternatively, edit the columns at creation</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>mycv <span class="ot">&lt;-</span> <span class="fu">ClassVars</span>(<span class="at">age_mortality_out =</span> <span class="fu">c</span>(<span class="fl">0.6</span>, <span class="fl">0.4</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.1</span>),</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>                  <span class="at">maturation =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div>
+<p><code>add_rows()</code> adds age classes, copying the current last
+row so you only edit what differs:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">add_rows</span>(mycv)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>mycv<span class="sc">$</span>ages</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; [1] 0 1 2 3 4 5 6</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>mycv<span class="sc">$</span>maturation</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; [1] &quot;0&quot;   &quot;0&quot;   &quot;0.5&quot; &quot;1&quot;   &quot;1&quot;   &quot;1&quot;   &quot;1&quot;</span></span></code></pre></div>
+</div>
+<div id="patchvars" class="section level1">
+<h1>PatchVars</h1>
+<p><code>PatchVars.csv</code> contains one row for each patch and
+includes spatial coordinates, carrying capacity, initial population
+size, mortality, migration, and growth parameters. The default is
+CDMetaPOP’s seven-patch <code>PatchVarsS1.csv</code>.</p>
+<p>The <code>class_vars</code> column is where a <code>PatchVars</code>
+file would normally name a <code>ClassVars.csv</code>. With the wrapper,
+you can provide either the R object or the relative filepath:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>mypv <span class="ot">&lt;-</span> <span class="fu">PatchVars</span>(<span class="at">class_vars =</span> mycv, <span class="at">genes_initialize =</span> <span class="st">&quot;random&quot;</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>mypv<span class="sc">$</span>patch_id</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; [1] 1 2 3 4 5 6 7</span></span></code></pre></div>
+<p><code>genes_initialize = &quot;random&quot;</code> draws random starting
+genotypes rather than reading an allele-frequency file.</p>
+<p>Edit columns one value per patch, and add patches with
+<code>add_rows()</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>mypv<span class="sc">$</span>k <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">300</span>, <span class="dv">300</span>, <span class="dv">500</span>, <span class="dv">500</span>, <span class="dv">200</span>, <span class="dv">200</span>, <span class="dv">200</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>mypv<span class="sc">$</span>n0 <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co"># Alternatively,</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>mypv <span class="ot">&lt;-</span> <span class="fu">PatchVars</span>(<span class="at">k =</span> <span class="fu">c</span>(<span class="dv">300</span>, <span class="dv">300</span>, <span class="dv">500</span>, <span class="dv">500</span>, <span class="dv">200</span>, <span class="dv">200</span>, <span class="dv">200</span>),</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>                  <span class="at">n0 =</span> <span class="dv">100</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="fu">add_rows</span>(mypv)</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>mypv<span class="sc">$</span>patch_id</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; [1] 1 2 3 4 5 6 7 8</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>mypv<span class="sc">$</span>k</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; [1] &quot;300&quot; &quot;300&quot; &quot;500&quot; &quot;500&quot; &quot;200&quot; &quot;200&quot; &quot;200&quot; &quot;200&quot;</span></span></code></pre></div>
+</div>
+<div id="changing-parameter-values-over-time-and-by-sex" class="section level1">
+<h1>Changing parameter values over time and by sex</h1>
+<p>CDMetaPOP packs multiple values into one cell using delimiters, be
+careful to get the formatting correct.</p>
+<table>
+<colgroup>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Delimiter</th>
+<th>Meaning</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>|</td>
+<td>changes over time, at the years set by
+<code>RunVars$cdclimgentime</code></td>
+<td><code>&quot;0|0.2|0.5&quot;</code></td>
+</tr>
+<tr class="even">
+<td><code>~</code></td>
+<td>differs by sex, in the order FXX, MXY, MYY, FYY</td>
+<td><code>&quot;0.5~0.5&quot;</code></td>
+</tr>
+<tr class="odd">
+<td><code>;</code></td>
+<td>multiple species, or multiple files for one field</td>
+<td><code>&quot;popvars/speciesA.csv;popvars/speciesB.csv&quot;</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>A delimited value is a single string, not a
+vector.</strong></p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># One patch&#39;s mortality changing over time: 0, then 0.2, then 0.5</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>mypv<span class="sc">$</span>mortality_out <span class="ot">&lt;-</span> <span class="st">&quot;0|0.2|0.5&quot;</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co"># Eight patches, each with different moratlity values over time</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>mypv<span class="sc">$</span>mortality_out <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;0|0.2|0.2&quot;</span>,<span class="st">&quot;0|0.2|0.3&quot;</span>,<span class="st">&quot;0|0.2|0.4&quot;</span>,<span class="st">&quot;0|0.2|0.5&quot;</span>,<span class="st">&quot;0|0.2|0.6&quot;</span>,<span class="st">&quot;0|0.2|0.7&quot;</span>,<span class="st">&quot;0|0.2|0.8&quot;</span>,<span class="st">&quot;0|0.2|0.8&quot;</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co"># Eight patches, each with its own constant mortality</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>mypv<span class="sc">$</span>mortality_out <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.2</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>, <span class="fl">0.3</span>)</span></code></pre></div>
+<p>The first assigns the same three-stage schedule to every patch. The
+second gives each patch different values over time, and the third gives
+one value for each patch. Writing <code>c(0, 0.2, 0.5)</code> when you
+meant <code>&quot;0|0.2|0.5&quot;</code> won’t raise any errors but is not correct
+and won’t be caught.</p>
+<p>Each segment is validated independently, so an out-of-range value
+inside a delimited string is still rejected:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>mypv<span class="sc">$</span>mortality_out <span class="ot">&lt;-</span> <span class="st">&quot;0|0.2|1.5&quot;</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; Error in `.pv_check_segment()`:</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt; ! `mortality_out`[1] = 1.5 is outside the allowed range [0, 1].</span></span></code></pre></div>
+<p>Sex-specific values work the same way, as one
+<code>~</code>-delimited string:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># XX~XY</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>mycv<span class="sc">$</span>sex_ratio <span class="ot">&lt;-</span> <span class="st">&quot;0.5~0.5&quot;</span></span></code></pre></div>
+</div>
+<div id="cost-distance-matrices" class="section level1">
+<h1>Cost-distance matrices</h1>
+<p><code>PopVars</code> has five movement fields (mating, emigration,
+immigration, straying and dispersal) that CDMetaPOP reads as
+patch-by-patch cost-distance matrices. Each accepts either a path to a
+csv or <strong>a raw R matrix</strong> which will be created and
+serialized for you at launch.</p>
+<p><code>create_cdmat()</code> builds a distance matrix from patch
+coordinates:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>coords <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(mypv)[, <span class="fu">c</span>(<span class="st">&quot;X&quot;</span>, <span class="st">&quot;Y&quot;</span>)]</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>cdmat <span class="ot">&lt;-</span> <span class="fu">create_cdmat</span>(coords, <span class="at">method =</span> <span class="st">&quot;euclidean&quot;</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="fu">dim</span>(cdmat)</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; [1] 8 8</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="fu">round</span>(cdmat[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>])</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt;       1     2     3     4</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; 1     0  5686 10287 16028</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; 2  5686     0  4705 20474</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; 3 10287  4705     0 23791</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt; 4 16028 20474 23791     0</span></span></code></pre></div>
+<p><code>method = &quot;equal&quot;</code> gives every patch pair the same cost,
+and <code>method = &quot;lcp&quot;</code> computes least-cost paths across a
+resistance raster. See the main vignette for more on
+<code>create_cdmat()</code>.</p>
+</div>
+<div id="popvars" class="section level1">
+<h1>PopVars</h1>
+<p><code>PopVars.csv</code> holds one row per <em>batch</em> - a set of
+population-level settings that CDMetaPOP runs as an independent
+simulation. The <code>xyfilename</code> column points at a
+<code>PatchVars</code> file, so hand it the object, and give the five
+movement fields the matrix built above:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>mypopv <span class="ot">&lt;-</span> <span class="fu">PopVars</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="at">n_batches =</span> <span class="dv">1</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">xyfilename =</span> mypv,</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">mate_cdmat =</span> cdmat,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="at">migrateout_cdmat =</span> cdmat,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="at">migrateback_cdmat =</span> cdmat,</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="at">stray_cdmat =</span> cdmat,</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  <span class="at">disperseLocal_cdmat =</span> cdmat,</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>  <span class="at">correlation_matrix =</span> <span class="st">&quot;N&quot;</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>  <span class="at">subpopmort_file =</span> <span class="st">&quot;N&quot;</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>  <span class="at">betaFile_selection =</span> <span class="st">&quot;N&quot;</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>)</span></code></pre></div>
+<p><code>&quot;N&quot;</code> is CDMetaPOP’s off switch, used here for the three
+optional fields so that nothing outside this session is referenced.</p>
+<p><code>PopVars</code> has 81 columns, and unlike
+<code>ClassVars</code>/<code>PatchVars</code> CDMetaPOP reads its
+headers as dictionary keys so the <code>PopVars()</code> argument and
+the csv column names match exactly:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>mypopv<span class="sc">$</span>loci <span class="ot">&lt;-</span> <span class="dv">4</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>mypopv<span class="sc">$</span>matemoveno <span class="ot">&lt;-</span> <span class="st">&quot;4&quot;</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="fu">add_rows</span>(mypopv)</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>mypopv<span class="sc">$</span>popmodel <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;packing&quot;</span>, <span class="st">&quot;logistic_back&quot;</span>)</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="fu">as.data.frame</span>(mypopv)[, <span class="fu">c</span>(<span class="st">&quot;loci&quot;</span>, <span class="st">&quot;alleles&quot;</span>, <span class="st">&quot;matemoveno&quot;</span>, <span class="st">&quot;popmodel&quot;</span>)]</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt;   loci alleles matemoveno      popmodel</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt; 1    4       2          4       packing</span></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt; 2    4       2          4 logistic_back</span></span></code></pre></div>
+<p>The second batch reuses the same <code>PatchVars</code> object with a
+different set of population parameters, which CDMetaPOP will run as a
+separate simulation.</p>
+</div>
+<div id="runvars" class="section level1">
+<h1>RunVars</h1>
+<p><code>RunVars.csv</code> is the top of the file tree. Each row is a
+<em>run</em>, and its <code>Popvars</code> column names one
+<code>PopVars</code> file per species. CDMetaPOP executes every run ×
+every batch × every Monte Carlo replicate as a separate simulation.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>myrv <span class="ot">&lt;-</span> <span class="fu">RunVars</span>(<span class="at">n_runs =</span> <span class="dv">1</span>, <span class="at">Popvars =</span> mypopv)</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>myrv<span class="sc">$</span>runtime <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>myrv<span class="sc">$</span>output_years <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>myrv</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="co">#&gt; &lt;RunVars&gt; 1 run(s)</span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co">#&gt;            Popvars sizecontrol constMortans mcruns runtime output_years</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co">#&gt; 1 &lt;PopVars object&gt;           Y            1      1      50            5</span></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt;   gridformat gridsampling summaryOutput cdclimgentime startcomp implementcomp</span></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co">#&gt; 1      cdpop       Sample             N         0|1|2         0          Back</span></span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt;   ncores</span></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt; 1      1</span></span></code></pre></div>
+<p>The set of R input objects is now complete: <code>myrv</code> →
+<code>mypopv</code> → <code>mypv</code> → <code>mycv</code>, plus the
+cost matrix. Nothing has been written to disk at this point, and no file
+has been named.</p>
+</div>
+<div id="writing-and-reading-single-files" class="section level1">
+<h1>Writing and reading single files</h1>
+<p>The normal route writes everything at launch (next section). But when
+you want one file on its own to inspect, hand-edit, send to a
+collaborator, or feed it to one of the <code>make_*()</code> Shiny apps,
+<code>write_cdmetapop()</code> writes a single object to a csv you
+name:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>out_dir <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;cdmetapop_inputs&quot;</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="fu">dir.create</span>(out_dir, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="fu">write_cdmetapop</span>(mycv, <span class="fu">file.path</span>(out_dir, <span class="st">&quot;ClassVars.csv&quot;</span>))</span></code></pre></div>
+<p>Read one back either with <code>read_cdmetapop()</code>, or by
+passing <code>path =</code> to the constructor. The two are
+equivalent:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>cv_a <span class="ot">&lt;-</span> <span class="fu">read_cdmetapop</span>(<span class="fu">file.path</span>(out_dir, <span class="st">&quot;ClassVars.csv&quot;</span>), <span class="at">type =</span> <span class="st">&quot;ClassVars&quot;</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>cv_b <span class="ot">&lt;-</span> <span class="fu">ClassVars</span>(<span class="at">path =</span> <span class="fu">file.path</span>(out_dir, <span class="st">&quot;ClassVars.csv&quot;</span>))</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="fu">identical</span>(<span class="fu">as.data.frame</span>(cv_a), <span class="fu">as.data.frame</span>(cv_b))</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a><span class="fu">identical</span>(<span class="fu">as.data.frame</span>(cv_a), <span class="fu">as.data.frame</span>(mycv))</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p><code>path =</code> has the advantage that you can override columns
+as you read:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>cv_c <span class="ot">&lt;-</span> <span class="fu">ClassVars</span>(<span class="at">path =</span> <span class="fu">file.path</span>(out_dir, <span class="st">&quot;ClassVars.csv&quot;</span>), <span class="at">maturation =</span> <span class="dv">1</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>cv_c<span class="sc">$</span>maturation</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;1&quot; &quot;1&quot; &quot;1&quot; &quot;1&quot; &quot;1&quot; &quot;1&quot; &quot;1&quot;</span></span></code></pre></div>
+<p>The same works for all four classes.</p>
+<p>There is one important limit. <code>write_cdmetapop()</code>
+deliberately does <strong>not</strong> follow references: a cell holding
+a path is written verbatim, but a cell holding a live object or a raw
+matrix has no path to write, so it is written as <code>NA</code> with a
+warning:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">write_cdmetapop</span>(myrv, <span class="fu">file.path</span>(out_dir, <span class="st">&quot;RunVars_nested.csv&quot;</span>))</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="co">#&gt; Warning: These cells held a live R object (an R6 object or a matrix), which has</span></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="co">#&gt; no file path, and were written as NA: `Popvars` (row 1). To keep a reference,</span></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="co">#&gt; write that object or matrix to its own file and assign its path instead.</span></span></code></pre></div>
+<p>A file written that way cannot be read back in immediately or
+launched with <code>launch_cdmetapop</code>, since <code>NA</code> is
+not a valid value. So <code>write_cdmetapop()</code> is more for getting
+an object onto disk to look at, hand-edit, or prep for a direct Python
+launch.</p>
+</div>
+<div id="launching-a-simulation" class="section level1">
+<h1>Launching a simulation</h1>
+<p><code>launch_cdmetapop()</code> takes the <code>RunVars</code>
+object, writes every file in the set into a fresh timestamped run
+directory, and calls Python to start CDMetaPOP:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>run_dir <span class="ot">&lt;-</span> <span class="fu">launch_cdmetapop</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>  myrv,</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="at">pythonFilepath =</span> <span class="st">&quot;C:/Users/User1/anaconda3/python.exe&quot;</span>,</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>  <span class="at">CDMetaPOPFilepath =</span> <span class="st">&quot;C:/Users/User1/CDMetaPOP/src/CDMetaPOP.py&quot;</span></span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>Runs can take days, so the simulation launches in the background by
+default and the function returns immediately. Pass
+<code>wait = TRUE</code> to block until it finishes. On macOS and Linux
+a background run opens no console window, so check CDMetaPOP’s
+<code>CDmetaPOP0.log</code> in the output folder for progress and
+errors.</p>
+<p>You can also point it at a directory of existing csvs instead of an
+object:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="fu">launch_cdmetapop</span>(<span class="st">&quot;C:/Users/User1/CDMetaPOP/example_files&quot;</span>, <span class="at">wait =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div id="what-gets-written" class="section level2">
+<h2>What gets written</h2>
+<p>The run directory holds CDMetaPOP’s canonical layout, with every
+cross-reference rewritten to the right relative path:</p>
+<pre><code>cdmetapop_run_20261002_143015/
+├── RunVars.csv
+├── popvars/mypopv.csv
+├── patchvars/mypv.csv
+├── classvars/mycv.csv
+├── cdmats/cdmat.csv
+└── manifest.csv</code></pre>
+<p>Files are named after the R variables that held the objects, so you
+can trace any csv back to where it came from. <code>manifest.csv</code>
+records that mapping explicitly:</p>
+</div>
+</div>
+<div id="validation" class="section level1">
+<h1>Validation</h1>
+<p>Values are checked as you assign them, against the rules in
+CDMetaPOP’s user manual, so problems surface at the point you introduce
+them:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>myrv<span class="sc">$</span>gridformat <span class="ot">&lt;-</span> <span class="st">&quot;csv&quot;</span></span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="co">#&gt; Error in `.rv_check_segment()`:</span></span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a><span class="co">#&gt; ! `gridformat`[1] = &quot;csv&quot; must be one of: cdpop, general, genalex, structure, genepop.</span></span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a>mypv<span class="sc">$</span>straying_prob <span class="ot">&lt;-</span> <span class="fl">1.5</span></span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="co">#&gt; Error in `.pv_check_segment()`:</span></span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a><span class="co">#&gt; ! `straying_prob`[1] = 1.5 is outside the allowed range [0, 1].</span></span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a>mycv<span class="sc">$</span>maturation <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a><span class="co">#&gt; Error in `.validate_cv_field()`:</span></span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a><span class="co">#&gt; ! `maturation` must have length 1 or 7 (the number of age classes), not 2.</span></span></code></pre></div>
+<p>Cross-file consistency is checked at launch, where the whole file set
+is visible at once. For example, a <code>PopVars</code> whose referenced
+<code>PatchVars</code> is missing something it needs. Those errors are
+raised before any directory is created, so a failed launch leaves
+nothing behind to clean up.</p>
+</div>
+<div id="reading-results" class="section level1">
+<h1>Reading results</h1>
+<p><code>launch_cdmetapop()</code> returns the run directory, which is
+what the <code>summary_*()</code> functions take. Once a run has
+finished:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="fu">summary_pop</span>(run_dir, <span class="at">type =</span> <span class="st">&quot;N_Initial&quot;</span>)</span></code></pre></div>
+<p>Using the example output bundled with the package:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a>example_out <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;Example_dat&quot;</span>, <span class="at">package =</span> <span class="st">&quot;cdmetapopR&quot;</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a><span class="fu">summary_pop</span>(example_out, <span class="at">type =</span> <span class="st">&quot;N_Initial&quot;</span>)</span></code></pre></div>
+<p><img role="img" aria-label src="data:image/png;base64,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" alt width="100%" /></p>
+<p>See the main vignette, <em>Reading, summarizing, customizing, and
+plotting CDMetaPOP outputs</em>, for the full set of summary and
+plotting functions.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
