@@ -14,7 +14,7 @@ make_patchvars <- function(output_file = "my_new_patchvars.csv") {
     PatchID = 0, X = NA, Y = NA,
     SubpatchNO = 0, K = 100, `K StDev` = 0, N0 = 100,
     `Natal Grounds` = 1, `Migration Out Grounds` = 0, 
-    `Genes.Initialize` = NA, 
+    `Genes Initialize` = "random",
     `ClassVars` = NA,
     `Mortality Out` = 0, `Mortality Out StDev` = 0,
     `Mortality Back` = 0, `Mortality Back StDev` = 0,
@@ -104,17 +104,7 @@ make_patchvars <- function(output_file = "my_new_patchvars.csv") {
             em(span("ClassVars", style = "color:#0072B2; font-weight: bold;"))  # Class.vars is the column name in the template
           ))
         ),
-        
-        # Genes 
-        div(
-          class = "upload-block",
-          h5("Genes"),
-          textInput("genes_file", label = "Type the name of your gene.csv file: "),
-          actionButton("update_genes", tagList(
-            "Update ",
-            em(span("Genes Initialize", style = "color:#0072B2; font-weight: bold;"))  # Genes Initialize is the column name in the template
-          ))
-        ),
+
         downloadButton("download_patchvars", "Download PatchVars File")
       ),
       
@@ -183,6 +173,61 @@ make_patchvars <- function(output_file = "my_new_patchvars.csv") {
                    actionButton("update_demography", "Apply changes"),
           ),
           
+          ########################################
+          # Genes Tab
+          ########################################
+          tabPanel(
+            "Genes",
+            
+            radioButtons(
+              inputId      = "genes",
+              label        = "Determines genotype initialization.",
+              choiceValues = c("random", "random_var", "allele_file", "allele_files_multi"),
+              choiceNames  = list(
+                span("Random",
+                     title = "Random assignment of alleles (number of alleles and loci specified in PopVars.csv). The patch will be at maximum genetic diversity with this option. 'random' assumes the number of alleles per locus is the same for all loci."),
+                
+                span("Random (variable)",
+                     title = "Random assignment of alleles (number of alleles and loci specified in PopVars.csv). The patch will be at maximum genetic diversity with this option. 'random_var' gives a variable number of alleles per locus, as specified in the alleles field of the PopVars file."),
+                
+                span("Enter allele frequency file name",
+                     title = "Alleles are drawn from the allele frequency distribution in the file. Examples of the comma-delimited format are in the data/genes/ folder. The file is a single column of allele frequencies whose length matches starting loci * starting alleles in PopVars.csv. Different allele frequency files can be given for different patches, as long as they are the same size (loci * alleles)."),
+                
+                span("Enter multiple allele frequency files",
+                     title = "Separate each file with a ';' (e.g., allelefrequencyA.csv;allelefrequencyB.csv;allelefrequencyC.csv). One of these files is chosen at random for gene initialization of each individual. Note this is a different delimiter than '|', which is linked to temporally changing files.")
+              ),
+              selected = "random"
+            ),
+            
+            conditionalPanel(
+              condition = "input.genes == 'allele_file'",
+              textInput(
+                inputId     = "allele_file_name",
+                label       = "Allele frequency file name",
+                placeholder = "e.g. allelefreq_pop1.csv",
+                width       = "100%"
+              )
+            ),
+            
+            conditionalPanel(
+              condition = "input.genes == 'allele_files_multi'",
+              textAreaInput(
+                inputId     = "allele_files_names",
+                label       = "Allele frequency file names (semicolon-separated)",
+                placeholder = "allelefreq_pop1.csv;allelefreq_pop2.csv;allelefreq_pop3.csv",
+                rows        = 5,
+                width       = "100%"
+              )
+            ),
+            
+            actionButton(
+              inputId = "update_genes",
+              label   = tagList(
+                "Update ",
+                em(span("Genes Initialize", style = "color:#0072B2; font-weight: bold;"))
+              )
+            )
+          ),
           ########################################
           # Movement tab
           ########################################
@@ -401,30 +446,34 @@ make_patchvars <- function(output_file = "my_new_patchvars.csv") {
         
         tabPanel("Disease",
                  radioButtons("apply_disease", "Do you want to apply disease?",
-                              choices = c("No", "Yes"), 
-                              selected = "No", 
+                              choices = c("No", "Yes"),
+                              selected = "No",
                               inline = TRUE),
-                 
+
                  # Show disease settings only if 'Yes' is selected
                  conditionalPanel(
                    condition = "input.apply_disease == 'Yes'",
+                   helpText(strong("Important:"), "Remember that if you want to implement the disease options, you also have to turn on the disease processes in the PopVars.csv file by selecting ",
+                            code("implementDisease = 'Back'"), ", ",
+                            code("'Out'"), ", or ",
+                            code("'Both'"), "."),
                    textInput("disease_file", "Type the file name of the disease file"),
-                   
-                  numericInput("Env_Res", tagList("Define the initial concentration/load of the pathogen in the patch's environmental reservoir", em(span("Env Res", style = "color:#0072B2;"))), 
+
+                  numericInput("Env_Res", tagList("Define the initial concentration/load of the pathogen in the patch's environmental reservoir", em(span("Env Res", style = "color:#0072B2;"))),
                                 value = 0,
                                 min = 0, step = 1),
                   bsTooltip(
                     "Env_Res",
                     "This column is only used when 'Indirect' transmission is specified in the DiseaseVars.csv file. Values are purely relative",
                     placement = "right",
-                    trigger = "hover"), 
-                  
+                    trigger = "hover"),
+
         # disease defense alleles
                   wellPanel(
-                    helpText("Type the the transition rate(s) for individuals with each genotype at the first disease defense locus. 
-                    For multiple affected transition rates, values should be separated by commas. 
+                    helpText("Type the the transition rate(s) for individuals with each genotype at the first disease defense locus.
+                    For multiple affected transition rates, values should be separated by commas.
                     The number of transition rates need to match the number of transitions specified in 'Transition 1' in the DiseaseVars file."),
-                    
+
                     textInput("dd1_AA", "Disease defense locus 1 genotype AA:"),
                     textInput("dd1_AB", "Disease defense locus 1 genotype AB:"),
                     textInput("dd1_BB", "Disease defense locus 1 genotype BB:"),
@@ -432,7 +481,7 @@ make_patchvars <- function(output_file = "my_new_patchvars.csv") {
                     textInput("dd2_AB", "Disease defense locus 1 genotype AB:"),
                     textInput("dd2_BB", "Disease defense locus 1 genotype BB:"),
                   ),
-                    
+
         actionButton("update_disease", "Update Disease Parameters"),
                  )
         ),
@@ -571,15 +620,6 @@ make_patchvars <- function(output_file = "my_new_patchvars.csv") {
       template_data(temp)
     })
     
-    # Update Genes text
-    observeEvent(input$update_genes, {
-      req(input$genes_file)
-      # Update only the 'Genes.Initialize' column with the subdir name
-      temp <- template_data()
-      temp$Genes.Initialize <- input$genes_file
-      template_data(temp)
-    })
-    
     # Update template when coordinates file is uploaded
     observeEvent(input$update_coordinates, {
       req(input$coordinates_upload)
@@ -628,6 +668,36 @@ make_patchvars <- function(output_file = "my_new_patchvars.csv") {
       temp$`Mortality Eggs` <- input$mortality_eggs
       temp$`Mortality Eggs StDev` <- input$mortality_eggs_stdev
       template_data(temp)
+    })
+    
+    ###################################################
+    # Update Gene tab
+    ###################################################
+    observeEvent(input$update_genes, {
+      req(input$genes)
+      
+      value <- switch(
+        input$genes,
+        
+        random     = "random",
+        random_var = "random_var",
+        
+        allele_file = trimws(input$allele_file_name),
+        
+        allele_files_multi = trimws(input$allele_files_names)
+      )
+      
+      # Require a file name for the two file options
+      if (input$genes %in% c("allele_file", "allele_files_multi") && !nzchar(value)) {
+        showNotification("Please enter a file name.", type = "warning")
+        return(invisible(NULL))
+      }
+      
+      temp <- template_data()
+      temp$`Genes Initialize` <- value
+      template_data(temp)
+      
+      showNotification("Genes Initialize updated.", type = "message")
     })
     
     ###################################################
@@ -943,7 +1013,14 @@ make_patchvars <- function(output_file = "my_new_patchvars.csv") {
         "PatchVars.csv"
       },
       content = function(file) {
-        write.csv(template_data(), file, row.names = FALSE, quote = FALSE)
+        output_data <- template_data()
+        # Remove disease columns if disease is not applied
+        if (input$apply_disease == "No") {
+          disease_cols <- c("disease_file", "Env Res", "dd1_AA", "dd1_AB", "dd1_BB",
+                           "dd2_AA", "dd2_AB", "dd2_BB")
+          output_data <- output_data[, !(names(output_data) %in% disease_cols), drop = FALSE]
+        }
+        write.csv(output_data, file, row.names = FALSE, quote = FALSE)
       }
     )
     

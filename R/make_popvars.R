@@ -13,31 +13,31 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
   # Provide the template
   template <- data.frame(
     xyfilename           = NA,
-    mate_cdmat           = NA,
+    mate_cdmat           = "N",
     matemoveno           = 6,
     matemoveparA         = 0,
     matemoveparB         = 0,
     matemoveparC         = 0,
     matemovethresh       = 0,
-    migrateout_cdmat     = NA,
+    migrateout_cdmat     = "N",
     migratemoveOutno     = 4,
     migratemoveOutparA   = 0,
     migratemoveOutparB   = 0,
     migratemoveOutparC   = 0,
     migratemoveOutthresh = "max~max",
-    migrateback_cdmat    = NA,
+    migrateback_cdmat    = "N",
     migratemoveBackno    = 4,
     migratemoveBackparA  = 0,
     migratemoveBackparB  = 0,
     migratemoveBackparC  = 0,
     migratemoveBackthresh= "max~max",
-    stray_cdmat          = NA,
+    stray_cdmat          = "N",
     StrayBackno          = 4,
     StrayBackparA        = 0,
     StrayBackparB        = 0,
     StrayBackparC        = 0,
     StrayBackthresh      = "max",
-    disperseLocal_cdmat  = NA,
+    disperseLocal_cdmat  = "N",
     disperseLocalno      = 4,
     disperseLocalparA    = 0,
     disperseLocalparB    = 0,
@@ -80,8 +80,6 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
     plasticBehavioralResponse = 0,
     startPlasticgene      = 0,
     implementPlasticgene  = "Back",
-    #cdinfect             = "N",# not in next version
-    #transmissionprob     = 1.5, # not in next version
     growth_option         = "N",
     growth_Loo            = 250,
     growth_R0             = 0.57,
@@ -1890,65 +1888,59 @@ make_popvars <- function(output_file = "my_new_popvars.csv") {
     
     # Update CDMAT text
     observeEvent(input$update_cdmat, {
-      req(input$mate_cdmat_file)
-      # Update the cdmat column with the dir and subdir name
-      temp <- template_data()
-      temp$mate_cdmat <- trimws(input$mate_cdmat_file)
-      template_data(temp)
+      # Only update if user provided a non-empty value
+      if (!is.null(input$mate_cdmat_file) && trimws(input$mate_cdmat_file) != "") {
+        temp <- template_data()
+        temp$mate_cdmat <- trimws(input$mate_cdmat_file)
+        template_data(temp)
+      }
+      # If empty, do nothing - keep the default "N" from template
     })
     
     # Update MigrationOut CDMat from entered text
     observeEvent(input$update_migrateout_cdmat, {
-      req(input$migrateout_cdmat_file)
-      
-      # Get the original filename
-      migrate_cdmats_name <- input$migrateout_cdmat_file
-      
-      # Update the 'migrate_cdmat' column with the subdir name
-      temp <- template_data()
-      temp$migrateout_cdmat <- trimws(migrate_cdmats_name)
-      template_data(temp)
+      # Only update if user provided a non-empty value
+      if (!is.null(input$migrateout_cdmat_file) && trimws(input$migrateout_cdmat_file) != "") {
+        temp <- template_data()
+        temp$migrateout_cdmat <- trimws(input$migrateout_cdmat_file)
+        template_data(temp)
+      }
+      # If empty, do nothing - keep the default "N" from template
     })
     
     # Update migrateback_cdmat from Uploaded File
-    
+
     observeEvent(input$update_migrateback_cdmat, {
-      req(input$migrateback_cdmat_file)
-      
-      # Get the original filename
-      migrateback_cdmats_name <- input$migrateback_cdmat_file
-      
-      # Update the 'migratemoveback_cdmat' column 
-      temp <- template_data()
-      temp$migrateback_cdmat <- trimws(migrateback_cdmats_name)
-      template_data(temp)
+      # Only update if user provided a non-empty value
+      if (!is.null(input$migrateback_cdmat_file) && trimws(input$migrateback_cdmat_file) != "") {
+        temp <- template_data()
+        temp$migrateback_cdmat <- trimws(input$migrateback_cdmat_file)
+        template_data(temp)
+      }
+      # If empty, do nothing - keep the default "N" from template
     })
     
     # Update Stray CDMat from text
-    
+
     observeEvent(input$update_stray_cdmat, {
-      req(input$stray_cdmat_file)
-      
-      # Get the original filename
-      stray_cdmats_name <- input$stray_cdmat_file
-      
-      # Update  the 'stray_cdmat' column 
-      temp <- template_data()
-      temp$stray_cdmat <- stray_cdmats_name
-      template_data(temp)
+      # Only update if user provided a non-empty value
+      if (!is.null(input$stray_cdmat_file) && trimws(input$stray_cdmat_file) != "") {
+        temp <- template_data()
+        temp$stray_cdmat <- trimws(input$stray_cdmat_file)
+        template_data(temp)
+      }
+      # If empty, do nothing - keep the default "N" from template
     })
     
     # Updated Dispersal CDMat from text
-    observeEvent(input$update_dispersal_cdmat, {
-      req(input$dispersal_cdmat_file)
-      
-      # Get the original filename
-      dispersal_cdmats_name <- input$dispersal_cdmat_file
-      
-      # Update  the 'dispersal_cdmat' column 
-      temp <- template_data()
-      temp$dispersal_cdmat <- dispersal_cdmats_name
-      template_data(temp)
+    observeEvent(input$update_disperse_cdmat, {
+      # Only update if user provided a non-empty value
+      if (!is.null(input$disperse_cdmat_file) && trimws(input$disperse_cdmat_file) != "") {
+        temp <- template_data()
+        temp$disperseLocal_cdmat <- trimws(input$disperse_cdmat_file)
+        template_data(temp)
+      }
+      # If empty, do nothing - keep the default "N" from template
     })
     
     ###########################################################   
