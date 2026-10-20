@@ -90,7 +90,7 @@ different patches.
 reference a disease file in \code{\link[=PatchVars]{PatchVars()}}.
 
 \strong{Delimiters:} \verb{;} is the only delimiter used in this file, separating the
-initial state proportions in \code{initial_conditions} and indicating which comparments
+initial state proportions in \code{initial_conditions} and indicating which compartments
 correspond to which disease state. To vary disease parameters over time,
 use the \code{|} delimited in \code{\link[=PatchVars]{PatchVars()}}'s \code{disease_file} column.
 
