@@ -15,6 +15,7 @@ authors:
   corresponding: true
   affiliation: 1
 - name: Casey C. Day
+  orcid: "0000-0001-6096-3448"
   affiliation: 1
 - name: Allison Williams
   affiliation: 2
@@ -23,6 +24,7 @@ authors:
 - name: Allen Warren
   affiliation: 1
 - name: Erin L. Landguth
+  orcid: "0000-0002-7044-346X"
   affiliation: 1
 bibliography: cdmetapopR_paper.bib
 affiliations:
@@ -72,8 +74,7 @@ AI tools used included: OpenAI Codex was used to assist with code generation, de
 
 # Acknowledgements
 
-We acknowledge contributions from Baylor Fain for reviewing the package and providing useful feedback and the University of Montana Computational Ecology Lab (RRID:SCR_029110) for allowing the use of its computational resources. This work was funded by the National Science Foundation grant no. 2407848 and Seattle City Light.
-
+We thank Bill Peterman and Baylor Fain for inspiring ideas and feedback that contributed to the development of this package, and the University of Montana Computational Ecology Lab (RRID:SCR_029110) for the use of its computational resources. This work was funded by the National Science Foundation grant no. 2407848 and Seattle City Light.
 # References
 
 Link to the software archive: <https://doi.org/10.5281/zenodo.19687119>
