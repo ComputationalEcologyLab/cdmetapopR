@@ -42,6 +42,10 @@ This R package is a companion to CDMetaPOP, an individual‑based, spatially exp
 
 This package is designed to facilitate the use of CDMetaPOP by an audience comprised of researchers across diverse fields, including evolutionary biologists, landscape ecologists, geneticists, and epidemiologists. cdmetapopR provides an R‑based platform for new users interested in applying CDMetaPOP to their own study systems. By offering user‑friendly tools for first‑time implementation, the package lowers the barrier to entry and is expected to promote broader adoption of CDMetaPOP across multiple research disciplines.
 
+# State of the field
+
+CDMetaPOP is a well-established simulation framework in landscape ecology and population genetics that builds upon the individual-based cost-distance model CDPOP [@landguth2010cdpop] to integrate demography, genetics, spatial dynamics, temporal variability, disease transmission, and multispecies interactions [@landguth2017cdmetapop; @day2023cdmetapop; @disease]. While other spatially explicit eco-evolutionary simulators exist at varying levels of complexity, researchers in ecology and evolutionary biology increasingly rely on the R programming environment for spatial data preparation, statistical modeling, and post-simulation visualization. Bridging standalone simulation engines with R through dedicated companion packages has become standard practice in the field to streamline workflows and improve reproducibility. Previously, however, no R interface existed for CDMetaPOP; users had to manually format complex comma-separated value (CSV) parameter files, execute simulations via Python command-line interfaces, and write custom scripts to parse multi-directory outputs. `cdmetapopR` is the first and only interface available for CDMetaPOP, allowing users to configure, launch, and analyze simulations directly within R while Python runs seamlessly in the background, eliminating the need for users to write or execute Python code themselves.
+
 # Software design
 
 The package provides two approaches for generating CDMetaPOP input parameter sets: interactive Shiny applications and R wrapper functions. The Shiny applications were developed to increase accessibility for new users and help them become familiar with the format and structure of the CDMetaPOP parameterization. Alternatively, the wrapper functions provide a more efficient and flexible workflow for experienced users that prefer the R coding environment.
@@ -75,6 +79,7 @@ AI tools used included: OpenAI Codex was used to assist with code generation, de
 # Acknowledgements
 
 We thank Bill Peterman and Baylor Fain for inspiring ideas and feedback that contributed to the development of this package, and the University of Montana Computational Ecology Lab (RRID:SCR_029110) for the use of its computational resources. This work was funded by the National Science Foundation grant no. 2407848 and Seattle City Light.
+
 # References
 
 Link to the software archive: <https://doi.org/10.5281/zenodo.19687119>
