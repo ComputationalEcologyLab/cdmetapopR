@@ -287,7 +287,7 @@ name-resolution mechanism and its caveats).
 Matrix fields (\code{mate_cdmat}, \code{migrateout_cdmat}, \code{migrateback_cdmat},
 \code{stray_cdmat}, \code{disperseLocal_cdmat}, \code{correlation_matrix},
 \code{subpopmort_file}) each accept, per batch, ONE of: a single raw R
-\code{matrix}; a file path; or sometimes \code{"N"}. When providing a matrix as an R variable, the cdclimate and per-sex options are not available.
+\code{matrix}; a file path; or sometimes \code{"N"}. When providin a matrix as an R variable, the cdclimate and per-sex options are not available.
 To vary a matrix over time (the \code{|} cdclimate mechanism) or by
 sex (\code{~}), you must supply file \emph{paths}, not matrices (e.g.
 \code{pv$mate_cdmat <- "surface0.csv|surface5.csv"}).
