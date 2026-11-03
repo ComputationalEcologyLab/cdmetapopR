@@ -297,22 +297,70 @@
 	invisible(NULL)
 }
 
+# Expand a path to its canonical long form when it exists, so a delimiter
+# character that is really part of the path cannot be mistaken for a delimiter.
+#
+# The motivating case is Windows 8.3 short names: a user profile folder whose
+# name exceeds 8 characters, or contains a space or a dot, gets an alias
+# containing '~' ("runneradmin" -> "RUNNER~1"). Every absolute path under such
+# a profile -- including anything derived from tempdir() or USERPROFILE --
+# then carries a '~', which is also CDMetaPOP's per-sex delimiter. Splitting
+# such a path on '~' tore it into fragments that do not exist, so the
+# pre-flight check failed on a perfectly valid path (seen on a Windows CI
+# runner; the short form itself is always usable, file.exists() is TRUE on it).
+#
+# normalizePath() resolves the alias for a path that EXISTS. It cannot for one
+# that does not, so this is a reduction of the problem rather than a cure --
+# hence the existence test in .wif_split_delim() below as well. Returns `x`
+# unchanged if normalization fails for any reason.
+.wif_longpath <- function(x) {
+	if (!is.character(x) || length(x) != 1 || is.na(x) || !nzchar(x)) return(x)
+	out <- tryCatch(
+		normalizePath(x, winslash = "/", mustWork = FALSE),
+		error = function(e) x, warning = function(w) x
+	)
+	if (length(out) == 1 && !is.na(out) && nzchar(out)) out else x
+}
+
+# Split a delimited path string into individual paths: always on `outer`, then
+# on `inner` only for groups that are not themselves an existing file.
+#
+# The existence test is what keeps a delimiter character that belongs to a
+# filename from being treated as a delimiter. It is checked per `outer` group,
+# since a group is the unit the `inner` split applies to -- and when there is
+# no `outer` delimiter at all, that group is the whole string, which is the
+# common case. Testing existence is consistent with the writer's own contract:
+# every path it resolves must exist by launch time anyway (see
+# .wif_check_sources()), so a group that exists is a path, not a delimited
+# list. Each path is also expanded to long form first, which removes the
+# delimiter character outright in the Windows 8.3 case.
+.wif_split_delim <- function(x, inner, keywords = character(0)) {
+	groups <- strsplit(x, "|", fixed = TRUE)[[1]]
+	out <- lapply(groups, function(g) {
+		if (!nzchar(g) || g %in% keywords) return(g)
+		g <- .wif_longpath(g)
+		# A group that is already a file is one path, however many delimiter
+		# characters its name happens to contain.
+		if (file.exists(g)) return(g)
+		vapply(strsplit(g, inner, fixed = TRUE)[[1]], .wif_longpath, character(1),
+			USE.NAMES = FALSE)
+	})
+	unlist(out, use.names = FALSE)
+}
+
 # Split a matrix-field path string on '|' (temporal) then '~' (per-sex) into
 # individual file paths; a plain path with no delimiters yields itself.
 .wif_split_pipe_tilde <- function(x) {
-	pipe_segs <- strsplit(x, "|", fixed = TRUE)[[1]]
-	unlist(lapply(pipe_segs, function(p) strsplit(p, "~", fixed = TRUE)[[1]]),
-		use.names = FALSE)
+	.wif_split_delim(x, inner = "~")
 }
 
 # Extract the file-path segments from a genes_initialize value: '|' outer
 # (temporal), ';' inner (multiple files per group). The keywords "random"/
-# "random_var" are not files and are dropped.
+# "random_var" are not files and are dropped. `;` is legal in a Windows
+# filename, so it gets the same treatment as '~' above.
 .wif_split_gene_paths <- function(x) {
 	if (is.na(x) || !nzchar(x)) return(character(0))
-	pipe_segs <- strsplit(x, "|", fixed = TRUE)[[1]]
-	segs <- unlist(lapply(pipe_segs, function(p) strsplit(p, ";", fixed = TRUE)[[1]]),
-		use.names = FALSE)
+	segs <- .wif_split_delim(x, inner = ";", keywords = c("random", "random_var"))
 	segs[!segs %in% c("random", "random_var") & nzchar(segs)]
 }
 
@@ -618,13 +666,25 @@
 # genes_initialize's random/random_var; empties should not occur but are left
 # untouched rather than looked up). Used for matrix paths ('|' then '~') and
 # genes_initialize ('|' then ';').
+#
+# The `inner` split MUST match what .wif_split_delim() did during discovery --
+# same long-form expansion, and the same "a group that is an existing file is
+# one path" rule -- or the cache lookup below will miss on a path whose own
+# name contains the delimiter character (the Windows 8.3 `~` case). Hence both
+# sides go through .wif_longpath() and the same existence test.
 .wif_rewrite_delimited <- function(reg, str, subdir, outer, inner, keywords = character(0)) {
 	outer_groups <- strsplit(str, outer, fixed = TRUE)[[1]]
 	new_outer <- vapply(outer_groups, function(g) {
-		inner_segs <- strsplit(g, inner, fixed = TRUE)[[1]]
+		if (!nzchar(g) || g %in% keywords) return(g)
+		g_long <- .wif_longpath(g)
+		# Whole group is itself a file: one path, not a delimited list.
+		if (file.exists(g_long)) {
+			return(.wif_relpath_of_cached_path(reg, g_long, subdir))
+		}
+		inner_segs <- strsplit(g_long, inner, fixed = TRUE)[[1]]
 		new_inner <- vapply(inner_segs, function(s) {
 			if (!nzchar(s) || s %in% keywords) return(s)
-			.wif_relpath_of_cached_path(reg, s, subdir)
+			.wif_relpath_of_cached_path(reg, .wif_longpath(s), subdir)
 		}, character(1))
 		paste(new_inner, collapse = inner)
 	}, character(1))
