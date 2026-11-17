@@ -257,72 +257,76 @@
   do.call(rbind, summary_rows)
 }
 
-.plot_line_by_source <- function(
-  data,
-  y,
-  title,
-  ylab,
-  color = "steelblue",
-  batch_labels = NULL,
-  show_mc = TRUE,
-  show_ci = TRUE
-) {
-  if (.plot_has_multiple_sources(data)) {
-    summary_df <- .summarize_ci_cdmetapop(
-      data = data,
-      value_col = y,
-      group_cols = c(".source_group", "Year")
+.plot_line_by_source <- function(data, y, title, ylab, color = "steelblue",
+                                 batch_labels = NULL, show_mc = TRUE, show_ci = TRUE) {
+  
+  # Recover species from .source_id if the helper didn't pass it through
+  if (is.null(data$.species)) {
+    data$.species <- suppressWarnings(
+      as.integer(sub(".*_species(\\d+)$", "\\1", data$.source_id))
     )
-
-    p <- ggplot(
-      data,
-      aes(
-        x = .data$Year,
-        y = .data[[y]],
-        group = .data$.source_id,
-        color = factor(.data$.mc)
+    data$.species[is.na(data$.species)] <- 0L
+  }
+  multi_species <- length(unique(data$.species)) > 1
+  
+  if (.plot_has_multiple_sources(data)) {
+    
+    summary_df <- .summarize_ci_cdmetapop(
+      data = data, value_col = y,
+      group_cols = c(".source_group", if (multi_species) ".species", "Year")
+    )
+    
+    if (multi_species) {
+      # one colour per species; MC replicates share their species' colour
+      data$.grp       <- paste("Species", data$.species)
+      summary_df$.grp <- paste("Species", summary_df$.species)
+      
+      p <- ggplot(data, aes(x = .data$Year, y = .data[[y]],
+                            group = .data$.source_id, color = .data$.grp))
+      if (show_ci) {
+        p <- p +
+          geom_ribbon(data = summary_df,
+                      aes(x = .data$Year, ymin = .data$lower, ymax = .data$upper,
+                          fill = .data$.grp, group = .data$.grp),
+                      inherit.aes = FALSE, alpha = 0.18) +
+          geom_line(data = summary_df,
+                    aes(x = .data$Year, y = .data$mean,
+                        color = .data$.grp, group = .data$.grp),
+                    inherit.aes = FALSE, linewidth = 1)
+      }
+      if (show_mc) p <- p + geom_line(alpha = 0.35, linewidth = 0.6)
+      p <- p + labs(color = "Species", fill = "Species")
+      
+    } else {
+      # original single-species behaviour (unchanged)
+      p <- ggplot(data, aes(x = .data$Year, y = .data[[y]],
+                            group = .data$.source_id, color = factor(.data$.mc)))
+      if (show_ci) {
+        p <- p +
+          geom_ribbon(data = summary_df,
+                      aes(x = .data$Year, ymin = .data$lower, ymax = .data$upper,
+                          group = .data$.source_group),
+                      inherit.aes = FALSE, fill = color, alpha = 0.18) +
+          geom_line(data = summary_df,
+                    aes(x = .data$Year, y = .data$mean, group = .data$.source_group),
+                    inherit.aes = FALSE, color = color, linewidth = 1)
+      }
+      if (show_mc) p <- p + geom_line(alpha = 0.35, linewidth = 0.6)
+      p <- p + labs(color = "Monte Carlo")
+    }
+    
+    p <- p + facet_wrap(
+      ~.source_group, scales = "free_y",
+      labeller = ggplot2::labeller(
+        .source_group = .facet_labeler_cdmetapop(batch_labels)
       )
     )
-
-    if (show_ci) {
-      p <- p +
-        geom_ribbon(
-          data = summary_df,
-          aes(
-            x = .data$Year,
-            ymin = .data$lower,
-            ymax = .data$upper,
-            group = .data$.source_group
-          ),
-          inherit.aes = FALSE,
-          fill = color,
-          alpha = 0.18
-        ) +
-        geom_line(
-          data = summary_df,
-          aes(x = .data$Year, y = .data$mean, group = .data$.source_group),
-          inherit.aes = FALSE,
-          color = color,
-          linewidth = 1
-        )
-    }
-
-    if (show_mc) {
-      p <- p + geom_line(alpha = 0.35, linewidth = 0.6)
-    }
-
-    p <- p +
-      facet_wrap(
-        ~ .source_group,
-        scales = "free_y",
-        labeller = ggplot2::labeller(.source_group = .facet_labeler_cdmetapop(batch_labels))
-      ) +
-      labs(color = "Monte Carlo")
+    
   } else {
     p <- ggplot(data, aes(x = .data$Year, y = .data[[y]])) +
       geom_line(color = color, linewidth = 0.8)
   }
-
+  
   p + labs(title = title, y = ylab, x = "Year")
 }
 
